@@ -142,7 +142,7 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
   const fill = color ?? picked ?? t.primary;
   const live = animated && !motionOff;
   // The bow is gold on pink and pink on everything else, so it always stands out.
-  const bowFill = fill.toUpperCase() === '#FF2E93' || (mode === 'women' && !color && !picked) ? '#FFC233' : '#FF2E93';
+  const bowFill = fill.toUpperCase() === '#E4688C' || (mode === 'women' && !color && !picked) ? '#FFC233' : '#E4688C';
 
   const cfg = useSharedValue<Cfg>(STATES[resolveState(state ?? 'idle')]);
   const stateClock = useSharedValue(0);

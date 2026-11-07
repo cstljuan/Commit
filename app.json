@@ -8,7 +8,17 @@
     "scheme": "commit",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "dev.juancstl.commit",
+      "appleTeamId": "WJ5L53XU8A",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        },
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocalNetworkUsageDescription": "Commit talks to Hachi's model running on your team's laptop."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -28,15 +38,21 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#FFEDE3",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 160
         }
       ],
       "expo-secure-store",
       "expo-web-browser",
       "expo-font",
-      "expo-audio"
+      "expo-audio",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.793748227483-64bcau26i86e8149h10dp9mkfvsepq1o"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

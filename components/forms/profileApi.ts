@@ -45,7 +45,10 @@ export async function saveProfile(p: ProfileInput): Promise<void> {
     await api.saveProfile(row as Parameters<typeof api.saveProfile>[0]);
   } catch (e) {
     // 'both' needs migration 0015. Until it runs, save student instead of failing the whole profile.
-    if (row.occupation === 'both' && /occupation/i.test(String((e as Error)?.message))) await api.saveProfile({ ...row, occupation: 'student' } as Parameters<typeof api.saveProfile>[0]);
+    // fail() rewrites the message for people, so look at the raw detail and the check-violation code too.
+    const err = e as Error & { detail?: string; code?: string };
+    const raw = `${err?.message ?? ''} ${err?.detail ?? ''}`;
+    if (row.occupation === 'both' && (/occupation/i.test(raw) || err?.code === '23514')) await api.saveProfile({ ...row, occupation: 'student' } as Parameters<typeof api.saveProfile>[0]);
     else throw e;
   }
 }

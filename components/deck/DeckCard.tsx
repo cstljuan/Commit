@@ -165,7 +165,7 @@ export const DeckCard = forwardRef<DeckCardHandle, Props>(function DeckCard(
             <Text style={[stampText, { color: t.bg }]}>{'\u2715\uFE0E'} {copy.stampLeft}</Text>
           </Animated.View>
           <Animated.View style={[styles.stamp, styles.stampUp, { backgroundColor: t.accent }, upStamp]}>
-            <Text style={[stampText, { color: '#2A1408' }]}>{'\u2605\uFE0E'} {copy.stampUp}</Text>
+            <Text style={[stampText, { color: t.accent === '#FF6B35' ? '#FFFFFF' : '#2A1408' }]}>{'\u2605\uFE0E'} {copy.stampUp}</Text>
           </Animated.View>
         </View>
       </Animated.View>

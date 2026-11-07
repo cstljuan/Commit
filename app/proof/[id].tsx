@@ -151,6 +151,6 @@ const styles = StyleSheet.create({
   card: { backgroundColor: LAB.card, borderRadius: 18, padding: 16, gap: 12 },
   input: { backgroundColor: LAB.card, color: LAB.text, fontFamily: LAB.mono, fontSize: 14, borderRadius: 14, padding: 14, minHeight: 80 },
   primary: { backgroundColor: LAB.accent, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  primaryText: { color: '#2A1408', fontFamily: LAB.monoBold, fontSize: 15 },
+  primaryText: { color: '#FFFFFF', fontFamily: LAB.monoBold, fontSize: 15 },
   secondary: { backgroundColor: LAB.card, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
 });
