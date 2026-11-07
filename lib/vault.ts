@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import * as Crypto from 'expo-crypto';
-import { getPublicKeys, signContent, verifyContent } from './crypto';
+import { generateKeys, hasKeys, getPublicKeys, signContent, verifyContent } from './crypto';
 
 export type VaultEntry = {
   seq: number; project_id: string; author_id: string; idea_hash: string; ts: string;
@@ -88,11 +88,37 @@ export async function verifyChain(): Promise<Verification[]> {
     .select('last_seq,last_entry_hash,server_sig').order('last_seq', { ascending: false }).limit(1);
   if (error) throw error;
   const rows = await readAll('vault_log', '*', 'seq') as VaultEntry[];
+  const { data: signingKeys, error: signingError } = await getCyberClient().rpc('vault_signing_keys');
+  if (signingError) throw signingError;
   const publicKeys: Record<string, string> = {};
-  for (const authorId of new Set(rows.map(row => row.author_id))) {
-    const { data, error: profileError } = await getCyberClient().from('profiles').select('sign_public_key').eq('id', authorId).maybeSingle();
-    if (profileError) throw profileError;
-    if (data?.sign_public_key) publicKeys[authorId] = data.sign_public_key;
+  for (const key of signingKeys ?? []) {
+    if (key.sign_public_key) publicKeys[key.author_id] = key.sign_public_key;
   }
   return verifyVaultSnapshot(rows, publicKeys, checkpoints?.[0] ?? null);
+}
+
+export type DeviceKeyState = 'ready' | 'new' | 'register' | 'other-device';
+export async function getDeviceKeyState(): Promise<DeviceKeyState> {
+  const id = await cyberUser();
+  const { data, error } = await getCyberClient().from('profiles').select('box_public_key,sign_public_key').eq('id', id).single();
+  if (error) throw error;
+  const local = await hasKeys();
+  if (data.box_public_key || data.sign_public_key) {
+    if (!local) return 'other-device';
+    const keys = await getPublicKeys();
+    return keys.boxPublicKey === data.box_public_key && keys.signPublicKey === data.sign_public_key ? 'ready' : 'other-device';
+  }
+  return local ? 'register' : 'new';
+}
+export async function registerDeviceKeys(): Promise<void> {
+  const id = await cyberUser();
+  const state = await getDeviceKeyState();
+  if (state === 'ready') return;
+  if (state === 'other-device') throw new Error("This account's keys are on another device. Open Commit there.");
+  const keys = await generateKeys();
+  const { data, error } = await getCyberClient().from('profiles').update({
+    box_public_key: keys.boxPublicKey, sign_public_key: keys.signPublicKey,
+  }).eq('id', id).is('box_public_key', null).is('sign_public_key', null).select('id');
+  if (error) throw error;
+  if (!data?.length && await getDeviceKeyState() !== 'ready') throw new Error('Account keys changed. Use the original device.');
 }
