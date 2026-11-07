@@ -40,7 +40,7 @@ const ACCESSORIES: { value: Prefs['hachiAccessory']; label: string }[] = [
 const COLORS: { value: string; label: string }[] = [
   { value: 'auto', label: 'Mode color' },
   { value: '#FF6B35', label: 'Takoyaki' },
-  { value: '#FF2E93', label: 'Pink' },
+  { value: '#E4688C', label: 'Pink' },
   { value: '#22D3EE', label: 'Cyan' },
   { value: '#00D2A0', label: 'Mint' },
   { value: '#FFC233', label: 'Gold' },
@@ -96,7 +96,7 @@ export default function HachiScreen() {
       </Reveal>
       <Reveal style={[styles.stage, { backgroundColor: t.surface }]}>
         <View testID="hachi-stage" style={styles.stageInner}>
-          <Hachi ref={ref} size={200} animated sleepAfter={0} onGesture={onGesture} color={who === 'hana' && (prefs.hachiColor ?? 'auto') === 'auto' ? '#FF2E93' : undefined} accessory={who === 'hana' ? 'bow' : prefs.hachiAccessory === 'bow' || prefs.hachiAccessory === 'auto' ? 'band' : prefs.hachiAccessory} />
+          <Hachi ref={ref} size={200} animated sleepAfter={0} onGesture={onGesture} color={who === 'hana' && (prefs.hachiColor ?? 'auto') === 'auto' ? '#E4688C' : undefined} accessory={who === 'hana' ? 'bow' : prefs.hachiAccessory === 'bow' || prefs.hachiAccessory === 'auto' ? 'band' : prefs.hachiAccessory} />
         </View>
         <View style={styles.tricksHead}>
           <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: type.body }}>

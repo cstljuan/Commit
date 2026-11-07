@@ -40,11 +40,11 @@ export const themes: Record<Mode, ThemeTokens> = {
   women: {
     bg: '#FFE3F1',
     surface: '#FFF5FA',
-    primary: '#FF2E93',
+    primary: '#E4688C',
     onPrimary: '#FFFFFF',
     text: '#3A0A24',
     muted: '#8A3A63',
-    like: '#FF2E93',
+    like: '#E4688C',
     pass: '#3A0A24',
     accent: '#FFC233',
     line: '#FFC6E2',
