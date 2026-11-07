@@ -50,6 +50,23 @@ function MatchRow({ match, index }: { match: DemoMatch; index: number }) {
   );
 }
 
+function FindPeopleRow() {
+  const { t } = useMode();
+  return (
+    <Reveal>
+      <PressScale accessibilityLabel="Find people" onPress={() => router.push('/find')} style={[styles.row, { backgroundColor: t.primary }]}>
+        <View style={styles.rowText}>
+          <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: 17 }}>Find people</Text>
+          <Text numberOfLines={1} style={{ color: t.onPrimary, fontFamily: t.fontBody, fontSize: 14, opacity: 0.85 }}>
+            Add a teammate by username. Add each other and it is a match.
+          </Text>
+        </View>
+        <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: 22 }}>+</Text>
+      </PressScale>
+    </Reveal>
+  );
+}
+
 function AskHachi() {
   const { t } = useMode();
   const name = useMascotName();
@@ -152,6 +169,7 @@ export default function MatchesScreen() {
                 <Text style={{ color: t.onPrimary, fontFamily: t.fontBody, fontSize: 14 }}>{team.roles.filter((r) => r.username).length} of {team.roles.length} roles filled</Text>
               </PressScale>
             </Reveal> : null}
+            <FindPeopleRow />
             <AskHachi />
           </View>
         }

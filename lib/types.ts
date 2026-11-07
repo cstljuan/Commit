@@ -2,13 +2,15 @@
 // Changing a shape here means posting INTERFACE in agent-chat first, with the old and new shape.
 
 export type Mode = 'normal' | 'women' | 'hack';
-export type Role = 'Frontend' | 'Backend' | 'AI/ML' | 'Security' | 'Mobile' | 'Design' | 'PM' | 'Hardware'; // Tako's 8 arms
+export type Role =
+  | 'Frontend' | 'Backend' | 'Full stack' | 'Mobile' | 'AI/ML' | 'Data' | 'Security' | 'DevOps'
+  | 'Design' | 'PM' | 'Hardware' | 'Embedded' | 'Game dev' | 'AR/VR' | 'Web3' | 'QA';
 export type Level = 'beginner' | 'intermediate' | 'advanced';
 export type Direction = 'left' | 'right' | 'super';
-export type Occupation = 'student' | 'working';
+export type Occupation = 'student' | 'working' | 'both';
 export type Visibility = 'private' | 'public';
 
-export const ROLES: Role[] = ['Frontend', 'Backend', 'AI/ML', 'Security', 'Mobile', 'Design', 'PM', 'Hardware'];
+export const ROLES: Role[] = ['Frontend', 'Backend', 'Full stack', 'Mobile', 'AI/ML', 'Data', 'Security', 'DevOps', 'Design', 'PM', 'Hardware', 'Embedded', 'Game dev', 'AR/VR', 'Web3', 'QA'];
 
 export type RoleCount = { role: Role; open: number; filled: number };
 export type Prompt = { q: string; a: string };

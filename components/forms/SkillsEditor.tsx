@@ -8,21 +8,30 @@ import { radius, space, type } from '@/lib/tokens';
 
 export const SUGGESTED_SKILLS = [
   'TypeScript', 'JavaScript', 'Python', 'Swift', 'Kotlin', 'Java', 'C++', 'Rust', 'Go',
-  'React', 'React Native', 'Node', 'SQL', 'Supabase', 'Firebase', 'AWS', 'PyTorch', 'Figma', 'Unity', 'Arduino',
+  'React', 'React Native', 'Next.js', 'Vue', 'Node', 'SQL', 'Supabase', 'Firebase', 'AWS', 'Docker',
+  'PyTorch', 'TensorFlow', 'Figma', 'Unity', 'Arduino', 'Flutter', 'Tailwind', 'GraphQL', 'C#', 'Solidity',
 ];
 export const MAX_SKILLS = 15;
 const MAX_LEN = 24;
 
-type Props = { value: string[]; onChange: (skills: string[]) => void };
+type Props = {
+  value: string[];
+  onChange: (skills: string[]) => void;
+  /** Optional: let the screen see a typed skill that was not added yet, so Continue can add it. */
+  draft?: string;
+  onDraftChange?: (draft: string) => void;
+};
 
 /**
  * Add and remove skills. Your skills sit on top, each with a remove button.
  * Below: suggestions to tap, plus a field to add anything that is not listed.
  * Used by onboarding and by the Edit skills screen reached from Profile.
  */
-export function SkillsEditor({ value, onChange }: Props) {
+export function SkillsEditor({ value, onChange, draft: outerDraft, onDraftChange }: Props) {
   const { t } = useMode();
-  const [draft, setDraft] = useState('');
+  const [innerDraft, setInnerDraft] = useState('');
+  const draft = outerDraft ?? innerDraft;
+  const setDraft = (v: string) => (onDraftChange ? onDraftChange(v) : setInnerDraft(v));
   const [error, setError] = useState<string | null>(null);
   const full = value.length >= MAX_SKILLS;
   const has = (s: string) => value.some((v) => v.toLowerCase() === s.toLowerCase());

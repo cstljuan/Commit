@@ -8,7 +8,8 @@
 const URL_BASE = process.env.EXPO_PUBLIC_LLM_URL?.replace(/\/$/, '') || undefined;
 const MODEL = process.env.EXPO_PUBLIC_LLM_MODEL || 'local';
 const KEY = process.env.EXPO_PUBLIC_LLM_KEY;
-const TIMEOUT_MS = 12000;
+// A teammate who takes longer than this to answer feels broken, so fall back to a built-in reply.
+const TIMEOUT_MS = 5000;
 const RETRY_AFTER_MS = 60000;
 
 export type LlmMessage = { role: 'system' | 'user' | 'assistant'; content: string };

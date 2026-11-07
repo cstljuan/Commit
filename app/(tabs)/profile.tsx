@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
-import { Critter } from '@/components/critters/Critter';
+import { ProfileCreature, critterChoice } from '@/components/ui/Avatar';
 import { critterFor } from '@/components/critters/identity';
 import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
@@ -34,11 +34,11 @@ export default function ProfileScreen() {
     <ScrollView style={{ backgroundColor: t.bg }} contentContainerStyle={[styles.content, { paddingTop: top + 12, paddingBottom: inset + 24 }]}>
       <Reveal style={styles.head}>
         <PressScale accessibilityLabel="Your creature" onPress={() => router.push('/creatures')}>
-          <Critter seed={seed} size={84} animated />
+          <ProfileCreature url={me?.avatarUrl} seed={seed} size={84} animated />
         </PressScale>
         <View style={styles.headText}>
           <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 28 }}>@{seed}</Text>
-          <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 15 }}>{critterFor(seed).name}. {me?.role ?? 'Frontend'}, {me?.occupation ?? 'student'}.</Text>
+          <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 15 }}>{critterChoice(me?.avatarUrl) ? 'Your creature' : critterFor(seed).name}. {me?.role ?? 'Frontend'}, {me?.occupation === 'both' ? 'studying and working' : (me?.occupation ?? 'student')}.</Text>
           {me?.bio ? <Text style={{ color: t.text, fontFamily: t.fontBody, fontSize: 15 }}>{me.bio}</Text> : null}
           <PressScale accessibilityLabel="Edit profile" onPress={() => router.push('/onboarding/edit')}>
             <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 14, marginTop: 4 }}>Edit profile</Text>

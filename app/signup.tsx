@@ -4,13 +4,13 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput,
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Tako } from '@/components/Tako/Tako';
-import { EMAIL_RE, MIN_PASSWORD, USERNAME_RE, authStyles as styles, routeAfterSignIn } from '@/components/forms/authFlow';
+import { EMAIL_RE, MIN_PASSWORD, authStyles as styles, routeAfterSignIn } from '@/components/forms/authFlow';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
 import { signUpWithPassword } from '@/lib/api';
 import { useMode } from '@/lib/theme';
 
-type Field = 'username' | 'email' | 'password' | 'confirm';
+type Field = 'email' | 'password' | 'confirm';
 
 export default function SignUpScreen() {
   const { t } = useMode();
@@ -19,7 +19,6 @@ export default function SignUpScreen() {
   const passwordRef = useRef<ComponentRef<typeof TextInput>>(null);
   const confirmRef = useRef<ComponentRef<typeof TextInput>>(null);
 
-  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -33,10 +32,8 @@ export default function SignUpScreen() {
   };
 
   async function create() {
-    const u = username.trim();
     const e = email.trim().toLowerCase();
     const next: Partial<Record<Field, string>> = {};
-    if (!USERNAME_RE.test(u)) next.username = '3 to 20 letters, numbers or underscores.';
     if (!EMAIL_RE.test(e)) next.email = 'Enter a full email, like you@email.com';
     if (password.length < MIN_PASSWORD) next.password = `At least ${MIN_PASSWORD} characters.`;
     if (!next.password && confirm !== password) next.confirm = 'The passwords do not match.';
@@ -48,7 +45,7 @@ export default function SignUpScreen() {
     try {
       const { needsConfirmation } = await signUpWithPassword(e, password);
       if (needsConfirmation) setFormError('Account made. Confirm it from your email, then sign in.');
-      else await routeAfterSignIn(router, u);
+      else await routeAfterSignIn(router);
     } catch (err) {
       const msg = String((err as Error)?.message ?? '').toLowerCase();
       setFormError(msg.includes('registered') || msg.includes('exists') ? 'That email already has an account. Sign in instead.' : 'Could not create the account. Try again.');
@@ -68,25 +65,9 @@ export default function SignUpScreen() {
             <View style={styles.hero}>
               <Tako state="idle" size={64} />
               <Text style={[styles.title, { color: t.text, fontFamily: t.fontDisplay }]}>Create your account</Text>
+              <Text style={[styles.sub, { color: t.muted, fontFamily: t.fontBody }]}>You pick your username next.</Text>
             </View>
 
-            <TextField
-              label="Username"
-              placeholder="octo_dev"
-              value={username}
-              onChangeText={(v) => {
-                setUsername(v);
-                clear('username');
-              }}
-              error={errors.username}
-              autoCapitalize="none"
-              autoCorrect={false}
-              maxLength={20}
-              textContentType="username"
-              returnKeyType="next"
-              onSubmitEditing={() => emailRef.current?.focus()}
-              editable={!busy}
-            />
             <TextField
               ref={emailRef}
               label="Email"

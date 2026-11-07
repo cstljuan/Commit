@@ -214,14 +214,16 @@ export default function ChatScreen() {
     setSource(reply.source);
     for (let i = 0; i < reply.texts.length; i++) {
       const text = reply.texts[i];
-      const pause = Math.min(1700, 450 + text.length * 16) - (i === 0 ? Date.now() - started : 0);
+      // Typing shows for at least a second and at most about 2.6 s, like a person, never instant.
+      const typingFor = Math.max(1100, Math.min(2600, 700 + text.length * 22));
+      const pause = typingFor - (i === 0 ? Date.now() - started : 0);
       if (pause > 0) await wait(pause);
       if (!alive.current || mine !== turn.current) return;
       const isLast = i === reply.texts.length - 1;
       sfx('msg_in');
       push({ mine: false, body: text, action: isLast ? reply.action : undefined });
       if (isLast) setTyping(false);
-      else await wait(250);
+      else await wait(700);
     }
     if (isHachi) hachi.play('happy');
   };

@@ -717,3 +717,65 @@ export async function leaveTeam(projectId: string): Promise<void> {
   const { error } = await supabase.rpc('leave_team', { p_project: projectId });
   fail(error);
 }
+
+// ---------- find people by username ----------
+
+export type FoundPerson = { id: string; username: string; role: string | null; level: string | null; avatarUrl: string | null; score: number };
+export type SmallProject = { id: string; title: string; pitch: string | null };
+
+/** Usernames that contain the query. Women-only profiles stay hidden by RLS for everyone else. */
+export async function searchPeople(query: string): Promise<FoundPerson[]> {
+  const q = query.trim().replace(/[%_,()]/g, '');
+  if (q.length < 2) return [];
+  const me = await uid();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, username, primary_role, level, avatar_url, reliability_score')
+    .ilike('username', `%${q}%`)
+    .neq('id', me)
+    .limit(20);
+  fail(error);
+  return (data ?? []).map((r) => ({
+    id: r.id as string,
+    username: (r.username as string) ?? 'builder',
+    role: (r.primary_role as string) ?? null,
+    level: (r.level as string) ?? null,
+    avatarUrl: (r.avatar_url as string) ?? null,
+    score: (r.reliability_score as number) ?? 70,
+  }));
+}
+
+/** Someone's own projects, not hack shells, newest first. */
+export async function getProjectsOf(userId: string): Promise<SmallProject[]> {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('id, title, short_pitch')
+    .eq('owner_id', userId)
+    .or('type.is.null,type.neq.hackathon')
+    .order('created_at', { ascending: false })
+    .limit(10);
+  fail(error);
+  return (data ?? []).map((r) => ({ id: r.id as string, title: (r.title as string) ?? 'Untitled', pitch: (r.short_pitch as string) ?? null }));
+}
+
+export async function getMyOwnProjects(): Promise<SmallProject[]> {
+  return getProjectsOf(await uid());
+}
+
+/** "I want in": a right swipe on their project. A match when they already invited you. */
+export async function askToJoin(projectId: string, role?: string | null): Promise<{ matched: boolean; matchId?: string }> {
+  const { data, error } = await supabase.rpc('record_swipe', {
+    p_target_id: projectId, p_target_type: 'project', p_project_id: projectId, p_role: role ?? null, p_direction: 'right',
+  });
+  fail(error);
+  return data as { matched: boolean; matchId?: string };
+}
+
+/** "Join my team": a right swipe on a person for one of your projects. A match when they already asked in. */
+export async function inviteToProject(personId: string, projectId: string): Promise<{ matched: boolean; matchId?: string }> {
+  const { data, error } = await supabase.rpc('record_swipe', {
+    p_target_id: personId, p_target_type: 'person', p_project_id: projectId, p_role: null, p_direction: 'right',
+  });
+  fail(error);
+  return data as { matched: boolean; matchId?: string };
+}
