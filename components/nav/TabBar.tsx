@@ -18,6 +18,8 @@ const ICONS: Record<string, string> = {
   profile: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
 };
 const SPRING = { damping: 17, stiffness: 240 };
+// The gap around the highlight, the same on every side, so it stays inside the bar's round ends.
+const INSET = 5;
 
 /** The bar floats over the screen, so tab screens pad their bottom by this much. */
 export const useTabInset = () => {
@@ -31,7 +33,7 @@ export function TabBar({ state, descriptors, navigateToTab }: BottomTabBarProps)
   const { bottom } = useSafeAreaInsets();
   const [width, setWidth] = useState(0);
   const count = state.routes.length;
-  const slot = width / count;
+  const slot = (width - INSET * 2) / count;
   const x = useSharedValue(0);
 
   useEffect(() => {
@@ -77,11 +79,12 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     height: 56,
+    paddingHorizontal: INSET,
     borderRadius: radius.full,
     shadowOpacity: 0.16,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 6 },
   },
-  pill: { position: 'absolute', top: 5, bottom: 5, left: 0, borderRadius: radius.full, transform: [{ scaleX: 0.96 }] },
+  pill: { position: 'absolute', top: INSET, bottom: INSET, left: INSET, borderRadius: radius.full },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 1 },
 });
