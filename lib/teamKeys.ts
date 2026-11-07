@@ -53,11 +53,27 @@ export async function shareTeamKey(projectId: string, memberId: string): Promise
   // A retry must preserve the existing wrapped key.
   if (error && error.code !== '23505') throw error;
 }
+export type IdeaRow = { idea_public: string | null; idea_cipher: string | null; idea_nonce: string | null };
+
+/**
+ * The stored idea for one project. Prefers the members-only `project_idea` function, so the
+ * table can stop showing ciphertext to everyone; falls back to the table until that ships.
+ */
+export async function ideaRow(projectId: string): Promise<IdeaRow | null> {
+  const rpc = await getCyberClient().rpc('project_idea', { p: projectId });
+  if (!rpc.error) return ((rpc.data ?? []) as IdeaRow[])[0] ?? null;
+  if (rpc.error.code !== 'PGRST202') throw rpc.error;
+  const { data, error } = await getCyberClient().from('projects').select('visibility,idea_public,idea_cipher,idea_nonce').eq('id', projectId).maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return { idea_public: data.visibility === 'public' ? data.idea_public ?? '' : null, idea_cipher: data.idea_cipher, idea_nonce: data.idea_nonce };
+}
+
 export async function readIdea(projectId: string): Promise<string> {
   const userId = await cyberUser();
-  const { data, error } = await getCyberClient().from('projects').select('visibility,idea_public,idea_cipher,idea_nonce').eq('id', projectId).single();
-  if (error) throw error;
-  if (data.visibility === 'public') return data.idea_public ?? '';
-  if (!data.idea_cipher || !data.idea_nonce) throw new Error('No encrypted idea is available');
-  return decryptForTeam(data.idea_cipher, data.idea_nonce, await ownKey(projectId, userId));
+  const row = await ideaRow(projectId);
+  if (!row) throw new Error('This idea is not available');
+  if (row.idea_public !== null && !row.idea_cipher) return row.idea_public;
+  if (!row.idea_cipher || !row.idea_nonce) throw new Error('No encrypted idea is available');
+  return decryptForTeam(row.idea_cipher, row.idea_nonce, await ownKey(projectId, userId));
 }

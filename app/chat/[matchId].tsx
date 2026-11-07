@@ -30,7 +30,7 @@ import { llmAvailable } from '@/lib/llm';
 import { useMode } from '@/lib/theme';
 
 /** `raw` is exactly what the database holds for this message, shown by the Server view switch. */
-type ChatMessage = DemoMessage & { raw?: string; failed?: boolean };
+type ChatMessage = DemoMessage & { raw?: string; failed?: boolean; plain?: boolean };
 
 function Lock({ open, color }: { open: boolean; color: string }) {
   return (
@@ -50,6 +50,10 @@ const securityLine = (security: ChatSecurity | null, username: string) => {
       return `Not encrypted. @${username} has no keys yet, so the server can read this.`;
     case 'no-device-key':
       return 'Not encrypted. This phone has no keys, so the server can read this. Tap to set up.';
+    case 'lost-device-key':
+      return 'This phone lost its keys, so sending is paused. Set up keys to keep this chat encrypted.';
+    case 'error':
+      return 'Could not check keys, so sending is paused. Tap to try again.';
     default:
       return security.verified ? 'End-to-end encrypted. You checked the keys.' : 'End-to-end encrypted. Tap to compare keys.';
   }
@@ -135,7 +139,7 @@ export default function ChatScreen() {
     });
     const toChat = async (m: { id: string; mine: boolean; body: string }): Promise<ChatMessage> => {
       const decoded = await decodeMessage(m.body, m.mine, matchId, await securityReady.current);
-      return { id: m.id, mine: m.mine, body: decoded.body, raw: m.body, failed: decoded.failed };
+      return { id: m.id, mine: m.mine, body: decoded.body, raw: m.body, failed: decoded.failed, plain: decoded.plain };
     };
     if (latest.current.length === 0) {
       getMessages(matchId)
@@ -171,10 +175,22 @@ export default function ChatScreen() {
       if (!live || !match.username) return;
       const next = chatSecurity(match.username).catch(() => null);
       securityReady.current = next;
-      next.then((value) => {
-        if (alive.current) setSecurity(value);
+      next.then(async (value) => {
+        if (!alive.current) return;
+        setSecurity(value);
+        // A newly trusted key can open messages that were hidden before.
+        const reopened = await Promise.all(
+          latest.current.map(async (m) => {
+            if (!m.failed || !m.raw) return m;
+            const decoded = await decodeMessage(m.raw, m.mine, chatId, value);
+            return { ...m, body: decoded.body, failed: decoded.failed };
+          }),
+        );
+        if (!alive.current) return;
+        latest.current = reopened;
+        setMessages(reopened);
       });
-    }, [live, match.username]),
+    }, [chatId, live, match.username]),
   );
 
   const push = (message: Omit<DemoMessage, 'id'>) => {
@@ -221,7 +237,8 @@ export default function ChatScreen() {
             router.push(`/security/compare/${match.username}`);
             return;
           }
-          if (!current) throw new Error('Keys are not ready');
+          // Plain text only when the chat says so out loud. A failed or missing check sends nothing.
+          if (!current || (!current.sealed && !current.plainAllowed)) throw new Error('Keys are not ready');
           await sendMessage(chatId, current.sealed ? await sealMessage(text, chatId, current) : text);
         })
         .catch(() => {
@@ -262,7 +279,7 @@ export default function ChatScreen() {
             <PressScale
               accessibilityLabel={securityLine(security, match.username)}
               disabled={!security || !match.username}
-              onPress={() => router.push(security?.state === 'no-device-key' ? '/onboarding/keys' : `/security/compare/${match.username}`)}
+              onPress={() => router.push(security?.state === 'no-device-key' || security?.state === 'lost-device-key' ? '/onboarding/keys' : `/security/compare/${match.username}`)}
               style={styles.secureLine}>
               <Lock open={!security?.sealed} color={security?.state === 'changed' ? '#2A1408' : security?.sealed ? t.like : t.muted} />
               <Text style={{ flex: 1, color: security?.state === 'changed' ? '#2A1408' : t.text, fontFamily: t.fontBold, fontSize: 12 }}>
@@ -311,9 +328,16 @@ export default function ChatScreen() {
             {serverView && item.raw ? (
               <Text style={{ color: item.mine ? t.onPrimary : t.text, fontFamily: LAB.mono, fontSize: 11, lineHeight: 15 }}>{item.raw}</Text>
             ) : (
-              <Text style={{ color: item.mine ? t.onPrimary : t.text, fontFamily: t.fontBody, fontSize: 16, lineHeight: 22, opacity: item.failed ? 0.65 : 1 }}>
-                {item.body}
-              </Text>
+              <>
+                {item.plain ? (
+                  <Text style={{ color: item.mine ? t.onPrimary : t.muted, fontFamily: t.fontBold, fontSize: 11, marginBottom: 2 }}>
+                    Not encrypted. Could have come from anyone.
+                  </Text>
+                ) : null}
+                <Text style={{ color: item.mine ? t.onPrimary : t.text, fontFamily: t.fontBody, fontSize: 16, lineHeight: 22, opacity: item.failed || item.plain ? 0.65 : 1 }}>
+                  {item.body}
+                </Text>
+              </>
             )}
             {item.action ? (
               <PressScale

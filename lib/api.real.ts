@@ -436,10 +436,10 @@ function subscribe<T>(name: string, table: string, filter: string | undefined, o
 }
 
 export function subscribeMessages(matchId: string, cb: (m: ChatMessage) => void): () => void {
-  let me = '';
-  uid().then((id) => (me = id)).catch(() => {});
+  // Wait for my id first, so my own messages are never treated as theirs.
+  const me = uid();
   return subscribe<MessageRow>('messages', 'match_messages', `match_id=eq.${matchId}`, (row) => {
-    toMessage(row, me).then(cb).catch(() => {});
+    me.then((id) => toMessage(row, id)).then(cb).catch(() => {});
   });
 }
 

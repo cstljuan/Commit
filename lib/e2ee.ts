@@ -1,88 +1,116 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { getPublicKeys, openFromPeer, sealForPeer, verifyContent } from './crypto';
+import { getPublicKeys, hasKeys, openFromPeer, sealForPeer, verifyContent } from './crypto';
 import { checkPin, isSealed, type PinState } from './e2eeCore';
 import { supabase } from './supabase';
-import { getDeviceKeyState, vaultContent } from './vault';
+import { ideaRow } from './teamKeys';
+import { vaultContent } from './vault';
 
-const PIN = 'commit.e2ee.pin.';
+// Pinned by account id, not username, so renaming cannot skip the key-change pause.
+const PIN = 'commit.e2ee.pin2.';
 
-type Pin = { key: string; verified: boolean };
+/** `previous` keeps keys this person trusted before, so older messages still open after a new phone. */
+type Pin = { key: string; verified: boolean; username: string; previous: string[] };
 
-const readPin = async (username: string): Promise<Pin | null> => {
-  const raw = await AsyncStorage.getItem(PIN + username).catch(() => null);
+const readPin = async (peerId: string): Promise<Pin | null> => {
+  const raw = await AsyncStorage.getItem(PIN + peerId).catch(() => null);
   try {
-    return raw ? (JSON.parse(raw) as Pin) : null;
+    const pin = raw ? (JSON.parse(raw) as Pin) : null;
+    return pin ? { ...pin, previous: pin.previous ?? [] } : null;
   } catch {
     return null;
   }
 };
-const writePin = (username: string, pin: Pin) => AsyncStorage.setItem(PIN + username, JSON.stringify(pin)).catch(() => {});
+const writePin = (peerId: string, pin: Pin) => AsyncStorage.setItem(PIN + peerId, JSON.stringify(pin)).catch(() => {});
 
 export type ChatSecurity = {
   /** True when messages to this person are end-to-end encrypted right now. */
   sealed: boolean;
-  state: PinState | 'no-peer-key' | 'no-device-key';
+  /**
+   * True only when plain text is allowed: first contact, and one side has no keys, which the
+   * chat says out loud. Once a key is pinned, this chat never falls back to plain text.
+   */
+  plainAllowed: boolean;
+  state: PinState | 'no-peer-key' | 'no-device-key' | 'lost-device-key' | 'error';
   verified: boolean;
+  peerId: string | null;
+  username: string;
   myKey: string | null;
   /** The key the server gives us now. Not trusted if it differs from the pinned one. */
   peerKey: string | null;
-  /** The key we pinned first. Old messages keep opening with it, and a swapped key cannot read or forge. */
-  trustedKey: string | null;
+  /** Keys we trust for this person, newest first. Messages only open with these. */
+  trustedKeys: string[];
 };
 
-const peerKeyOf = async (username: string): Promise<string | null> => {
-  const { data } = await supabase.from('profiles').select('box_public_key').eq('username', username).maybeSingle();
-  return (data as { box_public_key: string | null } | null)?.box_public_key ?? null;
-};
+const blocked = (username: string, state: ChatSecurity['state']): ChatSecurity => ({
+  sealed: false, plainAllowed: false, state, verified: false, peerId: null, username, myKey: null, peerKey: null, trustedKeys: [],
+});
 
 /** Works out whether a chat can be encrypted, and pins the other person's key the first time. */
 export async function chatSecurity(username: string): Promise<ChatSecurity> {
-  const device = await getDeviceKeyState().catch(() => 'new' as const);
-  const myKey = device === 'ready' ? (await getPublicKeys()).boxPublicKey : null;
-  const peerKey = await peerKeyOf(username);
-  const pin = await readPin(username);
-  const state = checkPin(pin?.key ?? null, peerKey);
+  try {
+    // My key comes from this phone only. The server never decides whether I encrypt.
+    const myKey = (await hasKeys()) ? (await getPublicKeys()).boxPublicKey : null;
+    const { data, error } = await supabase.from('profiles').select('id, box_public_key').eq('username', username).maybeSingle();
+    if (error) throw error;
+    const peer = data as { id: string; box_public_key: string | null } | null;
+    if (!peer) return blocked(username, 'error');
+    const peerKey = peer.box_public_key;
+    const pin = await readPin(peer.id);
+    const trustedKeys = pin ? [pin.key, ...pin.previous] : peerKey ? [peerKey] : [];
+    const base = { peerId: peer.id, username, myKey, peerKey, trustedKeys, verified: !!pin?.verified };
+    const state = checkPin(pin?.key ?? null, peerKey);
 
-  // A key that vanished or changed is treated as an attack until a person checks it.
-  const trustedKey = pin?.key ?? null;
-  if (state === 'changed') return { sealed: false, state, verified: false, myKey, peerKey, trustedKey };
-  if (!myKey) return { sealed: false, state: 'no-device-key', verified: !!pin?.verified, myKey, peerKey, trustedKey };
-  if (!peerKey) return { sealed: false, state: 'no-peer-key', verified: false, myKey, peerKey, trustedKey };
-  if (state === 'new') await writePin(username, { key: peerKey, verified: false });
-  return { sealed: true, state, verified: !!pin?.verified, myKey, peerKey, trustedKey: peerKey };
+    // A key that vanished or changed is treated as an attack until a person checks it.
+    if (state === 'changed') return { ...base, sealed: false, plainAllowed: false, state, verified: false };
+    if (!myKey) return { ...base, sealed: false, plainAllowed: !pin, state: pin ? 'lost-device-key' : 'no-device-key' };
+    if (!peerKey) return { ...base, sealed: false, plainAllowed: true, state: 'no-peer-key' };
+    if (state === 'new') await writePin(peer.id, { key: peerKey, verified: false, username, previous: [] });
+    return { ...base, sealed: true, plainAllowed: false, state };
+  } catch {
+    // Could not check, so nothing is sent until it can.
+    return blocked(username, 'error');
+  }
 }
 
-/** The person compared numbers and they match. */
-export const markVerified = (username: string, key: string) => writePin(username, { key, verified: true });
+/** The person compared numbers in person and they match. An older trusted key stays readable. */
+export async function markVerified(security: ChatSecurity) {
+  if (!security.peerId || !security.peerKey) return;
+  const pin = await readPin(security.peerId);
+  const previous = pin && pin.key !== security.peerKey ? [pin.key, ...pin.previous] : pin?.previous ?? [];
+  await writePin(security.peerId, { key: security.peerKey, verified: true, username: security.username, previous });
+}
 
 /** Everyone whose key this phone has seen, for the Security Center. */
 export async function listPins(): Promise<{ username: string; verified: boolean }[]> {
-  const names = (await AsyncStorage.getAllKeys().catch(() => [] as readonly string[])).filter((k) => k.startsWith(PIN));
-  const pins = await Promise.all(names.map(async (k) => ({ username: k.slice(PIN.length), pin: await readPin(k.slice(PIN.length)) })));
-  return pins.map((p) => ({ username: p.username, verified: !!p.pin?.verified }));
+  const ids = (await AsyncStorage.getAllKeys().catch(() => [] as readonly string[])).filter((k) => k.startsWith(PIN));
+  const pins = await Promise.all(ids.map((k) => readPin(k.slice(PIN.length))));
+  return pins.filter((p): p is Pin => !!p).map((p) => ({ username: p.username, verified: p.verified }));
 }
 
 export const sealMessage = (text: string, matchId: string, security: ChatSecurity) => sealForPeer(text, matchId, security.peerKey as string);
 
-export type Decoded = { body: string; cipher?: string; failed?: boolean };
+/** `plain` marks a message stored without encryption inside a chat that is encrypted: anyone could have written it. */
+export type Decoded = { body: string; cipher?: string; failed?: boolean; plain?: boolean };
 
-/** Turns what the server stored into what the person reads. Old plain messages pass through. */
+/** Turns what the server stored into what the person reads. */
 export async function decodeMessage(raw: string, mine: boolean, matchId: string, security: ChatSecurity | null): Promise<Decoded> {
-  if (!isSealed(raw)) return { body: raw };
-  const peer = security?.trustedKey;
-  if (!security?.myKey || !peer) return { body: 'Encrypted message. The keys are not on this phone.', cipher: raw, failed: true };
-  try {
-    return { body: await openFromPeer(raw, matchId, mine ? security.myKey : peer, peer), cipher: raw };
-  } catch {
-    return { body: 'This message could not be verified, so it is hidden.', cipher: raw, failed: true };
+  const encryptedChat = !!security && (security.sealed || security.trustedKeys.length > 0) && !security.plainAllowed;
+  if (!isSealed(raw)) return encryptedChat ? { body: raw, plain: true } : { body: raw };
+  if (!security?.myKey || !security.trustedKeys.length) return { body: 'Encrypted message. The keys are not on this phone.', cipher: raw, failed: true };
+  for (const peer of security.trustedKeys) {
+    try {
+      return { body: await openFromPeer(raw, matchId, mine ? security.myKey : peer, peer), cipher: raw };
+    } catch {
+      // Try the next key this person trusted before.
+    }
   }
+  return { body: 'This message could not be verified, so it is hidden.', cipher: raw, failed: true };
 }
 
 /** Exactly what the database holds for a private idea, for the "what the server sees" view. */
 export async function serverCopyOfIdea(projectId: string): Promise<string | null> {
-  const { data } = await supabase.from('projects').select('idea_cipher').eq('id', projectId).maybeSingle();
-  return (data as { idea_cipher: string | null } | null)?.idea_cipher ?? null;
+  return (await ideaRow(projectId))?.idea_cipher ?? null;
 }
 
 export type ProofReceipt = {

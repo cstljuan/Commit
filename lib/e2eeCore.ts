@@ -29,8 +29,10 @@ export const seal = (text: string, matchId: string, senderPublic: string, recipi
 /** Returns the text, or throws if it was tampered with, moved between chats, or reflected. */
 export const open = (body: string, matchId: string, expectedSender: string, peerPublic: string, mySecret: Uint8Array): string => {
   if (!isSealed(body)) throw new Error('Not an encrypted message');
-  const [nonce, box] = body.slice(SEALED_PREFIX.length).split('.');
-  if (!nonce || !box) throw new Error('Malformed message');
+  // Exactly two parts, so nothing can be added to a stored message without it being rejected.
+  const parts = body.slice(SEALED_PREFIX.length).split('.');
+  const [nonce, box] = parts;
+  if (parts.length !== 2 || !nonce || !box) throw new Error('Malformed message');
   const plain = nacl.box.open(decodeBase64(box), decodeBase64(nonce), decodeBase64(peerPublic), mySecret);
   if (!plain) throw new Error('Could not decrypt');
   const payload = JSON.parse(encodeUTF8(plain)) as Payload;

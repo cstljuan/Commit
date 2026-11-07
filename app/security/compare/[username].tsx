@@ -35,8 +35,8 @@ export default function CompareKeysScreen() {
   const changed = security?.state === 'changed';
 
   if (!myKey || !peerKey) {
-    const line = failed
-      ? 'Could not reach the server, so there is nothing to compare yet.'
+    const line = failed || security?.state === 'error'
+      ? 'Could not check keys right now, so there is nothing to compare yet.'
       : !security
       ? 'Loading keys'
       : !myKey
@@ -48,7 +48,7 @@ export default function CompareKeysScreen() {
       <View style={[styles.empty, { backgroundColor: LAB.bg }]}>
         <Stack.Screen options={{ title: 'Compare keys', ...header }} />
         <Text style={{ color: LAB.text, fontFamily: LAB.mono, fontSize: 15, textAlign: 'center', lineHeight: 22 }}>{line}</Text>
-        {security && !myKey ? (
+        {security && !myKey && security.state !== 'error' ? (
           <PressScale accessibilityLabel="Set up keys" onPress={() => router.push('/onboarding/keys')} style={styles.primary}>
             <Text style={styles.primaryText}>Set up keys</Text>
           </PressScale>
@@ -103,7 +103,7 @@ export default function CompareKeysScreen() {
           <PressScale
             accessibilityLabel="I checked with them, trust the new key"
             onPress={async () => {
-              await markVerified(username ?? '', peerKey);
+              await markVerified(security);
               sfx('commit');
               load();
             }}
@@ -118,7 +118,7 @@ export default function CompareKeysScreen() {
           <PressScale
             accessibilityLabel="The numbers match"
             onPress={async () => {
-              await markVerified(username ?? '', peerKey);
+              await markVerified(security);
               sfx('commit');
               load();
             }}

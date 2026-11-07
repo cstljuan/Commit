@@ -29,6 +29,6 @@ const hit = (list: string[] | undefined, value: string) => !list?.length || list
 /** Filters run on the phone for now. A group only applies to cards that have that field. */
 export const matchesFilters = (card: Card, f: DeckFilters) => {
   if (card.kind === 'person') return hit(f.Role, card.role) && hit(f.Level, card.level);
-  const roleOk = !f.Role?.length || card.roles.some((r) => r.open > 0 && f.Role!.includes(r.role));
+  const roleOk = !f.Role?.length || card.roles.some((r) => r.open > 0 && hit(f.Role, r.role));
   return roleOk && hit(f.Theme, card.theme) && hit(f.Timeframe, card.timeframe);
 };
