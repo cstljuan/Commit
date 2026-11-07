@@ -138,9 +138,11 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
   const hasBow = worn === 'bow';
   const hasBand = worn === 'band';
   const armWidth = micro ? 19 : 15;
-  const fill = color ?? t.primary;
+  const picked = prefs.hachiColor && prefs.hachiColor !== 'auto' ? prefs.hachiColor : undefined;
+  const fill = color ?? picked ?? t.primary;
   const live = animated && !motionOff;
-  const bowFill = mode === 'women' && !color ? '#FFC233' : '#FF2E93';
+  // The bow is gold on pink and pink on everything else, so it always stands out.
+  const bowFill = fill.toUpperCase() === '#FF2E93' || (mode === 'women' && !color && !picked) ? '#FFC233' : '#FF2E93';
 
   const cfg = useSharedValue<Cfg>(STATES[resolveState(state ?? 'idle')]);
   const stateClock = useSharedValue(0);

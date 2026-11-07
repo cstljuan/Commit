@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Hachi, type HachiGesture, type HachiHandle, type HachiState } from '@/components/Hachi/Hachi';
 import { Segmented } from '@/components/motion/Controls';
@@ -37,6 +37,28 @@ const ACCESSORIES: { value: Prefs['hachiAccessory']; label: string }[] = [
   { value: 'party', label: 'Party' },
 ];
 
+const COLOURS: { value: string; label: string }[] = [
+  { value: 'auto', label: 'Mode colour' },
+  { value: '#FF6B35', label: 'Takoyaki' },
+  { value: '#FF2E93', label: 'Pink' },
+  { value: '#22D3EE', label: 'Cyan' },
+  { value: '#00D2A0', label: 'Mint' },
+  { value: '#FFC233', label: 'Gold' },
+  { value: '#1579C4', label: 'Sky' },
+  { value: '#2A1408', label: 'Ink' },
+];
+
+const CHARACTERS = [
+  { value: 'hachi', label: 'Hachi' },
+  { value: 'hana', label: 'Hana' },
+] as const;
+type Character = (typeof CHARACTERS)[number]['value'];
+
+const ABOUT: Record<Character, string> = {
+  hachi: 'Hachi means eight. He runs Normal and Hack mode, wears the band with your commit hash, and guards your ideas.',
+  hana: 'Hana means flower. She runs Women mode, wears the bow and lashes, and cheers every match.',
+};
+
 function Chips({ names, onPick }: { names: HachiState[]; onPick: (n: HachiState) => void }) {
   const { t } = useMode();
   return (
@@ -52,9 +74,11 @@ function Chips({ names, onPick }: { names: HachiState[]; onPick: (n: HachiState)
 
 /** Hachi's room. Everything Hachi can do, the way Seams had its Arc preview on the settings page. */
 export default function HachiScreen() {
-  const { t } = useMode();
+  const { t, mode } = useMode();
   const name = useMascotName();
   const { prefs, setPref } = usePrefs();
+  const [who, setWho] = useState<Character>(mode === 'women' ? 'hana' : 'hachi');
+  const shown = who === 'hana' ? 'Hana' : 'Hachi';
   const ref = useRef<HachiHandle>(null);
   const [found, setFound] = useState<HachiGesture[]>([]);
   const onGesture = (g: HachiGesture) =>
@@ -65,10 +89,14 @@ export default function HachiScreen() {
       return next;
     });
   return (
-    <Screen title={`Meet ${name}`}>
+    <Screen title={`Meet ${shown}`}>
+      <Reveal style={styles.block}>
+        <Segmented options={[...CHARACTERS]} value={who} onChange={(v) => setWho(v as Character)} />
+        <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: type.small, lineHeight: 20 }}>{ABOUT[who]}</Text>
+      </Reveal>
       <Reveal style={[styles.stage, { backgroundColor: t.surface }]}>
         <View testID="hachi-stage" style={styles.stageInner}>
-          <Hachi ref={ref} size={200} animated sleepAfter={0} onGesture={onGesture} />
+          <Hachi ref={ref} size={200} animated sleepAfter={0} onGesture={onGesture} color={who === 'hana' && (prefs.hachiColor ?? 'auto') === 'auto' ? '#FF2E93' : undefined} accessory={who === 'hana' ? 'bow' : prefs.hachiAccessory === 'bow' || prefs.hachiAccessory === 'auto' ? 'band' : prefs.hachiAccessory} />
         </View>
         <View style={styles.tricksHead}>
           <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: type.body }}>
@@ -90,6 +118,25 @@ export default function HachiScreen() {
         </View>
       </Reveal>
       <Reveal index={1} style={styles.block}>
+        <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: type.small }}>Colour, everywhere in the app</Text>
+        <View style={styles.swatches}>
+          {COLOURS.map((c) => {
+            const on = (prefs.hachiColor ?? 'auto') === c.value;
+            return (
+              <Pressable
+                key={c.value}
+                accessibilityRole="button"
+                accessibilityLabel={c.label}
+                accessibilityState={{ selected: on }}
+                onPress={() => setPref('hachiColor', c.value)}
+                style={[styles.swatch, { backgroundColor: c.value === 'auto' ? t.primary : c.value, transform: [{ scale: on ? 1.18 : 1 }], opacity: on ? 1 : 0.8 }]}>
+                {c.value === 'auto' ? <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: 11 }}>auto</Text> : null}
+              </Pressable>
+            );
+          })}
+        </View>
+      </Reveal>
+      <Reveal index={1} style={styles.block}>
         <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: type.small }}>Wear</Text>
         <Segmented options={ACCESSORIES} value={prefs.hachiAccessory} onChange={(v) => setPref('hachiAccessory', v)} />
       </Reveal>
@@ -106,6 +153,8 @@ export default function HachiScreen() {
 }
 
 const styles = StyleSheet.create({
+  swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  swatch: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   stage: { alignItems: 'center', padding: space.xl, gap: space.l, borderRadius: radius.hero, marginTop: space.s },
   stageInner: { paddingVertical: space.xl, paddingHorizontal: space.huge },
   tricksHead: { alignSelf: 'stretch', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

@@ -14,9 +14,11 @@ export type Prefs = {
   notifyMatches: boolean;
   notifyCopyAlerts: boolean;
   hachiAccessory: 'auto' | 'band' | 'bow' | 'party' | 'none';
+  /** 'auto' follows the mode colour, otherwise a hex picked on the Meet screen. */
+  hachiColor: string;
 };
 
-const DEFAULTS: Prefs = { haptics: true, sound: true, calmMotion: false, startMode: 'normal', notifyMatches: true, notifyCopyAlerts: true, hachiAccessory: 'auto' };
+const DEFAULTS: Prefs = { haptics: true, sound: true, calmMotion: false, startMode: 'normal', notifyMatches: true, notifyCopyAlerts: true, hachiAccessory: 'auto', hachiColor: 'auto' };
 const KEY = 'commit.prefs';
 
 type Value = { prefs: Prefs; setPref: <K extends keyof Prefs>(key: K, value: Prefs[K]) => void };
