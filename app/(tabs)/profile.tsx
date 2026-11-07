@@ -11,6 +11,7 @@ import { Reveal } from '@/components/motion/Reveal';
 import { ScoreRing } from '@/components/motion/ScoreRing';
 import { useTabInset } from '@/components/nav/TabBar';
 import { getMyProfile } from '@/lib/api';
+import { LAB } from '@/lib/demoData';
 import { useMode } from '@/lib/theme';
 import type { Profile } from '@/lib/types';
 
@@ -76,6 +77,13 @@ export default function ProfileScreen() {
       <Reveal index={3} style={[styles.card, { backgroundColor: t.surface }]}>
         <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 13 }}>{prompt?.q ?? 'My 3 AM snack'}</Text>
         <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 24 }}>{prompt?.a ?? 'Whatever the vending machine gives me'}</Text>
+      </Reveal>
+
+      <Reveal index={4}>
+        <PressScale accessibilityLabel="Security" onPress={() => router.push('/security')} style={[styles.card, { backgroundColor: LAB.bg }]}>
+          <Text style={{ color: LAB.ok, fontFamily: LAB.monoBold, fontSize: 13 }}>Security</Text>
+          <Text style={{ color: LAB.text, fontFamily: t.fontDisplay, fontSize: 24 }}>What we can see, and what we can&apos;t</Text>
+        </PressScale>
       </Reveal>
 
       <Reveal index={4}>

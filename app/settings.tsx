@@ -116,6 +116,7 @@ export default function SettingsScreen() {
       </Section>
 
       <Section title="Proof" index={4}>
+        <LinkRow title="Security Center" note="What we can see, and what we can't" href="/security" />
         <LinkRow title="Your commits" note="Everything you have signed" href="/commits" />
         <LinkRow title="Verify the chain" href="/verify" />
         <LinkRow title="Security Lab" note="Watch us try to break it" href="/lab" />
