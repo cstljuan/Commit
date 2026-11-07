@@ -1,9 +1,12 @@
-import * as Haptics from 'expo-haptics';
+import { hachi } from '@/lib/hachi';
+import * as Haptics from '@/lib/haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
-import { Tako, type TakoState } from '@/components/Tako/Tako';
+import { Burst } from '@/components/motion/Particles';
+import { TypedLine } from '@/components/motion/TypedLine';
+import { Hachi, type HachiState } from '@/components/Hachi/Hachi';
 import { useMode } from '@/lib/theme';
 
 import type { Card, Direction, ProjectCard, Role } from './cardTypes';
@@ -16,20 +19,26 @@ type Props = {
   superPerDay?: number;
   onSwipe?: (card: Card, direction: Direction, role?: Role) => void;
   onUndo?: () => void;
-  /** Lets the screen react to the drag, for example Tako's face. */
-  onMood?: (mood: TakoState) => void;
+  /** Lets the screen react to the drag, for example Hachi's face. */
+  onMood?: (mood: HachiState) => void;
 };
 
 type Swiped = { dir: Direction };
 
 export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: Props) {
-  const { copy, t } = useMode();
+  const { copy, mode, t } = useMode();
   const [index, setIndex] = useState(0);
   const [history, setHistory] = useState<Swiped[]>([]);
   const [superLeft, setSuperLeft] = useState(superPerDay);
   const [enterFrom, setEnterFrom] = useState<Direction | null>(null);
   const [picking, setPicking] = useState<ProjectCard | null>(null);
   const [busy, setBusy] = useState(false);
+  const [fire, setFire] = useState(0);
+  const [typed, setTyped] = useState('');
+  const firstRender = useRef(true);
+  useEffect(() => {
+    firstRender.current = false;
+  }, []);
   const progress = useSharedValue(0);
   const top = useRef<DeckCardHandle>(null);
 
@@ -41,7 +50,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
 
   const onZone = useCallback(
     (zone: Zone) => {
-      onMood?.(zone === 'none' ? 'idle' : zone === 'left' ? 'alert' : 'happy');
+      onMood?.(zone === 'none' ? 'idle' : zone === 'left' ? 'guard' : 'happy');
       if (zone === 'none') {
         Haptics.selectionAsync();
       } else if (zone === 'up') {
@@ -55,7 +64,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
 
   const onBlockedSuper = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    onMood?.('alert');
+    onMood?.('blocked');
   }, [onMood]);
 
   const advance = useCallback((dir: Direction) => {
@@ -68,7 +77,14 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
   const onCommit = useCallback(
     (dir: Direction) => {
       const card = cards[index];
+      if (dir !== 'left') setFire((n) => n + 1);
+      if (mode === 'hack' && card.kind === 'person') {
+        setTyped(dir === 'left' ? `$ echo @${card.username} >> .gitignore` : `$ git add @${card.username}`);
+      }
       if (dir === 'super') setSuperLeft((s) => Math.max(0, s - 1));
+      // After advance() settles the mood, so the reaction is not cut off.
+      const reaction = index + 1 >= cards.length ? 'confused' : dir === 'left' ? 'wink' : dir === 'super' ? 'jump' : 'happy';
+      setTimeout(() => hachi.play(reaction), 40);
       const open = card.kind === 'project' ? card.roles.filter((r) => r.open > 0) : [];
       if (dir !== 'left' && card.kind === 'project' && open.length > 1) {
         // The card has flown off, so ask for the role before the swipe counts.
@@ -79,7 +95,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
       onSwipe?.(card, dir, open[0]?.role);
       advance(dir);
     },
-    [advance, cards, index, onSwipe],
+    [advance, cards, index, mode, onSwipe],
   );
 
   const undo = useCallback(() => {
@@ -108,13 +124,13 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
       <View style={styles.stack}>
         {done ? (
           <View style={styles.empty}>
-            <Tako size={96} state="idle" />
+            <Hachi size={120} state="confused" animated interactive />
             <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 16, textAlign: 'center' }}>
               {copy.emptyDeck}
             </Text>
           </View>
         ) : (
-          [...visible].reverse().map((card) => {
+          [...visible].reverse().map((card, i, list) => {
             const isTop = card.id === visible[0].id;
             return (
               <DeckCard
@@ -128,10 +144,13 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
                 onCommit={onCommit}
                 onZone={onZone}
                 onBlockedSuper={onBlockedSuper}
+                dealDelay={firstRender.current ? (list.length - 1 - i) * 90 : undefined}
               />
             );
           })
         )}
+        <Burst fire={fire} color={t.like} />
+        <TypedLine text={typed} fire={history.length} />
       </View>
       <DeckButtons
         canUndo={history.length > 0}
@@ -162,7 +181,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, width: '100%', gap: 16, paddingBottom: 12 },
+  root: { flex: 1, width: '100%', gap: 16 },
   stack: { flex: 1, marginHorizontal: 20 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 24 },
 });
