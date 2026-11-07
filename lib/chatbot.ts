@@ -46,14 +46,14 @@ type Persona = {
 const PERSONAS: Record<string, Persona> = {
   ben_codes: {
     lines: {
-      greet: [['hey', 'been looking at the study buddy idea, it\'s a good one'], ['yo, what are you working on right now']],
+      greet: [['hey', 'been looking at {project}, it\'s a good one'], ['yo, what are you working on right now']],
       thanks: [['anytime'], ['all good, that\'s what the team is for']],
       bye: [['later, I\'ll push the schema before I sleep'], ['night, text me if anything breaks']],
       commit: [['already held mine, it\'s on you now'], ['yeah I\'m in. hold the button and we\'re a team']],
       time: [['I can start tonight, probably until 3ish', 'tomorrow I\'m free after 11'], ['tonight works. give me an hour to get the tables up']],
       tech: [['Postgres on Supabase is what I would do', 'tables first, then row level security, then the API'], ['I can own the backend. you keep the screens, I\'ll hand you typed functions']],
       skills: [['mostly TypeScript and Postgres, some Go', 'I shipped a campus events API last semester'], ['backend is my thing. I\'m decent at SQL and bad at CSS']],
-      plan: [['simple split: I do notes, quizzes and attempts tables, you do upload and the quiz screen', 'we need a designer though'], ['first thing is upload notes, get a quiz back. everything else is extra']],
+      plan: [['simple split: I take the backend and hand you typed functions, you keep the screens', 'do we have a designer yet?'], ['first thing is one full flow working end to end. everything else is extra']],
       personal: [['running on cold pizza and regret', 'you?'], ['tired but fine. hackathon tired, the good kind']],
       about: [['student, backend, third year', 'my worst commit message is literally asdf'], ['CS student. I like databases, which I know is weird']],
       real: [['honest answer, I\'m a demo teammate in Commit, not a real person', 'real matches text you here once they sign up']],
@@ -61,23 +61,23 @@ const PERSONAS: Record<string, Persona> = {
       no: [['no worries, what would you do instead'], ['fair. what are you thinking']],
     },
     agenda: [
-      ['I\'ll make the tables for notes, quizzes and attempts first'],
+      ['I\'ll sketch the tables for {project} first'],
       ['do you want me on auth too or are you handling it'],
       ['we still need a designer, anyone in mind?'],
       ['hold to commit when you\'re good, I already did mine'],
     ],
-    unknown: ['not sure I follow, is that for the study buddy?', 'hm say more', 'wait what do you mean, like for the quiz part or something else?'],
+    unknown: ['not sure I follow, is that for {project}?', 'hm say more', 'wait what do you mean, like for the backend or something else?'],
   },
   priya_builds: {
     lines: {
-      greet: [['hi! tabs or spaces, be honest'], ['hey, I was just testing quiz generation on my bio notes']],
+      greet: [['hi! tabs or spaces, be honest'], ['hey, I was just reading your idea again']],
       thanks: [['of course!'], ['happy to, this one\'s fun']],
       bye: [['bye! I\'ll send eval numbers when they finish'], ['night, go sleep at some point']],
       commit: [['I want to see a working upload first, then I\'ll hold it'], ['almost. show me the demo flow and I\'m in']],
       time: [['I\'m around until 2, then again at 10'], ['tonight is good, my training run is going anyway']],
-      tech: [['for quizzes I would start with a small model and a good prompt', 'we can measure which questions people miss'], ['Python service, one endpoint, returns questions as JSON. you just call it']],
-      skills: [['Python and PyTorch mostly, and I can do Figma if I have to'], ['I did an NLP research project on question generation, so this is close']],
-      plan: [['I own the quiz generation, you own getting notes in', 'the hard part is picking what to ask again'], ['smallest version: paste text, get 5 questions, track the wrong ones']],
+      tech: [['I would start with a small model and a good prompt', 'then we measure what it gets wrong'], ['Python service, one endpoint, returns JSON. you just call it']],
+      skills: [['Python and PyTorch mostly, and I can do Figma if I have to'], ['I did an NLP research project last year, so this is close']],
+      plan: [['I own the model side, you own the app', 'the hard part is knowing when it is wrong'], ['smallest version: one input, one good output, then we measure']],
       personal: [['whatever ships, that\'s my answer to tabs or spaces'], ['good! too much caffeine, thanks for asking']],
       about: [['student, AI/ML, I like things that can be measured'], ['I\'m the person who asks for the eval numbers']],
       real: [['honest answer, I\'m a demo teammate in Commit, not a real person', 'real matches text you here once they sign up']],
@@ -85,22 +85,22 @@ const PERSONAS: Record<string, Persona> = {
       no: [['fair, why not though?'], ['ok what would you change']],
     },
     agenda: [
-      ['can you send me some example notes to test on'],
-      ['should wrong answers come back the next day or the same session?'],
-      ['I can have a first quiz endpoint in a couple of hours'],
+      ['can you send me some example data to test on'],
+      ['what does a good result look like to you?'],
+      ['I can have a first endpoint in a couple of hours'],
     ],
-    unknown: ['wait, explain that like I haven\'t slept', 'hm tell me more', 'is that for the quiz side or the app side?'],
+    unknown: ['wait, explain that like I haven\'t slept', 'hm tell me more', 'is that for the model side or the app side?'],
   },
   dev_ana: {
     lines: {
       greet: [['hey, did you see the screens I sent'], ['hi! I\'m moving things around in Figma, what\'s up']],
       thanks: [['anytime!'], ['of course']],
       bye: [['bye, I\'ll drop the next round in the morning'], ['talk soon']],
-      commit: [['we\'re both in on Rent splitter, it\'s official'], ['already committed, this one\'s happening']],
+      commit: [['we\'re both in on {project}, it\'s official'], ['already committed, this one\'s happening']],
       time: [['evenings work best since I work during the day'], ['after 6 I\'m all yours']],
-      tech: [['I can hand off in Figma or just write the React myself'], ['I care most about the split screen, it has to feel instant']],
+      tech: [['I can hand off in Figma or just write the React myself'], ['I care most about the first screen, it has to feel instant']],
       skills: [['design and front end, 4 years at a small studio'], ['Figma, React and a lot of motion work']],
-      plan: [['next up is the add expense flow', 'three taps max or nobody uses it'], ['I\'ll do flows, you check they\'re buildable']],
+      plan: [['next up is the main flow', 'three taps max or nobody uses it'], ['I\'ll do flows, you check they\'re buildable']],
       personal: [['tabs. fight me'], ['good, too many Figma frames open though']],
       about: [['I work as a designer, this is my side thing'], ['product designer by day, hackathon goblin by night']],
       real: [['honest answer, I\'m a demo teammate in Commit, not a real person', 'real matches text you here once they sign up']],
@@ -108,8 +108,8 @@ const PERSONAS: Record<string, Persona> = {
       no: [['ok what\'s bugging you about it'], ['fair, want a different direction?']],
     },
     agenda: [
-      ['I\'m thinking one big total on top and a list under it, thoughts?'],
-      ['should people settle up inside the app or just mark it paid'],
+      ['I\'m thinking one big number on top and a list under it, thoughts?'],
+      ['should this work before people make an account?'],
       ['I\'ll send the next screens when you\'re happy with this flow'],
     ],
     unknown: ['not sure I get it, can you show me?', 'say more?', 'is that a design thing or a build thing?'],
@@ -125,8 +125,18 @@ const pick = <T,>(chatId: string, key: string, options: T[]): T => {
   return options[n % options.length];
 };
 
+const VOICE_BY_ROLE: Partial<Record<string, string>> = { 'AI/ML': 'priya_builds', Design: 'dev_ana', Frontend: 'dev_ana' };
+
+type Peer = { role: string; project: string };
+const peers = new Map<string, Peer>();
+/** Lets a sample match made from a swipe answer in a voice that fits its role and project. */
+export const rememberMatch = (matchId: string, peer: Peer) => {
+  peers.set(matchId, peer);
+};
+export const peerOf = (matchId: string) => peers.get(matchId);
+
 const personaReply = (chatId: string, username: string, text: string): string[] => {
-  const persona = PERSONAS[username] ?? PERSONAS.ben_codes;
+  const persona = PERSONAS[username] ?? PERSONAS[VOICE_BY_ROLE[peers.get(chatId)?.role ?? ''] ?? 'ben_codes'];
   const intents = intentsOf(text);
   const intent = intents[0] ?? null;
   const asks = intents.filter((i) => i !== 'ack' && i !== 'no' && i !== 'greet');
@@ -238,10 +248,11 @@ const systemPrompt = (chatId: string, username?: string): string => {
     ].join(' ');
   }
   const p = demoPeople[username];
-  const match = demoMatches.find((m) => m.username === username);
+  const peer = peers.get(chatId);
+  const project = peer?.project ?? demoMatches.find((m) => m.username === username)?.project ?? 'the project';
   return [
-    `You are @${username}, a ${p?.level ?? ''} ${p?.role ?? ''} builder (${p?.occupation ?? 'student'}) texting a possible teammate about their project "${match?.project ?? 'the project'}".`,
-    `You know ${p?.skills.join(', ') ?? 'a few things'}.`,
+    `You are @${username}, a ${p?.level ?? ''} ${p?.role ?? peer?.role ?? ''} builder (${p?.occupation ?? 'student'}) texting a possible teammate about the project "${project}".`,
+    p ? `You know ${p.skills.join(', ')}.` : '',
     'Text like a real person: one or two short lowercase sentences, no emoji, no lists, stay on the project and move it forward with a concrete next step.',
     'If asked whether you are real, say you are a demo teammate in the Commit app, not a real person.',
   ].join(' ');
@@ -260,7 +271,9 @@ export async function getReply(chatId: string, username: string | undefined, his
     if (text) return { texts: [text], action: isHachi ? hachiTopic(last)?.action : undefined, source: 'local' };
   }
   if (isHachi) return { ...hachiReply(chatId, last), source: 'built-in' };
-  return { texts: personaReply(chatId, username ?? 'ben_codes', last), source: 'built-in' };
+  const project = peers.get(chatId)?.project ?? demoMatches.find((m) => m.username === username)?.project ?? 'the project';
+  const texts = personaReply(chatId, username ?? 'ben_codes', last).map((t) => t.replace('{project}', project));
+  return { texts, source: 'built-in' };
 }
 
 // Conversations last while the app is open, so leaving a chat and coming back keeps them.

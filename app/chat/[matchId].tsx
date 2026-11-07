@@ -18,8 +18,9 @@ import { Critter } from '@/components/critters/Critter';
 import { HoldToCommit } from '@/components/motion/HoldToCommit';
 import { PressScale } from '@/components/motion/PressScale';
 import { Hachi } from '@/components/Hachi/Hachi';
-import { getReply, getThread, HACHI_CHAT, saveThread } from '@/lib/chatbot';
-import { demoIcebreakers, demoMatches, demoThreads, HACHI_CHIPS, type DemoMessage } from '@/lib/demoData';
+import { API_IS_MOCK, commitToMatch, getMatches, getMessages, sendMessage, subscribeMessages } from '@/lib/api';
+import { getReply, getThread, HACHI_CHAT, peerOf, saveThread } from '@/lib/chatbot';
+import { demoIcebreakers, demoMatches, demoThreads, HACHI_CHIPS, type DemoMatch, type DemoMessage } from '@/lib/demoData';
 import { hachi } from '@/lib/hachi';
 import { llmAvailable } from '@/lib/llm';
 import { useMode } from '@/lib/theme';
@@ -38,19 +39,33 @@ export default function ChatScreen() {
   const { t } = useMode();
   const { bottom } = useSafeAreaInsets();
   const isHachi = matchId === HACHI_CHAT;
-  const match = demoMatches.find((m) => m.id === matchId) ?? demoMatches[0];
-  const chatId = isHachi ? HACHI_CHAT : match.id;
-  const initial = demoThreads[chatId] ?? demoThreads.m1;
+  const sample = demoMatches.find((m) => m.id === matchId);
+  const [fetched, setFetched] = useState<DemoMatch | null>(null);
+  const match: DemoMatch = sample ?? fetched ?? {
+    id: matchId ?? '',
+    username: '',
+    role: (peerOf(matchId ?? '')?.role ?? 'Backend') as DemoMatch['role'],
+    project: peerOf(matchId ?? '')?.project ?? 'your project',
+    iCommitted: false,
+    theyCommitted: false,
+    lastLine: '',
+  };
+  const chatId = isHachi ? HACHI_CHAT : (matchId ?? '');
+  // A real person on the other end: messages go through the backend and no bot answers.
+  const live = !API_IS_MOCK && !isHachi && !sample;
+  const initial = demoThreads[chatId] ?? [];
   const [messages, setMessages] = useState<DemoMessage[]>(() => getThread(chatId, initial));
   const [draft, setDraft] = useState('');
   const [typing, setTyping] = useState(false);
   const [source, setSource] = useState<'local' | 'built-in'>(llmAvailable() ? 'local' : 'built-in');
-  const [showCommit, setShowCommit] = useState(!isHachi && !match.iCommitted);
+  const [showCommit, setShowCommit] = useState(!isHachi && !!sample && !match.iCommitted);
   const [committed, setCommitted] = useState(match.iCommitted);
   const list = useRef<FlatList<DemoMessage>>(null);
   const latest = useRef(messages);
   const alive = useRef(true);
   const turn = useRef(0);
+
+  const starters = useRef(messages.length);
 
   useEffect(() => {
     alive.current = true;
@@ -58,6 +73,43 @@ export default function ChatScreen() {
       alive.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (isHachi || sample || !matchId) return;
+    getMatches()
+      .then((list) => {
+        const m = list.find((x) => x.id === matchId);
+        if (!m || !alive.current) return;
+        setFetched({
+          id: m.id,
+          username: m.otherUsername,
+          role: m.role,
+          project: peerOf(m.id)?.project ?? 'your project',
+          iCommitted: m.iCommitted,
+          theyCommitted: m.theyCommitted,
+          lastLine: '',
+        });
+        setCommitted(m.iCommitted);
+        setShowCommit(!m.iCommitted);
+      })
+      .catch(() => {});
+    if (latest.current.length === 0) {
+      getMessages(matchId)
+        .then((list) => {
+          if (!alive.current || latest.current.length) return;
+          latest.current = list.map((m) => ({ id: m.id, mine: m.mine, body: m.body }));
+          starters.current = list.length;
+          setMessages(latest.current);
+        })
+        .catch(() => {});
+    }
+    if (!live) return;
+    return subscribeMessages(matchId, (m) => {
+      if (latest.current.some((x) => x.id === m.id)) return;
+      latest.current = [...latest.current, { id: m.id, mine: m.mine, body: m.body }];
+      setMessages(latest.current);
+    });
+  }, [isHachi, live, matchId, sample]);
 
   const push = (message: Omit<DemoMessage, 'id'>) => {
     latest.current = [...latest.current, { ...message, id: `${Date.now()}-${latest.current.length}` }];
@@ -92,11 +144,20 @@ export default function ChatScreen() {
     const text = body.trim();
     if (!text) return;
     setDraft('');
+    if (live) {
+      // The message appears when the backend sends it back. Keep the words if sending fails.
+      sendMessage(chatId, text).catch(() => {
+        if (alive.current) setDraft(text);
+      });
+      return;
+    }
     push({ mine: true, body: text });
     respond();
   };
 
-  const stateLine = isHachi
+  const stateLine = live
+    ? 'Not end-to-end encrypted yet'
+    : isHachi
     ? source === 'local'
       ? 'Hachi is running on a model on our own laptop'
       : 'Hachi answers from what is built into the app'
@@ -109,7 +170,7 @@ export default function ChatScreen() {
       keyboardVerticalOffset={90}>
       <Stack.Screen
         options={{
-          title: isHachi ? 'Hachi' : `@${match.username}`,
+          title: isHachi ? 'Hachi' : match.username ? `@${match.username}` : 'Chat',
           headerRight: () => isHachi ? null : (
             <PressScale accessibilityLabel={`Open @${match.username}`} onPress={() => router.push(`/person/${match.username}`)}>
               <Critter seed={match.username} size={34} />
@@ -174,6 +235,8 @@ export default function ChatScreen() {
                   onCommit={() => {
                     setCommitted(true);
                     setTimeout(() => setShowCommit(false), 1600);
+                    if (!sample) commitToMatch(chatId).catch(() => setCommitted(false));
+                    if (live) return;
                     setTimeout(() => {
                       if (alive.current) push({ mine: false, body: `lets go, ${match.project} is official. I will start tonight` });
                     }, 1900);
@@ -184,7 +247,7 @@ export default function ChatScreen() {
           </View>
         }
       />
-      {(isHachi || messages.length <= initial.length) && !typing ? (
+      {(isHachi || messages.length <= starters.current) && !typing ? (
         <FlatList
           horizontal
           style={styles.chipRow}

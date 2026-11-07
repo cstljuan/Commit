@@ -62,7 +62,7 @@ export function Critter({ seed, size = 56, animated = false, disc = true, specie
   const [main, ...rest] = shape.body;
 
   const art = (
-    <Svg width={disc ? size * 0.82 : size} height={disc ? size * 0.82 : size} viewBox="0 0 160 160" fill="none">
+    <Svg width={disc ? size * 0.74 : size} height={disc ? size * 0.74 : size} viewBox="0 0 160 160" fill="none">
       {shape.limbs?.map((limb) => {
         const d = typeof limb === 'string' ? limb : limb.d;
         const w = typeof limb === 'string' ? LIMB : limb.w;

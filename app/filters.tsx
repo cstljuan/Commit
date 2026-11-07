@@ -6,13 +6,14 @@ import Animated, { useAnimatedStyle, useDerivedValue, withSpring } from 'react-n
 import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
 import { Screen } from '@/components/nav/Screen';
+import { getDeckFilters, setDeckFilters, type DeckFilters, type FilterGroup } from '@/lib/filters';
 import { useMode } from '@/lib/theme';
 import { radius, space, type } from '@/lib/tokens';
 
-const GROUPS = {
+const GROUPS: Record<FilterGroup, string[]> = {
   Role: ['Frontend', 'Backend', 'AI/ML', 'Security', 'Mobile', 'Design', 'PM', 'Hardware'],
   Level: ['Beginner', 'Intermediate', 'Advanced'],
-  Theme: ['Education', 'Finance', 'Health', 'Community', 'Safety', 'Games'],
+  Theme: ['AI', 'Education', 'Health', 'Climate', 'Fintech', 'Games', 'Security', 'Social good', 'Social', 'Food', 'Campus'],
   Timeframe: ['Weekend', '1 month', 'Semester', 'Ongoing'],
 };
 
@@ -29,11 +30,23 @@ function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () 
   );
 }
 
-/** Narrow the deck. Selections stay local until getDeck takes filters. */
+/** Narrows the deck, on the phone for now, until getDeck takes filters. */
 export default function FiltersScreen() {
   const { t } = useMode();
-  const [on, setOn] = useState<Record<string, boolean>>({});
+  const [on, setOn] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(Object.entries(getDeckFilters()).flatMap(([g, list]) => (list ?? []).map((item) => [`${g}:${item}`, true]))),
+  );
   const count = Object.values(on).filter(Boolean).length;
+  const apply = () => {
+    const next: DeckFilters = {};
+    for (const [key, active] of Object.entries(on)) {
+      if (!active) continue;
+      const [group, item] = key.split(':') as [FilterGroup, string];
+      (next[group] ??= []).push(item);
+    }
+    setDeckFilters(next);
+    router.back();
+  };
   return (
     <Screen title="Filters">
       {Object.entries(GROUPS).map(([group, items], i) => (
@@ -41,7 +54,7 @@ export default function FiltersScreen() {
           <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: type.small }}>{group}</Text>
           <View style={styles.chips}>
             {items.map((item) => (
-              <Chip key={item} label={item} on={!!on[item]} onPress={() => setOn((o) => ({ ...o, [item]: !o[item] }))} />
+              <Chip key={item} label={item} on={!!on[`${group}:${item}`]} onPress={() => setOn((o) => ({ ...o, [`${group}:${item}`]: !o[`${group}:${item}`] }))} />
             ))}
           </View>
         </Reveal>
@@ -51,7 +64,7 @@ export default function FiltersScreen() {
           <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: type.body }}>Clear</Text>
         </PressScale>
         <View style={styles.applyWrap}>
-          <PressScale onPress={() => router.back()} style={[styles.apply, { backgroundColor: t.primary }]}>
+          <PressScale onPress={apply} style={[styles.apply, { backgroundColor: t.primary }]}>
             <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: type.lead }}>{count ? `Apply ${count}` : 'Show everyone'}</Text>
           </PressScale>
         </View>

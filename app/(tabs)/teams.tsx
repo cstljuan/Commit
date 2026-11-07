@@ -9,7 +9,8 @@ import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
 import { useTabInset } from '@/components/nav/TabBar';
 import { Hachi } from '@/components/Hachi/Hachi';
-import { lastLineOf } from '@/lib/chatbot';
+import { getMatches, API_IS_MOCK } from '@/lib/api';
+import { lastLineOf, peerOf } from '@/lib/chatbot';
 import { demoMatches, demoTeam, type DemoMatch } from '@/lib/demoData';
 import { useMode } from '@/lib/theme';
 
@@ -72,11 +73,33 @@ export default function MatchesScreen() {
   const inset = useTabInset();
   // Coming back from a chat refreshes the last line of each row.
   const [seen, setSeen] = useState(0);
-  useFocusEffect(useCallback(() => setSeen((n) => n + 1), []));
+  const [live, setLive] = useState<DemoMatch[]>([]);
+  useFocusEffect(
+    useCallback(() => {
+      setSeen((n) => n + 1);
+      getMatches()
+        .then((list) =>
+          setLive(
+            list.map((m) => ({
+              id: m.id,
+              username: m.otherUsername,
+              role: m.role,
+              project: peerOf(m.id)?.project ?? 'your project',
+              iCommitted: m.iCommitted,
+              theyCommitted: m.theyCommitted,
+              lastLine: 'Say hi',
+            })),
+          ),
+        )
+        .catch(() => setLive([]));
+    }, []),
+  );
+  // Sample chats stay only until the real API is on.
+  const rows = API_IS_MOCK ? [...live, ...demoMatches] : live;
   return (
     <View style={[styles.root, { backgroundColor: t.bg }]}>
       <FlatList
-        data={demoMatches}
+        data={rows}
         extraData={seen}
         keyExtractor={(m) => m.id}
         contentContainerStyle={[styles.list, { paddingTop: top + 12, paddingBottom: inset }]}

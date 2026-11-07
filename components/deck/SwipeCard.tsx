@@ -36,10 +36,10 @@ function ProjectBody({ card }: { card: ProjectCard }) {
     <>
       <View style={[styles.art, { backgroundColor: t.primary + '24' }]}>
         <View style={styles.artCritter}>
-          <Critter seed={card.ownerUsername} size={128} disc={false} />
+          <Critter seed={card.ownerBoxPublicKey ?? card.ownerUsername} size={128} disc={false} />
         </View>
         <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: 13 }}>
-          {card.theme} · {card.timeframe}
+          {card.theme} · {card.timeframe[0]?.toUpperCase()}{card.timeframe.slice(1)}
         </Text>
         <View style={styles.row}>
           <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 13 }}>
@@ -69,7 +69,7 @@ function PersonBody({ card }: { card: PersonCard }) {
   return (
     <>
       <Pressable accessibilityRole="button" accessibilityLabel={`Open @${card.username}`} onPress={() => router.push(`/person/${card.username}`)} style={styles.personTop}>
-        <Critter seed={card.username} size={72} />
+        <Critter seed={card.boxPublicKey ?? card.username} size={72} />
         <View style={styles.personName}>
           <Text numberOfLines={1} style={[styles.title, { color: t.text, fontFamily: t.fontDisplay, fontSize: 26 }]}>
             @{card.username}
