@@ -107,8 +107,9 @@ export function MatchMoment({ match, onSayHi, onCommit, onDismiss }: Props) {
     transform: [{ scale: interpolate(pop.value, [0, 1], [0.6, 1]) }],
   }));
 
-  const onBg = t.onPrimary;
-  const ink = mode === 'women' ? '#FFFFFF' : mode === 'hack' ? t.bg : t.accent;
+  // Light ground with the brand color on top: never dark artwork on an orange field.
+  const onBg = t.text;
+  const ink = mode === 'hack' ? t.primary : t.accent;
 
   // A modal sits above the floating tab bar, so the whole screen is the moment.
   return (
@@ -117,12 +118,12 @@ export function MatchMoment({ match, onSayHi, onCommit, onDismiss }: Props) {
         entering={FadeIn.duration(120)}
         exiting={FadeOut.duration(160)}
         accessibilityViewIsModal
-        style={[StyleSheet.absoluteFill, styles.root, { backgroundColor: t.primary }]}>
+        style={[StyleSheet.absoluteFill, styles.root, { backgroundColor: t.bg }]}>
         <Pressable accessibilityLabel="Skip animation" style={StyleSheet.absoluteFill} onPress={settled ? onDismiss : skip} />
 
         <View pointerEvents="none" style={styles.center}>
           <Animated.View style={takoStyle}>
-            <Hachi size={104} state="success" color={onBg} animated interactive={false} sleepAfter={0} />
+            <Hachi size={104} state="success" color={t.primary} animated interactive={false} sleepAfter={0} />
           </Animated.View>
 
           <View style={styles.pair}>
@@ -147,13 +148,13 @@ export function MatchMoment({ match, onSayHi, onCommit, onDismiss }: Props) {
           <Pressable
             accessibilityRole="button"
             onPress={onSayHi}
-            style={[styles.primary, { backgroundColor: t.surface }]}>
-            <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: 18 }}>Say hi</Text>
+            style={[styles.primary, { backgroundColor: t.primary }]}>
+            <Text style={{ color: mode === 'hack' ? t.bg : '#FFFFFF', fontFamily: t.fontBold, fontSize: 18 }}>Say hi</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
             onPress={onCommit}
-            style={[styles.secondary, { backgroundColor: `${onBg}26` }]}>
+            style={[styles.secondary, { backgroundColor: `${t.primary}22` }]}>
             <Text style={{ color: onBg, fontFamily: t.fontBold, fontSize: 18 }}>Commit</Text>
           </Pressable>
           <Pressable accessibilityRole="button" hitSlop={12} onPress={onDismiss}>
