@@ -28,7 +28,7 @@ function Link({ row, last }: { row: ChainRow; last: boolean }) {
   const color = row.ok ? LAB.ok : LAB.bad;
   return (
     <Animated.View entering={FadeInDown.springify().damping(15).stiffness(190)}>
-      <Animated.View style={[styles.link, { borderColor: color, backgroundColor: LAB.card }, style]}>
+      <Animated.View style={[styles.link, { backgroundColor: `${color}26` }, style]}>
         <Text style={{ color, fontFamily: LAB.monoBold, fontSize: 20 }}>{row.ok ? '✓︎' : '✕︎'}</Text>
         <View style={{ flex: 1 }}>
           <Text style={{ color: LAB.text, fontFamily: LAB.monoBold, fontSize: 18 }}>
@@ -92,12 +92,12 @@ export default function VerifyScreen() {
           <PressScale onPress={() => {
               setShown(0);
               setTampered((v) => !v);
-            }} style={[styles.action, { borderColor: tampered ? LAB.ok : LAB.bad }]}>
+            }} style={[styles.action, { backgroundColor: `${tampered ? LAB.ok : LAB.bad}26` }]}>
             <Text style={{ color: tampered ? LAB.ok : LAB.bad, fontFamily: LAB.monoBold, fontSize: 15 }}>
               {tampered ? 'Undo the edit' : 'Simulate an edit'}
             </Text>
           </PressScale>
-          <PressScale onPress={() => setShown(0)} style={[styles.action, { borderColor: LAB.primary }]}>
+          <PressScale onPress={() => setShown(0)} style={[styles.action, { backgroundColor: `${LAB.primary}26` }]}>
             <Text style={{ color: LAB.primary, fontFamily: LAB.monoBold, fontSize: 15 }}>Run again</Text>
           </PressScale>
         </Animated.View>
@@ -109,8 +109,8 @@ export default function VerifyScreen() {
 const styles = StyleSheet.create({
   content: { padding: 20, gap: 18, paddingBottom: 40 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  link: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 18, borderWidth: 2 },
+  link: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 18 },
   connector: { width: 4, height: 18, marginLeft: 30 },
   actions: { flexDirection: 'row', gap: 10 },
-  action: { paddingVertical: 14, paddingHorizontal: 16, borderRadius: 16, borderWidth: 2 },
+  action: { paddingVertical: 14, paddingHorizontal: 16, borderRadius: 16 },
 });

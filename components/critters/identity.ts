@@ -7,16 +7,16 @@ export const SPECIES = ['jellyfish', 'crab', 'whale', 'puffer', 'shark', 'ray', 
 export type Species = (typeof SPECIES)[number];
 
 export const COLOURS = [
-  { name: 'Coral', hex: '#FF6B4A' },
-  { name: 'Amber', hex: '#E89B00' },
-  { name: 'Lime', hex: '#6DB80A' },
-  { name: 'Teal', hex: '#00A99D' },
-  { name: 'Sky', hex: '#1E9BF0' },
-  { name: 'Indigo', hex: '#4C5FD5' },
-  { name: 'Violet', hex: '#9B51E0' },
-  { name: 'Magenta', hex: '#E6399B' },
-  { name: 'Rust', hex: '#C8552B' },
-  { name: 'Forest', hex: '#2E9E5B' },
+  { name: 'Coral', hex: '#E8552F' },
+  { name: 'Amber', hex: '#C97A00' },
+  { name: 'Aonori', hex: '#4E8A1E' },
+  { name: 'Teal', hex: '#00877D' },
+  { name: 'Sky', hex: '#1579C4' },
+  { name: 'Navy', hex: '#1D3A5F' },
+  { name: 'Plum', hex: '#A23E6D' },
+  { name: 'Ginger', hex: '#D4376B' },
+  { name: 'Rust', hex: '#B84A24' },
+  { name: 'Forest', hex: '#2A8550' },
 ] as const;
 
 // FNV-1a, for an even spread. Not cryptographic, and it does not need to be.

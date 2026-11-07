@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Critter } from '@/components/critters/Critter';
+import { critterFor } from '@/components/critters/identity';
 import { HashChip } from '@/components/motion/HashChip';
 import { useMode } from '@/lib/theme';
 
@@ -15,8 +16,8 @@ const rolesText = (roles: RoleCount[]) => {
 function Reason({ text }: { text: string }) {
   const { t } = useMode();
   return (
-    <View style={[styles.pill, { backgroundColor: t.like + '2E' }]}>
-      <Text numberOfLines={1} style={{ color: t.text, fontFamily: t.fontBold, fontSize: 13 }}>
+    <View style={[styles.pill, { backgroundColor: t.accent }]}>
+      <Text numberOfLines={1} style={{ color: '#2A1408', fontFamily: t.fontBold, fontSize: 13 }}>
         {text}
       </Text>
     </View>
@@ -26,7 +27,10 @@ function Reason({ text }: { text: string }) {
 function Reliability({ score }: { score: number }) {
   const { t } = useMode();
   return (
-    <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 13 }}>Shows up {score}</Text>
+    <View accessibilityLabel={`Shows up score ${score}`} style={styles.score}>
+      <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 12 }}>shows up</Text>
+      <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 22 }}>{score}</Text>
+    </View>
   );
 }
 
@@ -34,18 +38,18 @@ function ProjectBody({ card }: { card: ProjectCard }) {
   const { t } = useMode();
   return (
     <>
-      <View style={[styles.art, { backgroundColor: t.primary + '24' }]}>
+      <View style={[styles.art, { backgroundColor: critterFor(card.ownerBoxPublicKey ?? card.ownerUsername).colour }]}>
         <View style={styles.artCritter}>
-          <Critter seed={card.ownerUsername} size={128} disc={false} />
+          <Critter seed={card.ownerBoxPublicKey ?? card.ownerUsername} size={128} disc={false} colour="#FFFFFF" />
         </View>
-        <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: 13 }}>
-          {card.theme} · {card.timeframe}
+        <Text style={{ color: '#FFFFFF', fontFamily: t.fontBold, fontSize: 14 }}>
+          {card.theme} · {card.timeframe[0]?.toUpperCase()}{card.timeframe.slice(1)}
         </Text>
         <View style={styles.row}>
-          <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 13 }}>
+          <Text style={{ color: '#FFFFFF', fontFamily: t.fontBody, fontSize: 13 }}>
             {card.visibility === 'private' ? 'Private idea' : 'Public idea'}
           </Text>
-          <HashChip hash={card.commitHash} />
+          <HashChip hash={card.commitHash} solid />
         </View>
       </View>
       <Text numberOfLines={2} style={[styles.title, { color: t.text, fontFamily: t.fontDisplay }]}>
@@ -69,7 +73,7 @@ function PersonBody({ card }: { card: PersonCard }) {
   return (
     <>
       <Pressable accessibilityRole="button" accessibilityLabel={`Open @${card.username}`} onPress={() => router.push(`/person/${card.username}`)} style={styles.personTop}>
-        <Critter seed={card.username} size={72} />
+        <Critter seed={card.boxPublicKey ?? card.username} size={72} />
         <View style={styles.personName}>
           <Text numberOfLines={1} style={[styles.title, { color: t.text, fontFamily: t.fontDisplay, fontSize: 26 }]}>
             @{card.username}
@@ -83,9 +87,9 @@ function PersonBody({ card }: { card: PersonCard }) {
         {card.skills.join(', ')}
       </Text>
       {prompt ? (
-        <View style={[styles.prompt, { backgroundColor: t.primary + '14' }]}>
-          <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 13 }}>{prompt.q}</Text>
-          <Text numberOfLines={2} style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 22 }}>
+        <View style={[styles.prompt, { backgroundColor: critterFor(card.boxPublicKey ?? card.username).colour }]}>
+          <Text style={{ color: '#FFFFFF', fontFamily: t.fontBold, fontSize: 13 }}>{prompt.q}</Text>
+          <Text numberOfLines={3} style={{ color: '#FFFFFF', fontFamily: t.fontDisplay, fontSize: 26 }}>
             {prompt.a}
           </Text>
         </View>
@@ -107,11 +111,12 @@ export function SwipeCard({ card }: { card: Card }) {
     <View
       style={[
         styles.card,
-        { backgroundColor: t.surface, shadowColor: t.primary },
-        card.isSuper && { borderColor: t.accent, borderWidth: 3 },
+        { backgroundColor: t.surface, shadowColor: t.line },
       ]}>
       {card.isSuper ? (
-        <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: 13 }}>{copy.stampUp}</Text>
+        <View style={[styles.superBand, { backgroundColor: t.accent }]}>
+          <Text style={{ color: '#2A1408', fontFamily: t.fontBold, fontSize: 13 }}>{'\u2605\uFE0E'} {copy.stampUp}</Text>
+        </View>
       ) : null}
       {card.kind === 'project' ? <ProjectBody card={card} /> : <PersonBody card={card} />}
     </View>
@@ -122,19 +127,22 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     borderRadius: 32,
-    padding: 24,
-    gap: 12,
-    shadowOpacity: 0.22,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 12 },
+    padding: 16,
+    paddingBottom: 18,
+    gap: 10,
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 6 },
   },
+  superBand: { marginTop: -16, marginHorizontal: -16, paddingTop: 12, paddingBottom: 10, paddingHorizontal: 20, borderTopLeftRadius: 32, borderTopRightRadius: 32 },
+  score: { flexDirection: 'row', alignItems: 'baseline', gap: 5, flexShrink: 0 },
   art: { flexGrow: 1, minHeight: 90, borderRadius: 20, padding: 16, justifyContent: 'flex-end', gap: 2 },
   artCritter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 30 },
   body: { fontSize: 16, lineHeight: 22 },
   roles: { fontSize: 16 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  pill: { flexShrink: 1, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 },
+  pill: { flexShrink: 1, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 12 },
   personTop: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   personName: { flex: 1, gap: 2 },
   prompt: { flexGrow: 1, borderRadius: 20, padding: 16, gap: 6, justifyContent: 'center' },

@@ -23,6 +23,9 @@ import type {
   TeamMember,
 } from './types';
 
+/** True while this file backs lib/api.ts. Chat bots and the sign-in gate read it. The real API exports false. */
+export const API_IS_MOCK = true;
+
 // ---------- helpers ----------
 
 const LATENCY_MS = 250;

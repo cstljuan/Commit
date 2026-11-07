@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import * as Haptics from '@/lib/haptics';
+import { GLIDE } from '@/lib/motion';
 import { useMode } from '@/lib/theme';
 import { radius, space, type } from '@/lib/tokens';
 
-const SPRING = { damping: 16, stiffness: 260 };
 const W = 54;
 const H = 32;
 const KNOB = 26;
@@ -17,7 +17,7 @@ export function Switch({ value, onChange, label }: { value: boolean; onChange: (
   const on = useSharedValue(value ? 1 : 0);
   const press = useSharedValue(0);
   useEffect(() => {
-    on.value = withSpring(value ? 1 : 0, SPRING);
+    on.value = withTiming(value ? 1 : 0, GLIDE);
   }, [on, value]);
   const track = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(on.value, [0, 1], [`${t.muted}55`, t.primary]) }));
   const knob = useAnimatedStyle(() => ({
@@ -31,10 +31,10 @@ export function Switch({ value, onChange, label }: { value: boolean; onChange: (
       accessibilityState={{ checked: value }}
       hitSlop={8}
       onPressIn={() => {
-        press.value = withSpring(1, SPRING);
+        press.value = withTiming(1, GLIDE);
       }}
       onPressOut={() => {
-        press.value = withSpring(0, SPRING);
+        press.value = withTiming(0, GLIDE);
       }}
       onPress={() => {
         Haptics.selectionAsync();
@@ -55,7 +55,7 @@ export function Segmented<T extends string>({ options, value, onChange }: { opti
   const x = useSharedValue(0);
   const index = options.findIndex((o) => o.value === value);
   useEffect(() => {
-    if (width) x.value = withSpring(index * slot, SPRING);
+    if (width) x.value = withTiming(index * slot, GLIDE);
   }, [index, slot, width, x]);
   const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   return (

@@ -139,7 +139,7 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
   const armWidth = micro ? 19 : 15;
   const fill = color ?? t.primary;
   const live = animated && !motionOff;
-  const bowFill = mode === 'women' && !color ? '#B45CFF' : '#FF2E93';
+  const bowFill = mode === 'women' && !color ? '#FFC233' : '#FF2E93';
 
   const cfg = useSharedValue<Cfg>(STATES[resolveState(state ?? 'idle')]);
   const stateClock = useSharedValue(0);
@@ -767,7 +767,7 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
   const paint = useMemo(() => (hasBand && !micro && size >= 72 ? hashPath(hash) : ''), [hasBand, hash, micro, size]);
   const head = hasBand ? HEAD_BAND : HEAD_PLAIN;
 
-  const redFill = '#E5484D';
+  const redFill = '#B3261E';
   const arm0 = useAnimatedProps(() => ({ d: out.value.arm0 }));
   const arm1 = useAnimatedProps(() => ({ d: out.value.arm1 }));
   const arm2 = useAnimatedProps(() => ({ d: out.value.arm2 }));

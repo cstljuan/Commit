@@ -20,7 +20,7 @@ function Stepper({ value, onChange, canAdd, label }: { value: number; onChange: 
       accessibilityLabel={a11y}
       disabled={disabled}
       onPress={() => onChange(next)}
-      style={[styles.step, { borderColor: t.primary }]}>
+      style={[styles.step, { backgroundColor: `${t.primary}26` }]}>
       <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: type.lead }}>{text}</Text>
     </PressScale>
   );
@@ -75,6 +75,6 @@ const styles = StyleSheet.create({
   terminal: { padding: space.l, borderRadius: radius.control, gap: space.s, marginTop: space.s },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: space.s, paddingHorizontal: space.l, borderRadius: radius.control },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: space.s },
-  step: { width: 40, height: 40, borderRadius: radius.s, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  step: { width: 40, height: 40, borderRadius: radius.s, alignItems: 'center', justifyContent: 'center' },
   cta: { height: 56, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center', marginTop: space.m },
 });

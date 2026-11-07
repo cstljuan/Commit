@@ -158,14 +158,14 @@ export const DeckCard = forwardRef<DeckCardHandle, Props>(function DeckCard(
       <Animated.View style={[StyleSheet.absoluteFill, cardStyle]}>
         <SwipeCard card={card} />
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-          <Animated.View style={[styles.stamp, styles.stampRight, { borderColor: t.like }, rightStamp]}>
-            <Text style={[stampText, { color: t.like }]}>{'\u2665\uFE0E'} {copy.stampRight}</Text>
+          <Animated.View style={[styles.stamp, styles.stampRight, { backgroundColor: t.like }, rightStamp]}>
+            <Text style={[stampText, { color: t.onPrimary }]}>{'\u2665\uFE0E'} {copy.stampRight}</Text>
           </Animated.View>
-          <Animated.View style={[styles.stamp, styles.stampLeft, { borderColor: t.pass }, leftStamp]}>
-            <Text style={[stampText, { color: t.pass }]}>{'\u2715\uFE0E'} {copy.stampLeft}</Text>
+          <Animated.View style={[styles.stamp, styles.stampLeft, { backgroundColor: t.pass }, leftStamp]}>
+            <Text style={[stampText, { color: t.bg }]}>{'\u2715\uFE0E'} {copy.stampLeft}</Text>
           </Animated.View>
-          <Animated.View style={[styles.stamp, styles.stampUp, { borderColor: t.primary }, upStamp]}>
-            <Text style={[stampText, { color: t.primary }]}>{'\u2605\uFE0E'} {copy.stampUp}</Text>
+          <Animated.View style={[styles.stamp, styles.stampUp, { backgroundColor: t.accent }, upStamp]}>
+            <Text style={[stampText, { color: '#2A1408' }]}>{'\u2605\uFE0E'} {copy.stampUp}</Text>
           </Animated.View>
         </View>
       </Animated.View>
@@ -177,11 +177,9 @@ export const DeckCard = forwardRef<DeckCardHandle, Props>(function DeckCard(
 const styles = StyleSheet.create({
   stamp: {
     position: 'absolute',
-    borderWidth: 4,
-    borderRadius: 12,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: 'transparent',
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
   },
   stampRight: { top: 28, left: 20, transform: [{ rotate: '-10deg' }] },
   stampLeft: { top: 28, right: 20, transform: [{ rotate: '10deg' }] },

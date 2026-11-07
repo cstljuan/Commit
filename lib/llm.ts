@@ -5,8 +5,9 @@
  * Set EXPO_PUBLIC_LLM_URL=http://<laptop-ip>:8080 in .env. With no URL, or if the laptop stops
  * answering, chat falls back to the replies built into lib/chatbot.ts, so a demo never hangs.
  */
-const URL_BASE = process.env.EXPO_PUBLIC_LLM_URL?.replace(/\/$/, '');
-const MODEL = process.env.EXPO_PUBLIC_LLM_MODEL ?? 'local';
+const URL_BASE = process.env.EXPO_PUBLIC_LLM_URL?.replace(/\/$/, '') || undefined;
+const MODEL = process.env.EXPO_PUBLIC_LLM_MODEL || 'local';
+const KEY = process.env.EXPO_PUBLIC_LLM_KEY;
 const TIMEOUT_MS = 12000;
 const RETRY_AFTER_MS = 60000;
 
@@ -35,7 +36,7 @@ export async function askLocalModel(messages: LlmMessage[]): Promise<string | nu
   try {
     const res = await fetch(`${URL_BASE}/v1/chat/completions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(KEY ? { Authorization: `Bearer ${KEY}` } : {}) },
       body: JSON.stringify({ model: MODEL, messages, max_tokens: 120, temperature: 0.7, stream: false }),
       signal: abort.signal,
     });

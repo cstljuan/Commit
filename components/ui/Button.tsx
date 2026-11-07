@@ -20,7 +20,7 @@ export function Button({ label, onPress, variant = 'primary', disabled, loading,
   // NativeWind drops function-style Pressable styles, so track pressed state ourselves.
   const [pressed, setPressed] = useState(false);
   const inactive = disabled || loading;
-  const bg = variant === 'primary' ? t.primary : variant === 'outline' ? t.surface : 'transparent';
+  const bg = variant === 'primary' ? t.primary : variant === 'outline' ? `${t.primary}26` : 'transparent';
   const fg = variant === 'primary' ? t.onPrimary : variant === 'outline' ? t.text : t.primary;
   const border = variant === 'outline' ? t.line : 'transparent';
 
@@ -54,7 +54,7 @@ export function Button({ label, onPress, variant = 'primary', disabled, loading,
 }
 
 const styles = StyleSheet.create({
-  base: { alignItems: 'center', justifyContent: 'center', borderRadius: 16, borderWidth: 1.5 },
+  base: { alignItems: 'center', justifyContent: 'center', borderRadius: 16 },
   solid: { minHeight: 54, paddingHorizontal: 20 },
   ghost: { minHeight: 44, paddingHorizontal: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },

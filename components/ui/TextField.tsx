@@ -29,7 +29,7 @@ export const TextField = forwardRef<ComponentRef<typeof TextInput>, Props>(funct
         }}
         style={[
           styles.input,
-          { color: t.text, backgroundColor: t.surface, borderColor: border, fontFamily: t.fontBody },
+          { color: t.text, backgroundColor: error ? `${t.pass}1F` : t.surface, fontFamily: t.fontBody },
           style,
         ]}
       />
@@ -46,5 +46,5 @@ export const TextField = forwardRef<ComponentRef<typeof TextInput>, Props>(funct
 
 const styles = StyleSheet.create({
   wrap: { gap: 8 },
-  input: { minHeight: 54, borderWidth: 1.5, borderRadius: 16, paddingHorizontal: 16, fontSize: 17 },
+  input: { minHeight: 54, borderRadius: 16, paddingHorizontal: 16, fontSize: 17 },
 });

@@ -29,7 +29,7 @@ function Row({ event, index }: { event: DemoEvent; index: number }) {
       <PressScale accessibilityLabel={event.title} onPress={() => router.push(event.href as Href)} style={[styles.row, { backgroundColor: hot ? `${tint}14` : t.surface }]}>
         <View>
           {event.kind === 'alert' ? <Hachi size={48} state="guard" animated interactive={false} /> : <Critter seed={event.seed} size={48} />}
-          <View style={[styles.badge, { backgroundColor: tint, borderColor: t.surface }]}>
+          <View style={[styles.badge, { backgroundColor: tint }]}>
             <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
               <Path d={BADGE[event.kind]} stroke={t.onPrimary} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
@@ -59,5 +59,5 @@ export default function ActivityScreen() {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.m, padding: space.m, borderRadius: radius.card },
   text: { flex: 1, gap: 2 },
-  badge: { position: 'absolute', right: -4, bottom: -4, width: 22, height: 22, borderRadius: 11, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  badge: { position: 'absolute', right: -4, bottom: -4, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
 });

@@ -28,7 +28,9 @@ export function Critter({ seed, size = 56, animated = false, disc = true, specie
   const motionOff = useMotionOff();
   const id = critterFor(seed);
   const shape = SHAPES[species ?? id.species];
-  const fill = colour ?? id.colour;
+  const base = colour ?? id.colour;
+  // On a disc the creature is white on its own solid colour. The eyes cut through to the colour.
+  const fill = disc ? '#FFFFFF' : base;
   const [blink, setBlink] = useState(false);
   const bob = useSharedValue(0);
   const live = animated && !motionOff;
@@ -62,7 +64,7 @@ export function Critter({ seed, size = 56, animated = false, disc = true, specie
   const [main, ...rest] = shape.body;
 
   const art = (
-    <Svg width={disc ? size * 0.82 : size} height={disc ? size * 0.82 : size} viewBox="0 0 160 160" fill="none">
+    <Svg width={disc ? size * 0.74 : size} height={disc ? size * 0.74 : size} viewBox="0 0 160 160" fill="none">
       {shape.limbs?.map((limb) => {
         const d = typeof limb === 'string' ? limb : limb.d;
         const w = typeof limb === 'string' ? LIMB : limb.w;
@@ -80,7 +82,7 @@ export function Critter({ seed, size = 56, animated = false, disc = true, specie
       accessibilityLabel={id.name}
       style={
         disc
-          ? { width: size, height: size, borderRadius: size / 2, backgroundColor: `${fill}24`, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }
+          ? { width: size, height: size, borderRadius: size / 2, backgroundColor: base, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }
           : undefined
       }>
       <Animated.View style={style}>{art}</Animated.View>

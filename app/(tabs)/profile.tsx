@@ -1,4 +1,5 @@
-import { Link, router } from 'expo-router';
+import { Link, router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -9,23 +10,34 @@ import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
 import { ScoreRing } from '@/components/motion/ScoreRing';
 import { useTabInset } from '@/components/nav/TabBar';
+import { getMyProfile } from '@/lib/api';
 import { useMode } from '@/lib/theme';
+import type { Profile } from '@/lib/types';
 
-const SKILLS = ['TypeScript', 'React Native', 'Figma', 'Supabase'];
 
 export default function ProfileScreen() {
   const { t } = useMode();
   const { top } = useSafeAreaInsets();
   const inset = useTabInset();
+  const [me, setMe] = useState<Profile | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      getMyProfile()
+        .then(setMe)
+        .catch(() => setMe(null));
+    }, []),
+  );
+  const seed = me?.username ?? 'you';
+  const prompt = me?.prompts[0];
   return (
     <ScrollView style={{ backgroundColor: t.bg }} contentContainerStyle={[styles.content, { paddingTop: top + 12, paddingBottom: inset }]}>
       <Reveal style={styles.head}>
         <PressScale accessibilityLabel="Your creature" onPress={() => router.push('/creatures')}>
-          <Critter seed="you" size={84} animated />
+          <Critter seed={seed} size={84} animated />
         </PressScale>
         <View style={styles.headText}>
-          <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 28 }}>@you</Text>
-          <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 15 }}>{critterFor('you').name}. Frontend, student.</Text>
+          <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 28 }}>@{seed}</Text>
+          <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 15 }}>{critterFor(seed).name}. {me?.role ?? 'Frontend'}, {me?.occupation ?? 'student'}.</Text>
         </View>
         <PressScale accessibilityLabel="Settings" onPress={() => router.push('/settings')} style={styles.gear}>
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
@@ -36,7 +48,7 @@ export default function ProfileScreen() {
 
       <Reveal index={1} style={[styles.card, styles.scoreCard, { backgroundColor: t.surface }]}>
         <PressScale accessibilityLabel="How your score works" onPress={() => router.push('/score')}>
-          <ScoreRing score={70} />
+          <ScoreRing score={me?.reliability ?? 70} />
         </PressScale>
         <View style={styles.headText}>
           <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 18 }}>Shows up score</Text>
@@ -49,7 +61,7 @@ export default function ProfileScreen() {
       <Reveal index={2} style={[styles.card, { backgroundColor: t.surface }]}>
         <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 13 }}>Skills</Text>
         <View style={styles.chips}>
-          {SKILLS.map((s) => (
+          {(me?.skills ?? []).map((s) => (
             <View key={s} style={[styles.chip, { backgroundColor: t.primary + '1A' }]}>
               <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 14 }}>{s}</Text>
             </View>
@@ -58,8 +70,8 @@ export default function ProfileScreen() {
       </Reveal>
 
       <Reveal index={3} style={[styles.card, { backgroundColor: t.surface }]}>
-        <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 13 }}>My 3 AM snack</Text>
-        <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 24 }}>Whatever the vending machine gives me</Text>
+        <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 13 }}>{prompt?.q ?? 'My 3 AM snack'}</Text>
+        <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 24 }}>{prompt?.a ?? 'Whatever the vending machine gives me'}</Text>
       </Reveal>
 
       <Reveal index={4}>

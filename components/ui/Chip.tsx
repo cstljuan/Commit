@@ -33,5 +33,5 @@ export function Chip({ label, selected, onPress }: Props) {
 }
 
 const styles = StyleSheet.create({
-  chip: { minHeight: 44, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1.5, justifyContent: 'center' },
+  chip: { minHeight: 44, paddingHorizontal: 16, borderRadius: 999, justifyContent: 'center' },
 });

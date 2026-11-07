@@ -1,6 +1,6 @@
 import * as Haptics from '@/lib/haptics';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
@@ -39,7 +39,7 @@ const TOTAL_MS = 1300;
 function Avatar({ seed, bg, fg }: { seed: string; bg: string; fg: string }) {
   return (
     <View style={[styles.avatar, { backgroundColor: bg, borderColor: fg }]}>
-      <Critter seed={seed} size={AVATAR - 12} animated disc={false} />
+      <Critter seed={seed} size={AVATAR - 28} animated disc={false} />
     </View>
   );
 }
@@ -106,55 +106,58 @@ export function MatchMoment({ match, onSayHi, onCommit, onDismiss }: Props) {
   const onBg = t.onPrimary;
   const ink = mode === 'women' ? '#FFFFFF' : mode === 'hack' ? t.bg : t.accent;
 
+  // A modal sits above the floating tab bar, so the whole screen is the moment.
   return (
-    <Animated.View
-      entering={FadeIn.duration(120)}
-      exiting={FadeOut.duration(160)}
-      accessibilityViewIsModal
-      style={[StyleSheet.absoluteFill, styles.root, { backgroundColor: t.primary }]}>
-      <Pressable accessibilityLabel="Skip animation" style={StyleSheet.absoluteFill} onPress={settled ? onDismiss : skip} />
+    <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={onDismiss}>
+      <Animated.View
+        entering={FadeIn.duration(120)}
+        exiting={FadeOut.duration(160)}
+        accessibilityViewIsModal
+        style={[StyleSheet.absoluteFill, styles.root, { backgroundColor: t.primary }]}>
+        <Pressable accessibilityLabel="Skip animation" style={StyleSheet.absoluteFill} onPress={settled ? onDismiss : skip} />
 
-      <View pointerEvents="none" style={styles.center}>
-        <Animated.View style={takoStyle}>
-          <Hachi size={104} state="success" color={onBg} animated sleepAfter={0} />
-        </Animated.View>
-
-        <View style={styles.pair}>
-          <ParticleField burst={burst} color={ink} reach={240} />
-          <Animated.View style={[styles.avatarSlot, left]}>
-            <Avatar seed="you" bg={t.surface} fg={t.primary} />
+        <View pointerEvents="none" style={styles.center}>
+          <Animated.View style={takoStyle}>
+            <Hachi size={104} state="success" color={onBg} animated interactive={false} sleepAfter={0} />
           </Animated.View>
-          <Animated.View style={[styles.avatarSlot, right]}>
-            <Avatar seed={match.otherUsername} bg={t.surface} fg={t.primary} />
+
+          <View style={styles.pair}>
+            <ParticleField burst={burst} color={ink} reach={240} />
+            <Animated.View style={[styles.avatarSlot, left]}>
+              <Avatar seed="you" bg={t.surface} fg={t.primary} />
+            </Animated.View>
+            <Animated.View style={[styles.avatarSlot, right]}>
+              <Avatar seed={match.otherUsername} bg={t.surface} fg={t.primary} />
+            </Animated.View>
+          </View>
+
+          <Animated.View style={[styles.words, titleStyle]}>
+            <Text style={{ color: onBg, fontFamily: t.fontDisplay, fontSize: 44, textAlign: 'center' }}>{copy.match}</Text>
+            <Text style={{ color: onBg, fontFamily: t.fontBold, fontSize: 17, textAlign: 'center' }}>
+              You and @{match.otherUsername}, {match.role}
+            </Text>
           </Animated.View>
         </View>
 
-        <Animated.View style={[styles.words, titleStyle]}>
-          <Text style={{ color: onBg, fontFamily: t.fontDisplay, fontSize: 44, textAlign: 'center' }}>{copy.match}</Text>
-          <Text style={{ color: onBg, fontFamily: t.fontBold, fontSize: 17, textAlign: 'center' }}>
-            You and @{match.otherUsername}, {match.role}
-          </Text>
-        </Animated.View>
-      </View>
-
-      <View style={styles.buttons}>
-        <Pressable
-          accessibilityRole="button"
-          onPress={onSayHi}
-          style={[styles.primary, { backgroundColor: t.surface }]}>
-          <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: 18 }}>Say hi</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          onPress={onCommit}
-          style={[styles.secondary, { borderColor: onBg }]}>
-          <Text style={{ color: onBg, fontFamily: t.fontBold, fontSize: 18 }}>Commit</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" hitSlop={12} onPress={onDismiss}>
-          <Text style={{ color: onBg, fontFamily: t.fontBody, fontSize: 15 }}>Keep swiping</Text>
-        </Pressable>
-      </View>
-    </Animated.View>
+        <View style={styles.buttons}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onSayHi}
+            style={[styles.primary, { backgroundColor: t.surface }]}>
+            <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: 18 }}>Say hi</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onCommit}
+            style={[styles.secondary, { backgroundColor: `${onBg}26` }]}>
+            <Text style={{ color: onBg, fontFamily: t.fontBold, fontSize: 18 }}>Commit</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" hitSlop={12} onPress={onDismiss}>
+            <Text style={{ color: onBg, fontFamily: t.fontBody, fontSize: 15 }}>Keep swiping</Text>
+          </Pressable>
+        </View>
+      </Animated.View>
+    </Modal>
   );
 }
 
@@ -167,7 +170,6 @@ const styles = StyleSheet.create({
     width: AVATAR,
     height: AVATAR,
     borderRadius: AVATAR / 2,
-    borderWidth: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -178,7 +180,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     borderRadius: 18,
-    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },

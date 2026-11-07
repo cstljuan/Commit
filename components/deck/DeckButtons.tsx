@@ -15,6 +15,7 @@ type ButtonProps = {
   icon: keyof typeof ICONS;
   label: string;
   color: string;
+  ink: string;
   size: number;
   disabled?: boolean;
   badge?: number;
@@ -22,7 +23,7 @@ type ButtonProps = {
   onPress: () => void;
 };
 
-function DeckButton({ icon, label, color, size, disabled, badge, filled, onPress }: ButtonProps) {
+function DeckButton({ icon, label, color, ink, size, disabled, badge, filled, onPress }: ButtonProps) {
   const { t } = useMode();
   const [pressed, setPressed] = useState(false);
   const glyph = size * 0.46;
@@ -42,8 +43,8 @@ function DeckButton({ icon, label, color, size, disabled, badge, filled, onPress
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: t.surface,
-          shadowColor: color,
+          backgroundColor: color,
+          shadowColor: t.line,
           opacity: disabled ? 0.35 : 1,
           transform: [{ scale: pressed ? 0.9 : 1 }],
         },
@@ -51,16 +52,16 @@ function DeckButton({ icon, label, color, size, disabled, badge, filled, onPress
       <Svg width={glyph} height={glyph} viewBox="0 0 24 24" fill="none">
         <Path
           d={ICONS[icon]}
-          stroke={color}
-          strokeWidth={2.6}
+          stroke={filled ? 'none' : ink}
+          strokeWidth={filled ? 0 : 3}
           strokeLinecap="round"
           strokeLinejoin="round"
-          fill={filled ? color : 'none'}
+          fill={filled ? ink : 'none'}
         />
       </Svg>
       {badge !== undefined ? (
-        <View style={[styles.badge, { backgroundColor: color }]}>
-          <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: 11 }}>{badge}</Text>
+        <View style={[styles.badge, { backgroundColor: t.text }]}>
+          <Text style={{ color: t.bg, fontFamily: t.fontBold, fontSize: 11 }}>{badge}</Text>
         </View>
       ) : null}
     </Pressable>
@@ -82,19 +83,20 @@ export function DeckButtons({ canUndo, superLeft, disabled, onPass, onUndo, onSu
   const { t, copy } = useMode();
   return (
     <View style={styles.row}>
-      <DeckButton icon="pass" label={copy.stampLeft} color={t.pass} size={64} disabled={disabled} onPress={onPass} />
-      <DeckButton icon="undo" label={copy.undo} color={t.muted} size={48} disabled={!canUndo} onPress={onUndo} />
+      <DeckButton icon="pass" label={copy.stampLeft} color={t.pass} ink={t.bg} size={64} disabled={disabled} onPress={onPass} />
+      <DeckButton icon="undo" label={copy.undo} color={t.surface} ink={t.muted} size={48} disabled={!canUndo} onPress={onUndo} />
       <DeckButton
         icon="super"
         label={copy.stampUp}
-        color={t.primary}
+        color={t.accent}
+        ink="#2A1408"
         size={48}
         disabled={disabled || superLeft === 0}
         badge={superLeft}
         filled
         onPress={onSuper}
       />
-      <DeckButton icon="like" label={copy.stampRight} color={t.like} size={64} disabled={disabled} filled onPress={onLike} />
+      <DeckButton icon="like" label={copy.stampRight} color={t.like} ink={t.onPrimary} size={64} disabled={disabled} filled onPress={onLike} />
     </View>
   );
 }
@@ -104,9 +106,9 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 3 },
   },
   badge: {
     position: 'absolute',

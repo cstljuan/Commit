@@ -38,5 +38,5 @@ export function TypedLine({ text, fire }: { text: string; fire: number }) {
 }
 
 const styles = StyleSheet.create({
-  line: { position: 'absolute', left: space.l, right: space.l, bottom: space.l, padding: space.m, borderRadius: radius.s, borderWidth: 2 },
+  line: { position: 'absolute', left: space.l, right: space.l, bottom: space.l, padding: space.m, borderRadius: radius.s },
 });

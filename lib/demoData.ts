@@ -10,7 +10,7 @@ export const LAB = {
   card: '#1C1C24',
   line: '#2C2C38',
   primary: '#22D3EE',
-  accent: '#E879F9',
+  accent: '#FF6B35',
   text: '#E5E7EB',
   muted: '#9CA3AF',
   ok: '#00D2A0',
