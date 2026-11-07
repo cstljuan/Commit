@@ -2,7 +2,9 @@
 // UI lanes build against this until the real Supabase functions land.
 // All data is synthetic. Avatars are null so the UI shows illustrated placeholders, never real photos.
 
+import { demoProjects } from './demoData';
 import type {
+  MyProject,
   Card,
   ChatMessage,
   CopyAlert,
@@ -529,6 +531,10 @@ export async function getTeam(projectId: string): Promise<Team> {
     ].slice(0, isHackTeam ? 4 : undefined),
     roles: roles(['Backend', 1, 1], ['Design', 1, committed.some((m) => m.role === 'Design') ? 1 : 0], ['Frontend', 1, 0]),
   });
+}
+
+export async function getMyProjects(): Promise<MyProject[]> {
+  return wait(clone(demoProjects) as MyProject[]);
 }
 
 // ---------- chat at match (plain text) ----------

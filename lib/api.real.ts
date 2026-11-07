@@ -19,6 +19,7 @@ import type {
   Interested,
   Match,
   Mode,
+  MyProject,
   PostIdeaInput,
   Profile,
   ProfileInput,
@@ -216,14 +217,14 @@ export async function getInterested(): Promise<{ count: number; cards: Intereste
 type MatchRow = {
   id: string; project_id: string; user_id: string; role: string | null;
   owner_committed: boolean; user_committed: boolean;
-  project: { owner_id: string; type: string | null } | null;
+  project: { owner_id: string; type: string | null; title: string | null } | null;
 };
 
 export async function getMatches(): Promise<Match[]> {
   const me = await uid();
   const { data, error } = await supabase
     .from('matches')
-    .select('id, project_id, user_id, role, owner_committed, user_committed, created_at, project:projects(owner_id, type)')
+    .select('id, project_id, user_id, role, owner_committed, user_committed, created_at, project:projects(owner_id, type, title)')
     .order('created_at', { ascending: false });
   fail(error);
   const rows = (data ?? []) as unknown as MatchRow[];
@@ -246,6 +247,7 @@ export async function getMatches(): Promise<Match[]> {
       role: asRole(r.role),
       otherUsername: other.username,
       otherAvatarUrl: other.avatarUrl,
+      projectTitle: r.project?.type === 'hackathon' ? undefined : r.project?.title ?? undefined,
       iCommitted: iAmUser ? r.user_committed : r.owner_committed,
       theyCommitted: iAmUser ? r.owner_committed : r.user_committed,
       isTeam: r.project?.type === 'hackathon',
@@ -291,6 +293,61 @@ export async function getTeam(projectId: string): Promise<Team> {
     }),
     roles: (roles ?? []) as RoleCount[],
   };
+}
+
+/** Projects tab: projects I own or joined. Hack shells and hidden posts are left out. */
+export async function getMyProjects(): Promise<MyProject[]> {
+  const me = await uid();
+  const [{ data: memberOf, error: e1 }, { data: owned, error: e2 }] = await Promise.all([
+    supabase.from('team_members').select('project_id').eq('user_id', me).eq('status', 'active'),
+    supabase.from('projects').select('id').eq('owner_id', me),
+  ]);
+  fail(e1);
+  fail(e2);
+  const ids = [...new Set([...(owned ?? []).map((p) => p.id), ...(memberOf ?? []).map((m) => m.project_id)])];
+  if (!ids.length) return [];
+
+  const { data: rows, error: e3 } = await supabase
+    .from('projects')
+    .select('id, owner_id, title, short_pitch, type, visibility, idea_public, hidden, created_at')
+    .in('id', ids)
+    .order('created_at', { ascending: false });
+  fail(e3);
+  const visible = (rows ?? []).filter((r) => !r.hidden && r.type !== 'hackathon');
+  if (!visible.length) return [];
+
+  const { data: members, error: e4 } = await supabase
+    .from('team_members')
+    .select('project_id, user_id, role')
+    .in('project_id', visible.map((r) => r.id))
+    .eq('status', 'active');
+  fail(e4);
+  await Promise.all([...new Set((members ?? []).map((m) => m.user_id))].map(usernameOf));
+
+  return Promise.all(
+    visible.map(async (r): Promise<MyProject> => {
+      const [{ data: counts }, { data: hash }] = await Promise.all([
+        supabase.rpc('project_role_counts', { p: r.id }),
+        supabase.rpc('project_commit_hash', { p: r.id }),
+      ]);
+      const taken = (members ?? [])
+        .filter((m) => m.project_id === r.id)
+        .map((m) => ({ role: asRole(m.role), username: usernames.get(m.user_id) ?? 'builder' }));
+      const open = ((counts ?? []) as RoleCount[]).flatMap((c) =>
+        Array.from({ length: Math.max(0, c.open) }, () => ({ role: c.role, username: null as string | null })),
+      );
+      return {
+        id: r.id,
+        title: r.title,
+        commitHash: (hash as string) ?? '',
+        idea: r.idea_public ?? r.short_pitch,
+        status: r.visibility !== 'public' ? 'private' : open.length ? 'recruiting' : 'building',
+        mine: r.owner_id === me,
+        wantIn: 0,
+        roles: [...taken, ...open],
+      };
+    }),
+  );
 }
 
 // ---------- chat at match (plain text, labelled honestly in the UI) ----------
