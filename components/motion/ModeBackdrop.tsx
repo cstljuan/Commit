@@ -8,16 +8,9 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { useMode, type Mode } from '@/lib/theme';
 import { useMotionOff } from '@/lib/prefs';
-
-const GLOW: Record<Mode, { a: string; b: string; strength: number }> = {
-  normal: { a: '#6C5CE7', b: '#00D2A0', strength: 0.14 },
-  women: { a: '#FF2E93', b: '#D9C2FF', strength: 0.5 },
-  hack: { a: '#22D3EE', b: '#E879F9', strength: 0.2 },
-};
 
 const FLOATERS: Partial<Record<Mode, string[]>> = {
   women: ['♥︎', '✦', '♡︎', '✧', '♥︎', '✦', '♡︎', '✧'],
@@ -50,29 +43,28 @@ function Floater({ glyph, i, color, width, height }: { glyph: string; i: number;
   );
 }
 
-/** The mood behind the deck: a soft glow, plus drifting glyphs in Women and Hack. */
+/** A big flat ball drifting very slowly, like takoyaki on the grill. */
+function Ball({ size, left, top, color, delay }: { size: number; left: number; top: number; color: string; delay: number }) {
+  const drift = useSharedValue(0);
+  const off = useMotionOff();
+  useEffect(() => {
+    if (off) return;
+    drift.value = withDelay(delay, withRepeat(withTiming(1, { duration: 6000, easing: Easing.inOut(Easing.sin) }), -1, true));
+  }, [delay, drift, off]);
+  const style = useAnimatedStyle(() => ({ transform: [{ translateY: drift.value * 14 }] }));
+  return <Animated.View style={[{ position: 'absolute', left, top, width: size, height: size, borderRadius: size / 2, backgroundColor: color }, style]} />;
+}
+
+/** The mood behind the deck: flat colour shapes, plus drifting glyphs in Women and Hack. */
 export function ModeBackdrop() {
   const { mode, t } = useMode();
   const { width, height } = useWindowDimensions();
   const reduced = useMotionOff();
-  const glow = GLOW[mode];
   const glyphs = useMemo(() => (reduced ? [] : (FLOATERS[mode] ?? [])), [mode, reduced]);
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <Svg width={width} height={height}>
-        <Defs>
-          <RadialGradient id="a" cx="85%" cy="12%" r="65%">
-            <Stop offset="0" stopColor={glow.a} stopOpacity={glow.strength} />
-            <Stop offset="1" stopColor={glow.a} stopOpacity={0} />
-          </RadialGradient>
-          <RadialGradient id="b" cx="5%" cy="90%" r="65%">
-            <Stop offset="0" stopColor={glow.b} stopOpacity={glow.strength} />
-            <Stop offset="1" stopColor={glow.b} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Rect width={width} height={height} fill="url(#a)" />
-        <Rect width={width} height={height} fill="url(#b)" />
-      </Svg>
+      <Ball size={width * 0.9} left={width * 0.45} top={-width * 0.35} color={t.line} delay={0} />
+      <Ball size={width * 1.1} left={-width * 0.5} top={height * 0.62} color={t.line} delay={1500} />
       {glyphs.map((g, i) => (
         <Floater key={`${mode}${i}`} glyph={g} i={i} color={t.primary} width={width} height={height} />
       ))}

@@ -21,7 +21,7 @@ export default function OracleScreen() {
         An attacker posts {demoOracle.attempts} guesses and watches what copy detection tells them.
       </Text>
       <View key={run} style={styles.stack}>
-        <View style={[styles.panel, { borderColor: LAB.bad }]}>
+        <View style={[styles.panel, { backgroundColor: `${LAB.bad}26` }]}>
           <Text style={{ color: LAB.bad, fontFamily: LAB.monoBold, fontSize: 18 }}>v1, vulnerable</Text>
           <CountUp
             to={demoOracle.v1Revealed}
@@ -35,7 +35,7 @@ export default function OracleScreen() {
           <Text style={{ color: LAB.text, fontFamily: LAB.monoBold, fontSize: 20 }}>private ideas revealed</Text>
         </View>
         {v1Done ? (
-          <Animated.View entering={FadeInDown.springify().damping(14)} style={[styles.panel, { borderColor: LAB.ok }]}>
+          <Animated.View entering={FadeInDown.springify().damping(14)} style={[styles.panel, { backgroundColor: `${LAB.ok}26` }]}>
             <Text style={{ color: LAB.ok, fontFamily: LAB.monoBold, fontSize: 18 }}>v2, fixed</Text>
             <Text style={{ color: LAB.ok, fontFamily: LAB.display, fontSize: 112, lineHeight: 120 }}>{demoOracle.v2Revealed}</Text>
             <Text style={{ color: LAB.text, fontFamily: LAB.monoBold, fontSize: 20 }}>revealed</Text>
@@ -50,7 +50,7 @@ export default function OracleScreen() {
           setV1Done(false);
           setRun((n) => n + 1);
         }}
-        style={[styles.again, { borderColor: LAB.primary }]}>
+        style={[styles.again, { backgroundColor: `${LAB.primary}26` }]}>
         <Text style={{ color: LAB.primary, fontFamily: LAB.monoBold, fontSize: 15 }}>Run again</Text>
       </PressScale>
     </ScrollView>
@@ -60,6 +60,6 @@ export default function OracleScreen() {
 const styles = StyleSheet.create({
   content: { padding: 20, gap: 16, paddingBottom: 40 },
   stack: { gap: 14 },
-  panel: { padding: 18, borderRadius: 22, borderWidth: 2, backgroundColor: LAB.card, gap: 2 },
-  again: { alignSelf: 'flex-start', paddingVertical: 14, paddingHorizontal: 16, borderRadius: 16, borderWidth: 2 },
+  panel: { padding: 18, borderRadius: 22, gap: 2 },
+  again: { alignSelf: 'flex-start', paddingVertical: 14, paddingHorizontal: 16, borderRadius: 16 },
 });

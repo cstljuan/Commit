@@ -86,7 +86,7 @@ export default function CommitsScreen() {
 
 const styles = StyleSheet.create({
   row: { position: 'absolute', left: 0, right: 0, height: ROW, justifyContent: 'center' },
-  node: { position: 'absolute', borderRadius: radius.full, borderWidth: 3 },
+  node: { position: 'absolute', borderRadius: radius.full },
   text: { marginLeft: 62, gap: space.xs },
   meta: { flexDirection: 'row', alignItems: 'center', gap: space.s },
   cta: { height: 56, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center', marginTop: space.m },

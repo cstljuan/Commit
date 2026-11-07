@@ -30,11 +30,11 @@ function RoleDots({ project }: { project: DemoProject }) {
     <View style={styles.dots}>
       {project.roles.map((r, i) =>
         r.username ? (
-          <View key={`${r.role}${i}`} style={[styles.dotWrap, { borderColor: t.surface, marginLeft: i ? -8 : 0 }]}>
+          <View key={`${r.role}${i}`} style={[styles.dotWrap, { marginLeft: i ? -6 : 0 }]}>
             <Critter seed={r.username} size={34} />
           </View>
         ) : (
-          <View key={`${r.role}${i}`} style={[styles.open, { borderColor: t.muted, marginLeft: i ? -4 : 0, backgroundColor: t.surface }]}>
+          <View key={`${r.role}${i}`} style={[styles.open, { marginLeft: i ? -6 : 0, backgroundColor: t.line }]}>
             <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 16 }}>+</Text>
           </View>
         ),
@@ -53,10 +53,10 @@ function ProjectCard({ project, index }: { project: DemoProject; index: number }
       <PressScale
         accessibilityLabel={`Open ${project.title}`}
         onPress={() => router.push(`/project/${project.id}` as Href)}
-        style={[styles.card, { backgroundColor: t.surface, shadowColor: t.primary }]}>
+        style={[styles.card, { backgroundColor: t.surface, shadowColor: t.line }]}>
         <View style={styles.cardTop}>
           <View style={[styles.status, { backgroundColor: `${tint}22` }]}>
-            <Text style={{ color: project.status === 'building' ? t.text : tint, fontFamily: t.fontBold, fontSize: 12 }}>{STATUS[project.status]}</Text>
+            <Text style={{ color: project.status === 'private' ? t.muted : t.text, fontFamily: t.fontBold, fontSize: 12 }}>{STATUS[project.status]}</Text>
           </View>
           <HashChip hash={project.commitHash} />
         </View>
@@ -80,7 +80,7 @@ function ProjectCard({ project, index }: { project: DemoProject; index: number }
             accessibilityLabel={`${project.wantIn} builders want in`}
             onPress={() => router.push('/likes')}
             style={[styles.want, { backgroundColor: `${t.primary}1F` }]}>
-            <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: type.small }}>{project.wantIn} builders want in</Text>
+            <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: type.small }}>{project.wantIn} builders want in</Text>
           </PressScale>
         ) : null}
       </PressScale>
@@ -125,14 +125,14 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: space.gutter, gap: space.m },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   newCard: { height: 56, borderRadius: radius.control, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.s },
-  card: { padding: space.l, borderRadius: radius.card, gap: space.s + 2, shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 } },
+  card: { padding: space.l, borderRadius: radius.card, gap: space.s + 2, shadowOpacity: 1, shadowRadius: 0, shadowOffset: { width: 0, height: 5 } },
   cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   status: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: radius.full },
   track: { height: 6, borderRadius: 3, overflow: 'hidden' },
   fill: { height: 6, borderRadius: 3 },
   cardBottom: { flexDirection: 'row', alignItems: 'center', gap: space.m },
   dots: { flexDirection: 'row', alignItems: 'center' },
-  dotWrap: { borderRadius: 19, borderWidth: 2 },
-  open: { width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
+  dotWrap: { borderRadius: 19 },
+  open: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   want: { alignSelf: 'flex-start', paddingVertical: 6, paddingHorizontal: 12, borderRadius: radius.full },
 });

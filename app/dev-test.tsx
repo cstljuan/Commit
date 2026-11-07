@@ -79,7 +79,7 @@ export default function DevTest() {
         </Text>
       ))}
       <Pressable onPress={() => setInk(true)}>
-        <Text style={{ fontSize: 18, fontWeight: '700', color: '#6C5CE7' }}>Preview ink animation</Text>
+        <Text style={{ fontSize: 18, fontWeight: '700', color: '#FF6B35' }}>Preview ink animation</Text>
       </Pressable>
       {ink ? (
         <InkCommit

@@ -115,19 +115,19 @@ export default function SwipeScreen() {
       <View style={styles.pills}>
         <PressScale
           onPress={() => router.push(mode === 'hack' ? '/hack/needs' : '/likes')}
-          style={[styles.interested, { backgroundColor: t.primary + '1F' }]}>
-          <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: 14 }}>
+          style={[styles.interested, { backgroundColor: t.surface }]}>
+          <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 14 }}>
             {mode === 'hack' ? 'Team needs 2 Backend, 1 Design' : `${wanting} ${wanting === 1 ? 'builder wants' : 'builders want'} in`}
           </Text>
         </PressScale>
         <PressScale
           accessibilityLabel="Filters"
           onPress={() => router.push('/filters')}
-          style={[styles.interested, { backgroundColor: t.primary + '1F' }]}>
+          style={[styles.interested, { backgroundColor: t.surface }]}>
           <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-            <Path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6" stroke={t.primary} strokeWidth={2.4} strokeLinecap="round" />
+            <Path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6" stroke={t.text} strokeWidth={2.4} strokeLinecap="round" />
           </Svg>
-          {active ? <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: 14 }}>{active}</Text> : null}
+          {active ? <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 14 }}>{active}</Text> : null}
         </PressScale>
       </View>
       {/* A new mode is a new deck, so the key resets its position. */}

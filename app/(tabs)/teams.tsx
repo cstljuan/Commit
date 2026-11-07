@@ -38,7 +38,7 @@ function MatchRow({ match, index }: { match: DemoMatch; index: number }) {
           <Text numberOfLines={1} style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 14 }}>
             {lastLineOf(match.id) ?? match.lastLine}
           </Text>
-          <Text style={{ color: yourMove ? t.primary : t.muted, fontFamily: t.fontBold, fontSize: 13 }}>
+          <Text style={{ color: yourMove ? t.text : t.muted, fontFamily: t.fontBold, fontSize: 13 }}>
             {match.role} · {status(match)}
           </Text>
         </View>
@@ -119,11 +119,11 @@ export default function MatchesScreen() {
                 <PressScale
                   accessibilityLabel="Copy alert. Someone posted a reworded version of your idea. Tap to see your proof."
                   onPress={() => router.push('/alert')}
-                  style={[styles.alert, { backgroundColor: t.pass + '1F', borderColor: t.pass }]}>
-                  <Hachi size={52} state="guard" animated interactive={false} />
+                  style={[styles.alert, { backgroundColor: t.accent }]}>
+                  <Hachi size={52} state="guard" color="#2A1408" animated interactive={false} />
                   <View style={styles.rowText}>
-                    <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 15 }}>Someone reworded your idea</Text>
-                    <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 13 }}>
+                    <Text style={{ color: '#2A1408', fontFamily: t.fontBold, fontSize: 15 }}>Someone reworded your idea</Text>
+                    <Text style={{ color: '#2A1408', fontFamily: t.fontBody, fontSize: 13 }}>
                       Only you can see this. Your commit hash proves you were first.
                     </Text>
                   </View>
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   header: { gap: 12, marginBottom: 4 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: 22 },
   rowText: { flex: 1, gap: 2 },
-  alert: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, borderWidth: 2 },
+  alert: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20 },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   bell: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   team: { padding: 18, borderRadius: 24, gap: 4 },

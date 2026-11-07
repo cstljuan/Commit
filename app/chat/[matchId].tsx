@@ -261,14 +261,14 @@ export default function ChatScreen() {
             <Animated.View entering={FadeInDown.delay(index * 70)}>
               <PressScale
                 onPress={() => send(item)}
-                style={[styles.chip, { backgroundColor: t.primary + '1F', borderColor: t.primary + '55' }]}>
+                style={[styles.chip, { backgroundColor: t.primary + '26' }]}>
                 <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 14 }}>{item}</Text>
               </PressScale>
             </Animated.View>
           )}
         />
       ) : null}
-      <View style={[styles.inputRow, { paddingBottom: bottom + 8, backgroundColor: t.surface, borderTopColor: t.line }]}>
+      <View style={[styles.inputRow, { paddingBottom: bottom + 8, backgroundColor: t.surface,  }]}>
         <TextInput
           accessibilityLabel="Message"
           value={draft}
@@ -304,8 +304,8 @@ const styles = StyleSheet.create({
   commit: { alignItems: 'center', gap: 12, padding: 18, borderRadius: 24, marginTop: 8 },
   chipRow: { flexGrow: 0 },
   chips: { paddingHorizontal: 16, paddingVertical: 8, gap: 8, alignItems: 'center' },
-  chip: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1 },
-  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingTop: 8, borderTopWidth: 1 },
+  chip: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999 },
+  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingTop: 8,  },
   input: { flex: 1, height: 44, borderRadius: 22, paddingHorizontal: 16, fontSize: 16 },
   send: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
 });

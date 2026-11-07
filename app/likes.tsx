@@ -47,7 +47,7 @@ export default function LikesScreen() {
             style={[
               styles.tile,
               { backgroundColor: t.surface },
-              item.isSuper && { borderColor: t.accent, borderWidth: 3 },
+              item.isSuper && { backgroundColor: t.accent },
             ]}>
             <View style={[styles.mystery, { backgroundColor: t.primary + '2E' }]}>
               <Text style={{ color: t.primary, fontFamily: t.fontDisplay, fontSize: 40 }}>?</Text>
@@ -59,8 +59,8 @@ export default function LikesScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`Pass on this ${item.role}`}
                 onPress={() => remove(item.swipeRef)}
-                style={[styles.action, { borderColor: t.pass, borderWidth: 2 }]}>
-                <Text style={{ color: t.pass, fontFamily: t.fontBold, fontSize: 16 }}>{'✕︎'}</Text>
+                style={[styles.action, { backgroundColor: t.pass }]}>
+                <Text style={{ color: t.bg, fontFamily: t.fontBold, fontSize: 16 }}>{'✕︎'}</Text>
               </Pressable>
               <Pressable
                 accessibilityRole="button"

@@ -40,13 +40,13 @@ function RoleSlot({ role, username, index, filled, onFilled }: { role: string; u
       accessibilityLabel={username ? `Open @${username}` : `${role} is open`}
       disabled={!username || username === 'you'}
       onPress={() => router.push(`/person/${username}`)}
-      style={[styles.slot, { backgroundColor: filled ? t.surface : 'transparent', borderColor: filled ? t.surface : t.muted + '66' }]}>
+      style={[styles.slot, { backgroundColor: filled ? t.surface : t.line }]}>
       {filled ? (
         <Animated.View style={[styles.badge, badge]}>
           <Critter seed={username ?? 'open'} size={44} />
         </Animated.View>
       ) : (
-        <View style={[styles.badge, styles.open, { borderColor: t.muted }]}>
+        <View style={[styles.badge, styles.open, { backgroundColor: t.bg }]}>
           <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 20 }}>+</Text>
         </View>
       )}
@@ -125,9 +125,9 @@ const styles = StyleSheet.create({
   meter: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   meterText: { flex: 1, gap: 2 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  slot: { width: '48.5%', borderRadius: 20, borderWidth: 2, padding: 14, gap: 4, alignItems: 'flex-start' },
+  slot: { width: '48.5%', borderRadius: 20, padding: 14, gap: 4, alignItems: 'flex-start' },
   badge: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-  open: { borderWidth: 2, borderStyle: 'dashed' },
+  open: { borderStyle: 'dashed' },
   idea: { padding: 18, borderRadius: 22, gap: 8 },
   button: { height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
 });

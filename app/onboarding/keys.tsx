@@ -48,7 +48,7 @@ export default function KeysScreen() {
         <Text style={{ color: t.onPrimary, fontFamily: t.fontBold }}>Continue</Text>
       </Pressable>}
       {(status === 'error' || status === 'other-device') && <Pressable accessibilityRole="button" onPress={inspect}
-        style={[styles.button, { borderWidth: 1, borderColor: t.line }]}>
+        style={[styles.button, { borderColor: t.line }]}>
         <Text style={{ color: t.text, fontFamily: t.fontBold }}>Check again</Text>
       </Pressable>}
     </View>
@@ -56,6 +56,6 @@ export default function KeysScreen() {
 }
 const styles = StyleSheet.create({
   content: { flexGrow: 1, justifyContent: 'center', padding: 24 },
-  panel: { gap: 22, padding: 24, borderWidth: 1, borderRadius: 24 },
+  panel: { gap: 22, padding: 24, borderRadius: 24 },
   button: { minHeight: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', padding: 16 },
 });

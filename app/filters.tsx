@@ -1,7 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, { useAnimatedStyle, useDerivedValue, withSpring } from 'react-native-reanimated';
 
 import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
@@ -19,13 +18,11 @@ const GROUPS: Record<FilterGroup, string[]> = {
 
 function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
   const { t } = useMode();
-  const k = useDerivedValue(() => withSpring(on ? 1 : 0, { damping: 12, stiffness: 300 }));
-  const pop = useAnimatedStyle(() => ({ transform: [{ scale: 1 + k.value * 0.05 }] }));
   return (
     <PressScale accessibilityRole="checkbox" accessibilityLabel={label} onPress={onPress}>
-      <Animated.View style={[styles.chip, { backgroundColor: on ? t.primary : `${t.primary}14` }, pop]}>
+      <View style={[styles.chip, { backgroundColor: on ? t.primary : t.surface }]}>
         <Text style={{ color: on ? t.onPrimary : t.text, fontFamily: t.fontBold, fontSize: type.small }}>{label}</Text>
-      </Animated.View>
+      </View>
     </PressScale>
   );
 }
@@ -60,7 +57,7 @@ export default function FiltersScreen() {
         </Reveal>
       ))}
       <Reveal index={4} style={styles.actions}>
-        <PressScale disabled={!count} onPress={() => setOn({})} style={[styles.clear, { borderColor: t.primary }]}>
+        <PressScale disabled={!count} onPress={() => setOn({})} style={[styles.clear, { backgroundColor: t.surface }]}>
           <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: type.body }}>Clear</Text>
         </PressScale>
         <View style={styles.applyWrap}>
@@ -78,7 +75,7 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s },
   chip: { paddingVertical: space.s + 2, paddingHorizontal: space.m + 2, borderRadius: radius.full },
   actions: { flexDirection: 'row', gap: space.m, marginTop: space.xl, alignItems: 'center' },
-  clear: { height: 56, paddingHorizontal: space.xl, borderRadius: radius.control, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  clear: { height: 56, paddingHorizontal: space.xl, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   applyWrap: { flex: 1 },
   apply: { height: 56, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
 });

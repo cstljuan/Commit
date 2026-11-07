@@ -20,19 +20,19 @@ export type ThemeTokens = {
   fontBold: string;
 };
 
-// Provisional until Juan approves them in Figma, page 03 Colour lab.
+// Takoyaki: batter orange, sauce brown, gold, aonori green. Flat colour only, no gradients or outlines.
 export const themes: Record<Mode, ThemeTokens> = {
   normal: {
-    bg: '#F7F7FB',
+    bg: '#FFEDE3',
     surface: '#FFFFFF',
-    primary: '#6C5CE7',
-    onPrimary: '#FFFFFF',
-    text: '#1E1E2F',
-    muted: '#6B6B80',
-    like: '#00D2A0',
-    pass: '#FF6B6B',
-    accent: '#F59E0B',
-    line: '#E2E2EC',
+    primary: '#FF6B35',
+    onPrimary: '#2A1408',
+    text: '#2A1408',
+    muted: '#86604C',
+    like: '#4CAF50',
+    pass: '#2A1408',
+    accent: '#FFC233',
+    line: '#FFD9C6',
     fontDisplay: 'BricolageGrotesque_800ExtraBold',
     fontBody: 'Figtree_400Regular',
     fontBold: 'Figtree_700Bold',
@@ -45,8 +45,8 @@ export const themes: Record<Mode, ThemeTokens> = {
     text: '#3A0A24',
     muted: '#8A3A63',
     like: '#FF2E93',
-    pass: '#B45CFF',
-    accent: '#D9C2FF',
+    pass: '#3A0A24',
+    accent: '#FFC233',
     line: '#FFC6E2',
     fontDisplay: 'Shrikhand_400Regular',
     fontBody: 'Figtree_400Regular',
@@ -60,8 +60,8 @@ export const themes: Record<Mode, ThemeTokens> = {
     text: '#E5E7EB',
     muted: '#9CA3AF',
     like: '#00D2A0',
-    pass: '#FF6B6B',
-    accent: '#E879F9',
+    pass: '#E5E7EB',
+    accent: '#FF6B35',
     line: '#2C2C38',
     fontDisplay: 'JetBrainsMono_700Bold',
     fontBody: 'JetBrainsMono_400Regular',

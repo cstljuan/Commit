@@ -25,9 +25,9 @@ export function CodeInput({ value, onChange, length = 6, error, disabled }: Prop
         {Array.from({ length }, (_, i) => {
           const char = value[i] ?? '';
           const active = i === Math.min(value.length, length - 1) && !disabled;
-          const border = error ? t.pass : active ? t.primary : t.line;
+          const fill = error ? `${t.pass}26` : active ? `${t.primary}33` : t.surface;
           return (
-            <View key={i} style={[styles.box, { backgroundColor: t.surface, borderColor: border }]}>
+            <View key={i} style={[styles.box, { backgroundColor: fill }]}>
               <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 26 }}>{char}</Text>
             </View>
           );
@@ -52,6 +52,6 @@ export function CodeInput({ value, onChange, length = 6, error, disabled }: Prop
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  box: { flex: 1, aspectRatio: 0.82, maxWidth: 56, borderWidth: 1.5, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  box: { flex: 1, aspectRatio: 0.82, maxWidth: 56, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   hidden: { position: 'absolute', opacity: 0, width: 1, height: 1 },
 });

@@ -1,3 +1,8 @@
+import { Easing } from 'react-native-reanimated';
+
+/** The app's one move for anything that slides: fast start, soft landing, no bounce, like iOS. */
+export const GLIDE = { duration: 280, easing: Easing.bezier(0.32, 0.72, 0, 1) };
+
 /** Deck feel. Tune these on a real phone, not in the components. */
 export const SWIPE = {
   /** Fraction of screen width to commit a left or right swipe. */

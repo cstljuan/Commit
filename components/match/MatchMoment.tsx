@@ -39,7 +39,7 @@ const TOTAL_MS = 1300;
 function Avatar({ seed, bg, fg }: { seed: string; bg: string; fg: string }) {
   return (
     <View style={[styles.avatar, { backgroundColor: bg, borderColor: fg }]}>
-      <Critter seed={seed} size={AVATAR - 12} animated disc={false} />
+      <Critter seed={seed} size={AVATAR - 28} animated disc={false} />
     </View>
   );
 }
@@ -149,7 +149,7 @@ export function MatchMoment({ match, onSayHi, onCommit, onDismiss }: Props) {
           <Pressable
             accessibilityRole="button"
             onPress={onCommit}
-            style={[styles.secondary, { borderColor: onBg }]}>
+            style={[styles.secondary, { backgroundColor: `${onBg}26` }]}>
             <Text style={{ color: onBg, fontFamily: t.fontBold, fontSize: 18 }}>Commit</Text>
           </Pressable>
           <Pressable accessibilityRole="button" hitSlop={12} onPress={onDismiss}>
@@ -170,7 +170,6 @@ const styles = StyleSheet.create({
     width: AVATAR,
     height: AVATAR,
     borderRadius: AVATAR / 2,
-    borderWidth: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -181,7 +180,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     borderRadius: 18,
-    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
