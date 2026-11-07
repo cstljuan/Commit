@@ -12,7 +12,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Tako } from '@/components/Tako/Tako';
-import { sendEmailCode, signInWithProvider, verifyEmailCode } from '@/components/forms/authApi';
+import { sendEmailCode, signInWithPassword, signInWithProvider, verifyEmailCode } from '@/components/forms/authApi';
+import { getMyProfile } from '@/lib/api';
+import { getDeviceKeyState } from '@/lib/vault';
 import { Button } from '@/components/ui/Button';
 import { CodeInput } from '@/components/ui/CodeInput';
 import { TextField } from '@/components/ui/TextField';
@@ -64,7 +66,28 @@ export default function LoginScreen() {
     return () => clearTimeout(id);
   }, [resendIn]);
 
-  const done = () => router.replace('/onboarding/profile');
+  const done = async () => {
+    const profile = await getMyProfile().catch(() => null);
+    if (!profile) return router.replace('/onboarding/profile');
+    const keys = await getDeviceKeyState().catch(() => 'ready');
+    router.replace(keys === 'new' || keys === 'register' ? '/onboarding/keys' : '/(tabs)');
+  };
+  const [password, setPassword] = useState('');
+  const [usePassword, setUsePassword] = useState(false);
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const withPassword = async () => {
+    setPasswordBusy(true);
+    setPasswordError(null);
+    try {
+      await signInWithPassword(email.trim().toLowerCase(), password);
+      await done();
+    } catch {
+      setPasswordError('That email and password did not work.');
+    } finally {
+      setPasswordBusy(false);
+    }
+  };
 
   async function sendCode(isResend = false) {
     if (!emailValid) {
@@ -172,6 +195,23 @@ export default function LoginScreen() {
                 loading={sending}
                 disabled={!emailValid || busy}
               />
+
+              <Button variant="ghost" label={usePassword ? 'Hide demo sign in' : 'Use a demo account'} onPress={() => setUsePassword((v) => !v)} />
+              {usePassword ? (
+                <>
+                  <TextField
+                    label="Password"
+                    value={password}
+                    onChangeText={setPassword}
+                    error={passwordError}
+                    secureTextEntry
+                    textContentType="password"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <Button label="Sign in" variant="outline" onPress={withPassword} loading={passwordBusy} disabled={!emailValid || !password || passwordBusy} />
+                </>
+              ) : null}
 
               <View style={styles.dividerRow}>
                 <View style={[styles.divider, { backgroundColor: t.line }]} />

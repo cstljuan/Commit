@@ -1,3 +1,4 @@
+import { getMyProjects } from './api';
 import { demoMatches, demoPeople, demoTeam, type DemoMessage } from './demoData';
 import { askLocalModel, llmAvailable, type LlmMessage } from './llm';
 
@@ -151,6 +152,9 @@ const personaReply = (chatId: string, username: string, text: string): string[] 
   return pick(chatId, intent, persona.lines[intent]);
 };
 
+// The project Hachi talks about: your newest one, or the sample until you have one.
+let current: { id: string; title: string; idea: string; roles: { role: string; username: string | null }[] } = demoTeam;
+
 const firstMessageTip = () => {
   const m = demoMatches.find((x) => !x.iCommitted) ?? demoMatches[0];
   return `Ask @${m.username} something specific about ${m.project}. Like: "What would you build first if we only had tonight?"`;
@@ -165,8 +169,8 @@ const HACHI_TOPICS: { re: RegExp; texts: () => string[]; action?: ChatAction }[]
   {
     re: /\b(teammate|team|who should|need|designer|find|looking for|roles?|gap)\b/,
     texts: () => {
-      const open = demoTeam.roles.filter((r) => !r.username).map((r) => r.role);
-      return [`${demoTeam.title} still needs ${open.join(' and ') || 'nobody, the team is full'}.`, 'Filter the deck to that role and swipe only on people who fill it.'];
+      const open = current.roles.filter((r) => !r.username).map((r) => r.role);
+      return [`${current.title} still needs ${open.join(' and ') || 'nobody, the team is full'}.`, 'Filter the deck to that role and swipe only on people who fill it.'];
     },
     action: { label: 'Open filters', href: '/filters' },
   },
@@ -177,8 +181,8 @@ const HACHI_TOPICS: { re: RegExp; texts: () => string[]; action?: ChatAction }[]
   },
   {
     re: /\b(pitch|describe|description|summary|write|blurb|explain my)\b/,
-    texts: () => [`Try this for ${demoTeam.title}: "Upload your notes, get a quiz that keeps asking what you got wrong until you stop getting it wrong."`, 'One sentence, what it does, and who it helps. Want a different angle? Tell me who it is for.'],
-    action: { label: 'Open my project', href: `/project/${demoTeam.id}` },
+    texts: () => [`Try this for ${current.title}: "${current.idea}"`, 'One sentence, what it does, and who it helps. Want a different angle? Tell me who it is for.'],
+    action: { label: 'Open my project', href: '/project/current' },
   },
   {
     re: /\b(score|reliab|shows? up|ghost|points?|flake)\b/,
@@ -229,7 +233,10 @@ const hachiTopic = (text: string) => HACHI_TOPICS.find((topic) => topic.re.test(
 
 const hachiReply = (chatId: string, text: string) => {
   const topic = hachiTopic(text);
-  if (topic) return { texts: topic.texts(), action: topic.action };
+  if (topic) {
+    const action = topic.action && { ...topic.action, href: topic.action.href.replace('/project/current', `/project/${current.id}`) };
+    return { texts: topic.texts(), action };
+  }
   return {
     texts: [pick(chatId, 'unknown', ["I can't help with that one yet.", 'That one is beyond my eight arms.']), 'I am good at teammates, your pitch, first messages, your score and proof. Which one?'],
     action: undefined,
@@ -244,7 +251,7 @@ const systemPrompt = (chatId: string, username?: string): string => {
       'Facts: people swipe on projects and builders by role. Both saying yes is a match. Joining takes a held press called a commit.',
       'The shows up score starts at 70: finishing is +5, leaving with notice is -3, ghosting is -15.',
       'Ideas get a hash chained to the previous one, like git, so tampering is detectable. Reworded copies raise a private alert to the owner.',
-      `The sample project is ${demoTeam.title}, and it still needs: ${demoTeam.roles.filter((r) => !r.username).map((r) => r.role).join(', ')}.`,
+      `The user's project is ${current.title}, and it still needs: ${current.roles.filter((r) => !r.username).map((r) => r.role).join(', ')}.`,
     ].join(' ');
   }
   const p = demoPeople[username];
@@ -262,6 +269,7 @@ const systemPrompt = (chatId: string, username?: string): string => {
 export async function getReply(chatId: string, username: string | undefined, history: DemoMessage[]): Promise<Reply> {
   const last = history[history.length - 1]?.body ?? '';
   const isHachi = chatId === HACHI_CHAT;
+  if (isHachi) current = (await getMyProjects().catch(() => [])).find((p) => p.mine) ?? demoTeam;
   if (llmAvailable()) {
     const messages: LlmMessage[] = [
       { role: 'system', content: systemPrompt(chatId, username) },

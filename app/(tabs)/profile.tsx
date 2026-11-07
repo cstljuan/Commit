@@ -38,6 +38,10 @@ export default function ProfileScreen() {
         <View style={styles.headText}>
           <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 28 }}>@{seed}</Text>
           <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 15 }}>{critterFor(seed).name}. {me?.role ?? 'Frontend'}, {me?.occupation ?? 'student'}.</Text>
+          {me?.bio ? <Text style={{ color: t.text, fontFamily: t.fontBody, fontSize: 15 }}>{me.bio}</Text> : null}
+          <PressScale accessibilityLabel="Edit profile" onPress={() => router.push('/onboarding/edit')}>
+            <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 14, marginTop: 4 }}>Edit profile</Text>
+          </PressScale>
         </View>
         <PressScale accessibilityLabel="Settings" onPress={() => router.push('/settings')} style={styles.gear}>
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">

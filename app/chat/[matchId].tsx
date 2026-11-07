@@ -84,7 +84,7 @@ export default function ChatScreen() {
           id: m.id,
           username: m.otherUsername,
           role: m.role,
-          project: peerOf(m.id)?.project ?? 'your project',
+          project: m.projectTitle ?? peerOf(m.id)?.project ?? 'your project',
           iCommitted: m.iCommitted,
           theyCommitted: m.theyCommitted,
           lastLine: '',

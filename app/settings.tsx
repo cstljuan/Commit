@@ -1,3 +1,4 @@
+import { signOut } from '@/lib/api';
 import { router, type Href } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -35,6 +36,14 @@ function Row({ title, note, right }: { title: string; note?: string; right?: Rea
       </View>
       {right}
     </View>
+  );
+}
+
+function SignOutRow() {
+  return (
+    <PressScale accessibilityLabel="Sign out" onPress={() => signOut().catch(() => {})}>
+      <Row title="Sign out" />
+    </PressScale>
   );
 }
 
@@ -112,7 +121,8 @@ export default function SettingsScreen() {
 
       <Section title="Account" index={5}>
         <LinkRow title="Edit profile" href="/onboarding/profile" />
-        <LinkRow title="Sign in again" href="/login" />
+        <LinkRow title="Sign in" href="/login" />
+        <SignOutRow />
         <LinkRow title="Replay the welcome" href="/welcome" />
       </Section>
 

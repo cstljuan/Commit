@@ -4,6 +4,7 @@
  * these as measured results. Replace each with the real source named beside it.
  */
 import type { Role } from '@/components/deck/cardTypes';
+import type { MyProject } from './types';
 
 export const LAB = {
   bg: '#0F0F14',
@@ -75,16 +76,7 @@ export const demoThreads: Record<string, DemoMessage[]> = {
 
 export const HACHI_CHIPS = ['Who should I swipe on?', 'Write my pitch', 'What do I text first?', 'How does my score work?', 'What if someone copies me?'];
 
-export type DemoProject = {
-  id: string;
-  title: string;
-  commitHash: string;
-  idea: string;
-  status: 'recruiting' | 'building' | 'private';
-  mine: boolean;
-  wantIn: number;
-  roles: { role: Role; username: string | null }[];
-};
+export type DemoProject = MyProject;
 
 // Real source: my projects query in lib/api.ts.
 export const demoProjects: DemoProject[] = [

@@ -1,10 +1,10 @@
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { MatchMoment, type MatchInfo } from '@/components/match/MatchMoment';
 import { sampleReveal } from '@/components/deck/sampleCards';
-import { getInterested } from '@/lib/api';
+import { API_IS_MOCK, getInterested } from '@/lib/api';
 import type { Interested } from '@/lib/types';
 import { useMode } from '@/lib/theme';
 
@@ -67,7 +67,9 @@ export default function LikesScreen() {
                 accessibilityLabel={`Like this ${item.role} and reveal them`}
                 onPress={() => {
                   remove(item.swipeRef);
-                  setMatch(sampleReveal(item));
+                  // On the real backend identity stays hidden (F5): they appear in your deck to swipe on.
+                  if (API_IS_MOCK) setMatch(sampleReveal(item));
+                  else router.back();
                 }}
                 style={[styles.action, { backgroundColor: t.like }]}>
                 <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: 16 }}>{'♥︎'}</Text>

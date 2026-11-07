@@ -68,7 +68,7 @@ export default function SwipeScreen() {
     swipe(card, direction, role)
       .then((result) => {
         if (!result.matched || !result.match) return;
-        rememberMatch(result.match.id, { role: result.match.role, project: card.kind === 'project' ? card.title : 'your project' });
+        rememberMatch(result.match.id, { role: result.match.role, project: result.match.projectTitle ?? (card.kind === 'project' ? card.title : 'your project') });
         setMatch({ id: result.match.id, role: result.match.role, otherUsername: result.match.otherUsername });
       })
       .catch(() => {

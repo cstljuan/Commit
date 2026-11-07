@@ -2,6 +2,7 @@
 // UI lanes build against this until the real Supabase functions land.
 // All data is synthetic. Avatars are null so the UI shows illustrated placeholders, never real photos.
 
+import { demoProjects } from './demoData';
 import type {
   Card,
   ChatMessage,
@@ -11,6 +12,7 @@ import type {
   Interested,
   Match,
   Mode,
+  MyProject,
   PersonCard,
   Profile,
   ProfileInput,
@@ -405,6 +407,11 @@ export async function signInWithProvider(_provider: 'github' | 'google'): Promis
   return wait(undefined, 600);
 }
 
+export async function signInWithPassword(email: string, _password: string): Promise<void> {
+  if (!email.includes('@')) throw new Error('Enter a valid email');
+  return wait(undefined);
+}
+
 export async function signOut(): Promise<void> {
   return wait(undefined);
 }
@@ -524,6 +531,10 @@ export async function getTeam(projectId: string): Promise<Team> {
     ].slice(0, isHackTeam ? 4 : undefined),
     roles: roles(['Backend', 1, 1], ['Design', 1, committed.some((m) => m.role === 'Design') ? 1 : 0], ['Frontend', 1, 0]),
   });
+}
+
+export async function getMyProjects(): Promise<MyProject[]> {
+  return wait(demoProjects);
 }
 
 // ---------- chat at match (plain text) ----------

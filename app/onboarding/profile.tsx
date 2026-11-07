@@ -68,7 +68,7 @@ export default function OnboardingProfile() {
     };
     try {
       await saveProfile(input);
-      router.replace('/(tabs)');
+      router.replace('/onboarding/keys');
     } catch (e) {
       const msg = String((e as Error)?.message ?? '').toLowerCase();
       if (msg.includes('unique') || msg.includes('duplicate')) {

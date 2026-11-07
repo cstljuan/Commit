@@ -58,9 +58,22 @@ export type Match = {
   role: Role;
   otherUsername: string;
   otherAvatarUrl: string | null;
+  projectTitle?: string; // missing for hack teams
   iCommitted: boolean;
   theyCommitted: boolean;
   isTeam: boolean;
+};
+
+/** A project on the Projects tab. A seat with no username is open. */
+export type MyProject = {
+  id: string;
+  title: string;
+  commitHash: string;
+  idea: string;
+  status: 'recruiting' | 'building' | 'private';
+  mine: boolean;
+  wantIn: number;
+  roles: { role: Role; username: string | null }[];
 };
 
 /** Blurred card. MUST contain no identity. The server only sends identity on reveal. */

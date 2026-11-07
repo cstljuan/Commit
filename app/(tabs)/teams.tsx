@@ -9,9 +9,10 @@ import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
 import { useTabInset } from '@/components/nav/TabBar';
 import { Hachi } from '@/components/Hachi/Hachi';
-import { getMatches, API_IS_MOCK } from '@/lib/api';
+import { API_IS_MOCK, getCopyAlerts, getMatches, getMyProjects } from '@/lib/api';
+import type { MyProject } from '@/lib/types';
 import { lastLineOf, peerOf } from '@/lib/chatbot';
-import { demoMatches, demoTeam, type DemoMatch } from '@/lib/demoData';
+import { demoMatches, type DemoMatch } from '@/lib/demoData';
 import { useMode } from '@/lib/theme';
 
 function status(m: DemoMatch) {
@@ -74,6 +75,8 @@ export default function MatchesScreen() {
   // Coming back from a chat refreshes the last line of each row.
   const [seen, setSeen] = useState(0);
   const [live, setLive] = useState<DemoMatch[]>([]);
+  const [team, setTeam] = useState<MyProject | null>(null);
+  const [hasAlert, setHasAlert] = useState(false);
   useFocusEffect(
     useCallback(() => {
       setSeen((n) => n + 1);
@@ -84,7 +87,7 @@ export default function MatchesScreen() {
               id: m.id,
               username: m.otherUsername,
               role: m.role,
-              project: peerOf(m.id)?.project ?? 'your project',
+              project: m.projectTitle ?? peerOf(m.id)?.project ?? 'your project',
               iCommitted: m.iCommitted,
               theyCommitted: m.theyCommitted,
               lastLine: 'Say hi',
@@ -92,6 +95,12 @@ export default function MatchesScreen() {
           ),
         )
         .catch(() => setLive([]));
+      getMyProjects()
+        .then((list) => setTeam(list.find((p) => p.roles.filter((r) => r.username).length > 1) ?? list[0] ?? null))
+        .catch(() => setTeam(null));
+      getCopyAlerts()
+        .then((list) => setHasAlert(API_IS_MOCK || list.length > 0))
+        .catch(() => setHasAlert(false));
     }, []),
   );
   // Sample chats stay only until the real API is on.
@@ -115,7 +124,7 @@ export default function MatchesScreen() {
                 </Svg>
               </PressScale>
             </View>
-            <Reveal>
+            {hasAlert ? <Reveal>
                 <PressScale
                   accessibilityLabel="Copy alert. Someone posted a reworded version of your idea. Tap to see your proof."
                   onPress={() => router.push('/alert')}
@@ -128,17 +137,17 @@ export default function MatchesScreen() {
                     </Text>
                   </View>
                 </PressScale>
-            </Reveal>
-            <Reveal index={1}>
+            </Reveal> : null}
+            {team ? <Reveal index={1}>
               <PressScale
-                accessibilityLabel={`Open team ${demoTeam.title}`}
-                onPress={() => router.push(`/project/${demoTeam.id}`)}
+                accessibilityLabel={`Open team ${team.title}`}
+                onPress={() => router.push(`/project/${team.id}`)}
                 style={[styles.team, { backgroundColor: t.primary }]}>
                 <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: 13 }}>Your team</Text>
-                <Text style={{ color: t.onPrimary, fontFamily: t.fontDisplay, fontSize: 24 }}>{demoTeam.title}</Text>
-                <Text style={{ color: t.onPrimary, fontFamily: t.fontBody, fontSize: 14 }}>3 of 4 roles filled</Text>
+                <Text style={{ color: t.onPrimary, fontFamily: t.fontDisplay, fontSize: 24 }}>{team.title}</Text>
+                <Text style={{ color: t.onPrimary, fontFamily: t.fontBody, fontSize: 14 }}>{team.roles.filter((r) => r.username).length} of {team.roles.length} roles filled</Text>
               </PressScale>
-            </Reveal>
+            </Reveal> : null}
             <AskHachi />
           </View>
         }
