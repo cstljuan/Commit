@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Tako } from '@/components/Tako/Tako';
 import { sendEmailCode, signInWithPassword, signInWithProvider, verifyEmailCode } from '@/components/forms/authApi';
-import { getMyProfile } from '@/lib/api';
+import { authProviders, getMyProfile, signUpWithPassword } from '@/lib/api';
 import { getDeviceKeyState } from '@/lib/vault';
 import { Button } from '@/components/ui/Button';
 import { CodeInput } from '@/components/ui/CodeInput';
@@ -72,6 +72,10 @@ export default function LoginScreen() {
     const keys = await getDeviceKeyState().catch(() => 'ready');
     router.replace(keys === 'new' || keys === 'register' ? '/onboarding/keys' : '/(tabs)');
   };
+  const [social, setSocial] = useState({ github: false, google: false });
+  useEffect(() => {
+    authProviders().then(setSocial).catch(() => {});
+  }, []);
   const [password, setPassword] = useState('');
   const [usePassword, setUsePassword] = useState(false);
   const [passwordBusy, setPasswordBusy] = useState(false);
@@ -89,9 +93,23 @@ export default function LoginScreen() {
     }
   };
 
+  const createAccount = async () => {
+    setPasswordBusy(true);
+    setPasswordError(null);
+    try {
+      const { needsConfirmation } = await signUpWithPassword(trimmed, password);
+      if (needsConfirmation) setPasswordError('Account made. Confirm it from your email, then sign in.');
+      else await done();
+    } catch (e) {
+      setPasswordError((e as Error).message || 'Could not create that account.');
+    } finally {
+      setPasswordBusy(false);
+    }
+  };
+
   async function sendCode(isResend = false) {
     if (!emailValid) {
-      setEmailError('Enter a full email, like you@school.edu');
+      setEmailError('Enter a full email, like you@email.com');
       return;
     }
     setEmailError(null);
@@ -105,7 +123,11 @@ export default function LoginScreen() {
       setResendIn(RESEND_SECONDS);
     } catch {
       if (isResend) setCodeError('other');
-      else setEmailError('We could not send a code. Check the email and try again.');
+      else {
+        // Codes only reach verified inboxes for now, so offer the password path right away.
+        setEmailError('We could not email that address yet. Use a password below.');
+        setUsePassword(true);
+      }
     } finally {
       setSending(false);
     }
@@ -171,14 +193,14 @@ export default function LoginScreen() {
               <TextField
                 ref={emailRef}
                 label="Email"
-                placeholder="you@school.edu"
+                placeholder="you@email.com"
                 value={email}
                 onChangeText={(v) => {
                   setEmail(v);
                   if (emailError) setEmailError(null);
                 }}
                 error={emailError}
-                hint="We will email you a 6-digit code. No password."
+                hint="Any email works."
                 keyboardType="email-address"
                 textContentType="emailAddress"
                 autoComplete="email"
@@ -196,7 +218,7 @@ export default function LoginScreen() {
                 disabled={!emailValid || busy}
               />
 
-              <Button variant="ghost" label={usePassword ? 'Hide demo sign in' : 'Use a demo account'} onPress={() => setUsePassword((v) => !v)} />
+              <Button variant="ghost" label={usePassword ? 'Use an email code instead' : 'Use a password instead'} onPress={() => setUsePassword((v) => !v)} />
               {usePassword ? (
                 <>
                   <TextField
@@ -209,30 +231,25 @@ export default function LoginScreen() {
                     autoCapitalize="none"
                     autoCorrect={false}
                   />
-                  <Button label="Sign in" variant="outline" onPress={withPassword} loading={passwordBusy} disabled={!emailValid || !password || passwordBusy} />
+                  <Button label="Sign in" onPress={withPassword} loading={passwordBusy} disabled={!emailValid || !password || passwordBusy} />
+                  <Button label="Create account" variant="outline" onPress={createAccount} disabled={!emailValid || password.length < 6 || passwordBusy} />
                 </>
               ) : null}
 
-              <View style={styles.dividerRow}>
-                <View style={[styles.divider, { backgroundColor: t.line }]} />
-                <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 14 }}>or</Text>
-                <View style={[styles.divider, { backgroundColor: t.line }]} />
-              </View>
+              {social.github || social.google ? (
+                <View style={styles.dividerRow}>
+                  <View style={[styles.divider, { backgroundColor: t.line }]} />
+                  <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 14 }}>or</Text>
+                  <View style={[styles.divider, { backgroundColor: t.line }]} />
+                </View>
+              ) : null}
 
-              <Button
-                variant="outline"
-                label="Continue with GitHub"
-                onPress={() => withProvider('github')}
-                loading={providerBusy === 'github'}
-                disabled={busy}
-              />
-              <Button
-                variant="outline"
-                label="Continue with Google"
-                onPress={() => withProvider('google')}
-                loading={providerBusy === 'google'}
-                disabled={busy}
-              />
+              {social.github ? (
+                <Button variant="outline" label="Continue with GitHub" onPress={() => withProvider('github')} loading={providerBusy === 'github'} disabled={busy} />
+              ) : null}
+              {social.google ? (
+                <Button variant="outline" label="Continue with Google" onPress={() => withProvider('google')} loading={providerBusy === 'google'} disabled={busy} />
+              ) : null}
               {providerError ? (
                 <Text accessibilityLiveRegion="polite" style={[styles.center, { color: t.pass, fontFamily: t.fontBold }]}>
                   {providerError}

@@ -51,10 +51,11 @@ function ProjectCard({ project, index }: { project: DemoProject; index: number }
   const tint = project.status === 'private' ? t.muted : project.status === 'building' ? t.like : t.primary;
   return (
     <Reveal index={index + 1}>
+      <View style={[styles.card, { backgroundColor: t.surface, shadowColor: t.line }]}>
       <PressScale
         accessibilityLabel={`Open ${project.title}`}
         onPress={() => router.push(`/project/${project.id}` as Href)}
-        style={[styles.card, { backgroundColor: t.surface, shadowColor: t.line }]}>
+        style={styles.cardMain}>
         <View style={styles.cardTop}>
           <View style={[styles.status, { backgroundColor: `${tint}22` }]}>
             <Text style={{ color: project.status === 'private' ? t.muted : t.text, fontFamily: t.fontBold, fontSize: 12 }}>{STATUS[project.status]}</Text>
@@ -76,6 +77,7 @@ function ProjectCard({ project, index }: { project: DemoProject; index: number }
             {need.length ? `Needs ${need.join(', ')}` : 'Team is full'}
           </Text>
         </View>
+      </PressScale>
         {project.wantIn ? (
           <PressScale
             accessibilityLabel={`${project.wantIn} builders want in`}
@@ -84,7 +86,7 @@ function ProjectCard({ project, index }: { project: DemoProject; index: number }
             <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: type.small }}>{project.wantIn} builders want in</Text>
           </PressScale>
         ) : null}
-      </PressScale>
+      </View>
     </Reveal>
   );
 }
@@ -142,6 +144,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   newCard: { height: 56, borderRadius: radius.control, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.s },
   card: { padding: space.l, borderRadius: radius.card, gap: space.s + 2, shadowOpacity: 1, shadowRadius: 0, shadowOffset: { width: 0, height: 5 } },
+  cardMain: { gap: space.s + 2 },
   cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   status: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: radius.full },
   track: { height: 6, borderRadius: 3, overflow: 'hidden' },

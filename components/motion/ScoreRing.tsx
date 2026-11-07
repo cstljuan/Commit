@@ -9,6 +9,9 @@ import { CountUp } from './CountUp';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
+// Starts the ring at the top. Rotating the whole Svg also works on web.
+const ROTATE = { transform: [{ rotate: '-90deg' }] };
+
 export function ScoreRing({ score, size = 132, label = 'Shows up score', color }: { score: number; size?: number; label?: string; color?: string }) {
   const { t } = useMode();
   const stroke = size * 0.09;
@@ -33,9 +36,6 @@ export function ScoreRing({ score, size = 132, label = 'Shows up score', color }
           strokeLinecap="round"
           strokeDasharray={length}
           animatedProps={props}
-          rotation={-90}
-          originX={size / 2}
-          originY={size / 2}
         />
       </Svg>
       <CountUp to={score} delayMs={200} durationMs={1000} style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: size * 0.3 }} />

@@ -99,7 +99,7 @@ export function HoldToCommit({ label = 'Hold to commit', doneLabel = 'Committed'
         onPressIn={begin}
         onPressOut={cancel}>
         <Animated.View style={[styles.button, body]}>
-          <Svg width={SIZE} height={SIZE} style={StyleSheet.absoluteFill}>
+          <Svg width={SIZE} height={SIZE} style={[StyleSheet.absoluteFill, { transform: [{ rotate: '-90deg' }] }]}>
             <Circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} stroke={t.primary + '33'} strokeWidth={STROKE} fill="none" />
             <AnimatedCircle
               cx={SIZE / 2}
@@ -111,9 +111,6 @@ export function HoldToCommit({ label = 'Hold to commit', doneLabel = 'Committed'
               strokeLinecap="round"
               strokeDasharray={LENGTH}
               animatedProps={ring}
-              rotation={-90}
-              originX={SIZE / 2}
-              originY={SIZE / 2}
             />
           </Svg>
           <Text style={{ color: done ? t.onPrimary : t.primary, fontFamily: t.fontBold, fontSize: done ? 40 : 15 }}>
