@@ -199,7 +199,8 @@ async function checklist(copyProjectId: string): Promise<boolean> {
   });
 
   await check(`Copy rewrite "${copyRewrite.title}" is hidden and in no deck`, async () => {
-    const { data } = await bob.from('projects').select('hidden').eq('id', copyProjectId).maybeSingle();
+    // Read the flag with the service key: since 0009, users cannot read other people's hidden projects at all.
+    const [data] = (await rest(`projects?select=hidden&id=eq.${copyProjectId}`)) as { hidden: boolean }[];
     const { data: aDeck } = await alice.rpc('get_deck', { p_mode: 'normal' });
     const inDeck = bobDeck.some((c) => c.id === copyProjectId)
       || ((aDeck ?? []) as { id: string }[]).some((c) => c.id === copyProjectId);
