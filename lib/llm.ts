@@ -46,6 +46,13 @@ const clean = (text: string) =>
     .replace(/^["']|["']$/g, '')
     // House style: no em dashes, even from the model.
     .replace(/\s*—\s*/g, ', ')
+    // Small models add assistant filler that no teammate would text.
+    .replace(/^(sure|of course|great question|absolutely|certainly)[,!.]\s*/i, '')
+    .replace(/\s*(let me know if[^.!?]*[.!?]?|feel free to[^.!?]*[.!?]?|i hope this helps[.!?]?)\s*$/i, '')
+    .replace(/^as an ai[^.]*\.\s*/i, '')
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
     .slice(0, 400);
 
 /** Returns the model's reply, or null so the caller uses a built-in reply instead. */
@@ -57,7 +64,7 @@ export async function askLocalModel(messages: LlmMessage[]): Promise<string | nu
     const res = await fetch(`${URL_BASE}/v1/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(KEY ? { Authorization: `Bearer ${KEY}` } : {}) },
-      body: JSON.stringify({ model: MODEL, messages, max_tokens: 120, temperature: 0.7, stream: false }),
+      body: JSON.stringify({ model: MODEL, messages, max_tokens: 80, temperature: 0.85, top_p: 0.9, frequency_penalty: 0.6, presence_penalty: 0.3, stream: false }),
       signal: abort.signal,
     });
     if (!res.ok) throw new Error(`status ${res.status}`);
