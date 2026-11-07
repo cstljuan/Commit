@@ -176,6 +176,10 @@ async function main() {
     const up = await mallory.from('profiles').upsert({ id: me, name: 'qa_mallory', women_only: true }, { onConflict: 'id' }).select('women_only');
     const on2 = !up.error && up.data?.[0]?.women_only === true;
     add('1b', 'women', 'turn on women_only via upsert (saveProfile path)', on2 ? 'ALLOWED' : 'DENIED', up.error ? errText(up.error) : `women_only=${up.data?.[0]?.women_only}`);
+    const [stored] = await rest(`profiles?select=women_only&id=eq.${me}`);
+    const wd = await mallory.rpc('get_deck', { p_mode: 'women' });
+    const wn = Array.isArray(wd.data) ? wd.data.length : 0;
+    add('1d', 'women', 'women_only stored after both tries / women deck', stored.women_only || wn > 0 ? 'ALLOWED' : 'DENIED', `stored women_only=${stored.women_only}, women deck ${wd.error ? errText(wd.error) : wn + ' card(s)'}`);
     await rest(`profiles?id=eq.${me}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ women_only: false }) });
   }
   {
@@ -390,6 +394,14 @@ async function main() {
     pass('S18', 'victim1 getCopyAlerts query', !al.error, al.error ? errText(al.error) : `${al.data?.length} row(s)`);
     const prof = await v2.from('profiles').upsert({ id: ids.victim2, name: 'qa_victim2', username: 'qa_victim2', bio: 'qa smoke', primary_role: 'Backend' }, { onConflict: 'id' });
     pass('S19', 'victim2 saveProfile upsert without women_only', !prof.error, prof.error ? errText(prof.error) : 'ok');
+    // The exact payload the deployed app (cstljuan/wire saveProfile) sends, women_only included.
+    const wire = await v2.from('profiles').upsert({
+      id: ids.victim2, name: 'qa_victim2', username: 'qa_victim2', avatar_url: null, bio: 'qa smoke', primary_role: 'Backend',
+      level: 'intermediate', occupation: 'student', skills: ['Go'], prompts: [], hours_per_week: 10, timezone: 'America/New_York',
+      women_only: true,
+    }, { onConflict: 'id' });
+    const [w2] = await rest(`profiles?select=women_only&id=eq.${ids.victim2}`);
+    pass('S19b', 'victim2 wire-app upsert with women_only:true saves, flag stays false', !wire.error && w2.women_only === false, wire.error ? errText(wire.error) : `stored women_only=${w2.women_only}`);
     const me2 = await v2.from('profiles').select('*').eq('id', ids.victim2).maybeSingle();
     pass('S20', 'victim2 getMyProfile select *', !me2.error && !!me2.data, me2.error ? errText(me2.error) : 'ok');
     const vl = await v1.from('vault_log').select('seq, project_id, ts').eq('author_id', ids.victim1).limit(1);

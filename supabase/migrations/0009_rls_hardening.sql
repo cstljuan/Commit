@@ -6,7 +6,25 @@ begin;
 -- Any user could set profiles.women_only on themselves and then read Women profiles and decks.
 -- The flag is now written only by the service role (seed, or the team granting access for the demo).
 -- Self-identification is not verified, so there is deliberately no self-serve RPC either.
-revoke insert (women_only), update (women_only) on public.profiles from authenticated;
+-- The column grants stay so the deployed app's saveProfile (which still sends women_only) keeps working:
+-- a trigger silently pins the value for client roles instead of rejecting the whole upsert.
+grant insert (women_only), update (women_only) on public.profiles to authenticated;
+create or replace function public.lock_women_only() returns trigger
+language plpgsql set search_path = '' as $$
+begin
+  if current_user in ('authenticated', 'anon') then
+    if tg_op = 'INSERT' then
+      new.women_only := false;
+    else
+      new.women_only := old.women_only;
+    end if;
+  end if;
+  return new;
+end $$;
+revoke all on function public.lock_women_only() from public, anon, authenticated;
+drop trigger if exists profiles_lock_women_only on public.profiles;
+create trigger profiles_lock_women_only before insert or update on public.profiles
+for each row execute function public.lock_women_only();
 -- PostgREST upserts write "set id = excluded.id", so saveProfile needs update on id. The policy
 -- (using and with check: id = auth.uid()) keeps id unchangeable.
 grant update (id) on public.profiles to authenticated;
