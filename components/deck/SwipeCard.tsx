@@ -30,6 +30,8 @@ const rolesText = (roles: RoleCount[]) => {
 
 function Reason({ text }: { text: string }) {
   const { t } = useMode();
+  // No reason from the server: show nothing rather than an empty pill.
+  if (!text?.trim()) return null;
   return (
     <View style={[styles.pill, { backgroundColor: t.accent }]}>
       <Text numberOfLines={1} style={{ color: t.accent === '#FF6B35' ? '#FFFFFF' : '#2A1408', fontFamily: t.fontBold, fontSize: 13 }}>
@@ -41,6 +43,7 @@ function Reason({ text }: { text: string }) {
 
 function Reliability({ score }: { score: number }) {
   const { t } = useMode();
+  if (typeof score !== 'number' || !Number.isFinite(score)) return null;
   return (
     <View accessibilityLabel={`Shows up score ${score}`} style={styles.score}>
       <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 12 }}>shows up</Text>
