@@ -401,6 +401,11 @@ export async function verifyEmailCode(_email: string, code: string): Promise<voi
   return wait(undefined);
 }
 
+export async function signInWithPassword(email: string, password: string): Promise<void> {
+  if (!email.includes('@') || !password) throw new Error('Enter your email and password');
+  return wait(undefined);
+}
+
 export async function signInWithProvider(_provider: 'github' | 'google'): Promise<void> {
   return wait(undefined, 600);
 }
