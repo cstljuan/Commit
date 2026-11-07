@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Text, type StyleProp, type TextStyle } from 'react-native';
-import { useReducedMotion } from 'react-native-reanimated';
+
+import { useMotionOff } from '@/lib/prefs';
 
 type Props = {
   to: number;
@@ -14,7 +15,7 @@ type Props = {
 
 /** Counts up to the real number, easing out so it lands with weight. */
 export function CountUp({ to, durationMs = 900, delayMs = 0, decimals = 0, suffix = '', style, onDone }: Props) {
-  const reduced = useReducedMotion();
+  const reduced = useMotionOff();
   const [value, setValue] = useState(reduced ? to : 0);
 
   useEffect(() => {

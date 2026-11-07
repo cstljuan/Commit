@@ -1,17 +1,17 @@
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   FadeIn,
   interpolate,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
 
 import { useMode } from '@/lib/theme';
+import { useMotionOff } from '@/lib/prefs';
 
 import { Tako } from './Tako';
 
@@ -37,7 +37,7 @@ type Props = {
  */
 export function InkCommit({ text, commitHash, onDone }: Props) {
   const { t } = useMode();
-  const reduced = useReducedMotion();
+  const reduced = useMotionOff();
   const [seed, setSeed] = useState(0);
   const [settled, setSettled] = useState(false);
   const ink = useSharedValue(reduced ? 1 : 0);

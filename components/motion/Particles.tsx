@@ -4,13 +4,13 @@ import Animated, {
   Easing,
   interpolate,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
 
 import { useMode, type Mode } from '@/lib/theme';
+import { useMotionOff } from '@/lib/prefs';
 
 export const MODE_GLYPHS: Record<Mode, string[]> = {
   normal: ['★︎', '●', '▲'],
@@ -56,7 +56,7 @@ export function ParticleField({ burst, count = 18, color, reach = 220, glyphs }:
 /** Fires once each time `fire` changes, centred in its parent. Never blocks touches. */
 export function Burst({ fire, color, count = 12, reach = 170 }: { fire: number; color: string; count?: number; reach?: number }) {
   const burst = useSharedValue(0);
-  const reduced = useReducedMotion();
+  const reduced = useMotionOff();
   useEffect(() => {
     if (!fire || reduced) return;
     burst.value = 0;

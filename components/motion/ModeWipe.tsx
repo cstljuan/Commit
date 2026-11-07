@@ -1,11 +1,10 @@
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
   interpolate,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withDelay,
   withTiming,
@@ -14,6 +13,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { copy } from '@/lib/copy';
 import { themes, useMode, type Mode } from '@/lib/theme';
+import { useMotionOff } from '@/lib/prefs';
 
 type Flip = (mode: Mode, x: number, y: number) => void;
 const FlipContext = createContext<Flip>(() => {});
@@ -31,7 +31,7 @@ type Wipe = { mode: Mode; x: number; y: number };
 export function ModeWipeProvider({ children }: { children: ReactNode }) {
   const { mode, setMode } = useMode();
   const { width, height } = useWindowDimensions();
-  const reduced = useReducedMotion();
+  const reduced = useMotionOff();
   const [wipe, setWipe] = useState<Wipe | null>(null);
   const grow = useSharedValue(0);
   const fade = useSharedValue(1);

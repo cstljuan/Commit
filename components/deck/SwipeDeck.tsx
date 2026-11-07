@@ -1,9 +1,10 @@
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
 import { Burst } from '@/components/motion/Particles';
+import { TypedLine } from '@/components/motion/TypedLine';
 import { Tako, type TakoState } from '@/components/Tako/Tako';
 import { useMode } from '@/lib/theme';
 
@@ -24,7 +25,7 @@ type Props = {
 type Swiped = { dir: Direction };
 
 export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: Props) {
-  const { copy, t } = useMode();
+  const { copy, mode, t } = useMode();
   const [index, setIndex] = useState(0);
   const [history, setHistory] = useState<Swiped[]>([]);
   const [superLeft, setSuperLeft] = useState(superPerDay);
@@ -32,6 +33,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
   const [picking, setPicking] = useState<ProjectCard | null>(null);
   const [busy, setBusy] = useState(false);
   const [fire, setFire] = useState(0);
+  const [typed, setTyped] = useState('');
   const firstRender = useRef(true);
   useEffect(() => {
     firstRender.current = false;
@@ -75,6 +77,9 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
     (dir: Direction) => {
       const card = cards[index];
       if (dir !== 'left') setFire((n) => n + 1);
+      if (mode === 'hack' && card.kind === 'person') {
+        setTyped(dir === 'left' ? `$ echo @${card.username} >> .gitignore` : `$ git add @${card.username}`);
+      }
       if (dir === 'super') setSuperLeft((s) => Math.max(0, s - 1));
       const open = card.kind === 'project' ? card.roles.filter((r) => r.open > 0) : [];
       if (dir !== 'left' && card.kind === 'project' && open.length > 1) {
@@ -86,7 +91,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
       onSwipe?.(card, dir, open[0]?.role);
       advance(dir);
     },
-    [advance, cards, index, onSwipe],
+    [advance, cards, index, mode, onSwipe],
   );
 
   const undo = useCallback(() => {
@@ -141,6 +146,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
           })
         )}
         <Burst fire={fire} color={t.like} />
+        <TypedLine text={typed} fire={history.length} />
       </View>
       <DeckButtons
         canUndo={history.length > 0}
@@ -171,7 +177,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, width: '100%', gap: 16, paddingBottom: 12 },
+  root: { flex: 1, width: '100%', gap: 16 },
   stack: { flex: 1, marginHorizontal: 20 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 24 },
 });

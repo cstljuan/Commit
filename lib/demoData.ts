@@ -113,3 +113,24 @@ export const demoAttacks = [
   "Post in a team I'm not on",
   'Read Women-only profiles',
 ];
+
+export type DemoCommit = { hash: string; message: string; when: string; kind: 'idea' | 'team' | 'merge' };
+
+// Real source: vault_log and team_members for this user.
+export const demoCommits: DemoCommit[] = [
+  { hash: 'a3f9c21', message: 'Posted AI study buddy', when: 'Tonight, 10:41 PM', kind: 'idea' },
+  { hash: '7be04d9', message: 'Matched with @ben_codes as Backend', when: 'Tonight, 11:02 PM', kind: 'team' },
+  { hash: 'c19e7f0', message: 'Matched with @priya_builds as AI/ML', when: 'Tonight, 11:20 PM', kind: 'team' },
+  { hash: 'e40b2a6', message: 'Merged into team AI study buddy', when: 'Tonight, 11:34 PM', kind: 'merge' },
+  { hash: '21fd8c3', message: 'Posted Rent splitter', when: 'Last night, 9:15 PM', kind: 'idea' },
+];
+
+// Real source: copy_alerts. Placeholder similarity, not a measurement.
+export const demoAlert = { similarity: 93, yours: 'Tonight, 10:41 PM', theirs: 'Tonight, 11:47 PM', hash: 'a3f9c21d8e07b6f4' };
+
+// Real source: getPublicProfile(id).
+export const demoPeople: Record<string, { role: string; level: string; occupation: string; score: number; skills: string[]; prompts: { q: string; a: string }[] }> = {
+  ben_codes: { role: 'Backend', level: 'intermediate', occupation: 'student', score: 92, skills: ['TypeScript', 'Postgres', 'Go'], prompts: [{ q: 'My 3 AM snack', a: 'Cold pizza and regret' }, { q: 'Worst commit message', a: 'asdf' }] },
+  priya_builds: { role: 'AI/ML', level: 'advanced', occupation: 'student', score: 95, skills: ['Python', 'PyTorch', 'Figma'], prompts: [{ q: 'Tabs or spaces', a: 'Whatever ships' }] },
+  dev_ana: { role: 'Design', level: 'advanced', occupation: 'working', score: 84, skills: ['Figma', 'React', 'Motion'], prompts: [{ q: 'Tabs or spaces', a: 'Tabs. Fight me.' }] },
+};

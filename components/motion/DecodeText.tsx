@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Text, type StyleProp, type TextStyle } from 'react-native';
-import { useReducedMotion } from 'react-native-reanimated';
+
+import { useMotionOff } from '@/lib/prefs';
 
 const GLYPHS = '0123456789abcdef';
 
@@ -22,7 +23,7 @@ type Props = {
 
 /** Text that decrypts itself, left to right. Screen readers always get the plain text. */
 export function DecodeText({ text, durationMs = 800, delayMs = 0, style, numberOfLines, onDone }: Props) {
-  const reduced = useReducedMotion();
+  const reduced = useMotionOff();
   const [shown, setShown] = useState(reduced ? text.length : 0);
   const [tick, setTick] = useState(0);
 

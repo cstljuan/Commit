@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, {
@@ -14,6 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Critter } from '@/components/critters/Critter';
 import { HoldToCommit } from '@/components/motion/HoldToCommit';
 import { PressScale } from '@/components/motion/PressScale';
 import { Tako } from '@/components/Tako/Tako';
@@ -63,7 +64,16 @@ export default function ChatScreen() {
       style={[styles.root, { backgroundColor: t.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={90}>
-      <Stack.Screen options={{ title: `@${match.username}` }} />
+      <Stack.Screen
+        options={{
+          title: `@${match.username}`,
+          headerRight: () => (
+            <PressScale accessibilityLabel={`Open @${match.username}`} onPress={() => router.push(`/person/${match.username}`)}>
+              <Critter seed={match.username} size={34} />
+            </PressScale>
+          ),
+        }}
+      />
       <View style={[styles.honest, { backgroundColor: t.surface }]}>
         <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 12, textAlign: 'center' }}>
           Not end-to-end encrypted yet

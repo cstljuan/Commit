@@ -3,7 +3,6 @@ import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withDelay,
   withRepeat,
@@ -12,6 +11,7 @@ import Animated, {
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { useMode, type Mode } from '@/lib/theme';
+import { useMotionOff } from '@/lib/prefs';
 
 const GLOW: Record<Mode, { a: string; b: string; strength: number }> = {
   normal: { a: '#6C5CE7', b: '#00D2A0', strength: 0.14 },
@@ -54,7 +54,7 @@ function Floater({ glyph, i, color, width, height }: { glyph: string; i: number;
 export function ModeBackdrop() {
   const { mode, t } = useMode();
   const { width, height } = useWindowDimensions();
-  const reduced = useReducedMotion();
+  const reduced = useMotionOff();
   const glow = GLOW[mode];
   const glyphs = useMemo(() => (reduced ? [] : (FLOATERS[mode] ?? [])), [mode, reduced]);
   return (

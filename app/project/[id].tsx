@@ -1,7 +1,7 @@
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { router, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -9,7 +9,9 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
+import { Critter } from '@/components/critters/Critter';
 import { DecodeText } from '@/components/motion/DecodeText';
+import { HashChip } from '@/components/motion/HashChip';
 import { Burst } from '@/components/motion/Particles';
 import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
@@ -33,10 +35,15 @@ function RoleSlot({ role, username, index, filled, onFilled }: { role: string; u
   }, []);
   const badge = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }], opacity: scale.value }));
   return (
-    <View style={[styles.slot, { backgroundColor: filled ? t.surface : 'transparent', borderColor: filled ? t.surface : t.muted + '66' }]}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={username ? `Open @${username}` : `${role} is open`}
+      disabled={!username || username === 'you'}
+      onPress={() => router.push(`/person/${username}`)}
+      style={[styles.slot, { backgroundColor: filled ? t.surface : 'transparent', borderColor: filled ? t.surface : t.muted + '66' }]}>
       {filled ? (
-        <Animated.View style={[styles.badge, { backgroundColor: t.primary }, badge]}>
-          <Text style={{ color: t.onPrimary, fontFamily: t.fontDisplay, fontSize: 20 }}>{(username ?? '?')[0].toUpperCase()}</Text>
+        <Animated.View style={[styles.badge, badge]}>
+          <Critter seed={username ?? 'open'} size={44} />
         </Animated.View>
       ) : (
         <View style={[styles.badge, styles.open, { borderColor: t.muted }]}>
@@ -47,7 +54,7 @@ function RoleSlot({ role, username, index, filled, onFilled }: { role: string; u
       <Text numberOfLines={1} style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 13 }}>
         {username ? `@${username}` : 'Open'}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -61,9 +68,9 @@ export default function TeamScreen() {
       <Stack.Screen options={{ title: 'Team' }} />
       <Reveal>
         <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 34 }}>{demoTeam.title}</Text>
-        <Text style={{ color: t.primary, fontFamily: 'JetBrainsMono_700Bold', fontSize: 14, marginTop: 4 }}>
-          commit {demoTeam.commitHash.slice(0, 7)}
-        </Text>
+        <View style={{ marginTop: 6 }}>
+          <HashChip hash={demoTeam.commitHash} />
+        </View>
       </Reveal>
 
       <Reveal index={1} style={styles.meter}>

@@ -13,6 +13,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { IntroSplash } from '@/components/motion/IntroSplash';
 import { ModeWipeProvider } from '@/components/motion/ModeWipe';
+import { PrefsProvider } from '@/lib/prefs';
 import { ModeProvider, useMode } from '@/lib/theme';
 
 function AppStack() {
@@ -49,10 +50,12 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ModeProvider>
-        <ModeWipeProvider>
-          <AppStack />
-          <IntroSplash />
-        </ModeWipeProvider>
+        <PrefsProvider>
+          <ModeWipeProvider>
+            <AppStack />
+            <IntroSplash />
+          </ModeWipeProvider>
+        </PrefsProvider>
       </ModeProvider>
     </GestureHandlerRootView>
   );

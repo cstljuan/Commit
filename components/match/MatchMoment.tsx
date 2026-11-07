@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
@@ -7,7 +7,6 @@ import Animated, {
   FadeOut,
   interpolate,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withDelay,
   withSpring,
@@ -15,8 +14,10 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ParticleField } from '@/components/motion/Particles';
+import { Critter } from '@/components/critters/Critter';
 import { Tako } from '@/components/Tako/Tako';
 import { useMode } from '@/lib/theme';
+import { useMotionOff } from '@/lib/prefs';
 
 export type MatchInfo = {
   id: string;
@@ -35,10 +36,10 @@ const AVATAR = 96;
 /** Everything has landed by this point, so the whole moment stays under 1.5 s. */
 const TOTAL_MS = 1300;
 
-function Avatar({ letter, bg, fg, font }: { letter: string; bg: string; fg: string; font: string }) {
+function Avatar({ seed, bg, fg }: { seed: string; bg: string; fg: string }) {
   return (
     <View style={[styles.avatar, { backgroundColor: bg, borderColor: fg }]}>
-      <Text style={{ color: fg, fontFamily: font, fontSize: 40 }}>{letter}</Text>
+      <Critter seed={seed} size={AVATAR - 12} animated disc={false} />
     </View>
   );
 }
@@ -47,7 +48,7 @@ function Avatar({ letter, bg, fg, font }: { letter: string; bg: string; fg: stri
 export function MatchMoment({ match, onSayHi, onCommit, onDismiss }: Props) {
   const { t, mode, copy } = useMode();
   const { width } = useWindowDimensions();
-  const reduced = useReducedMotion();
+  const reduced = useMotionOff();
   const [settled, setSettled] = useState(false);
 
   const start = width / 2 + AVATAR;
@@ -121,10 +122,10 @@ export function MatchMoment({ match, onSayHi, onCommit, onDismiss }: Props) {
         <View style={styles.pair}>
           <ParticleField burst={burst} color={ink} reach={240} />
           <Animated.View style={[styles.avatarSlot, left]}>
-            <Avatar letter="Y" bg={t.surface} fg={t.primary} font={t.fontDisplay} />
+            <Avatar seed="you" bg={t.surface} fg={t.primary} />
           </Animated.View>
           <Animated.View style={[styles.avatarSlot, right]}>
-            <Avatar letter={match.otherUsername[0].toUpperCase()} bg={t.surface} fg={t.primary} font={t.fontDisplay} />
+            <Avatar seed={match.otherUsername} bg={t.surface} fg={t.primary} />
           </Animated.View>
         </View>
 

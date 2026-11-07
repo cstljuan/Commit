@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withRepeat,
   withSequence,
@@ -11,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useMode } from '@/lib/theme';
+import { useMotionOff } from '@/lib/prefs';
 
 import { MascotArt, type TakoState } from './art';
 
@@ -30,7 +30,7 @@ type Props = {
 /** The mascot with its motion. Its drawing lives in art.tsx, so it can be swapped there. */
 export function Tako({ state = 'idle', size = 96, color, animated = false }: Props) {
   const { t } = useMode();
-  const reduced = useReducedMotion();
+  const reduced = useMotionOff();
   const fill = state === 'broken' ? BROKEN_RED : (color ?? t.primary);
 
   const scale = useSharedValue(1);

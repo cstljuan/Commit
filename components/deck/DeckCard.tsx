@@ -6,7 +6,6 @@ import Animated, {
   interpolate,
   useAnimatedStyle,
   FadeInDown,
-  useReducedMotion,
   useSharedValue,
   withSpring,
   withTiming,
@@ -16,6 +15,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { SWIPE } from '@/lib/motion';
 import { useMode } from '@/lib/theme';
+import { useMotionOff } from '@/lib/prefs';
 
 import type { Card, Direction } from './cardTypes';
 import { SwipeCard } from './SwipeCard';
@@ -44,7 +44,7 @@ export const DeckCard = forwardRef<DeckCardHandle, Props>(function DeckCard(
 ) {
   const { width: W, height: H } = useWindowDimensions();
   const { copy, t } = useMode();
-  const reduced = useReducedMotion();
+  const reduced = useMotionOff();
 
   const offX = W * 1.4;
   const offY = H * 1.2;

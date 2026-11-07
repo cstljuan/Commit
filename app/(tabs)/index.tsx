@@ -10,6 +10,7 @@ import { MatchMoment, type MatchInfo } from '@/components/match/MatchMoment';
 import { ModeBackdrop } from '@/components/motion/ModeBackdrop';
 import { useModeFlip } from '@/components/motion/ModeWipe';
 import { PressScale } from '@/components/motion/PressScale';
+import { useTabInset } from '@/components/nav/TabBar';
 import { Tako, type TakoState } from '@/components/Tako/Tako';
 import { copy } from '@/lib/copy';
 import { useMode, type Mode } from '@/lib/theme';
@@ -20,6 +21,7 @@ export default function SwipeScreen() {
   const { mode, t } = useMode();
   const flip = useModeFlip();
   const { top } = useSafeAreaInsets();
+  const inset = useTabInset();
   const [mood, setMood] = useState<TakoState>('idle');
   const [match, setMatch] = useState<MatchInfo | null>(null);
 
@@ -34,7 +36,7 @@ export default function SwipeScreen() {
   };
 
   return (
-    <View style={[styles.root, { backgroundColor: t.bg, paddingTop: top + 8 }]}>
+    <View style={[styles.root, { backgroundColor: t.bg, paddingTop: top + 8, paddingBottom: inset }]}>
       <ModeBackdrop />
       <View style={styles.header}>
         <View style={[styles.switcher, { backgroundColor: t.surface }]}>
@@ -57,10 +59,10 @@ export default function SwipeScreen() {
         <Tako size={38} state={mood} animated />
       </View>
       <PressScale
-        onPress={() => router.push('/likes')}
+        onPress={() => router.push(mode === 'hack' ? '/hack/needs' : '/likes')}
         style={[styles.interested, { backgroundColor: t.primary + '1F' }]}>
         <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: 14 }}>
-          {sampleInterested.length} builders want in
+          {mode === 'hack' ? 'Your team needs 2 Backend, 1 Design' : `${sampleInterested.length} builders want in`}
         </Text>
       </PressScale>
       {/* A new mode is a new deck, so the key resets its position. */}

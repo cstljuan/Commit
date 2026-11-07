@@ -1,6 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Tako } from '@/components/Tako/Tako';
+import { Critter } from '@/components/critters/Critter';
+import { HashChip } from '@/components/motion/HashChip';
 import { useMode } from '@/lib/theme';
 
 import type { Card, PersonCard, ProjectCard, RoleCount } from './cardTypes';
@@ -34,14 +36,17 @@ function ProjectBody({ card }: { card: ProjectCard }) {
     <>
       <View style={[styles.art, { backgroundColor: t.primary + '24' }]}>
         <View style={styles.artTako}>
-          <Tako size={112} state="idle" />
+          <Critter seed={card.ownerUsername} size={128} disc={false} />
         </View>
         <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: 13 }}>
           {card.theme} · {card.timeframe}
         </Text>
-        <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 13 }}>
-          {card.visibility === 'private' ? 'Private idea' : 'Public idea'} · commit {card.commitHash}
-        </Text>
+        <View style={styles.row}>
+          <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 13 }}>
+            {card.visibility === 'private' ? 'Private idea' : 'Public idea'}
+          </Text>
+          <HashChip hash={card.commitHash} />
+        </View>
       </View>
       <Text numberOfLines={2} style={[styles.title, { color: t.text, fontFamily: t.fontDisplay }]}>
         {card.title}
@@ -63,12 +68,8 @@ function PersonBody({ card }: { card: PersonCard }) {
   const prompt = card.prompts[0];
   return (
     <>
-      <View style={styles.personTop}>
-        <View style={[styles.avatar, { backgroundColor: t.primary }]}>
-          <Text style={{ color: t.onPrimary, fontFamily: t.fontDisplay, fontSize: 30 }}>
-            {card.username[0].toUpperCase()}
-          </Text>
-        </View>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Open @${card.username}`} onPress={() => router.push(`/person/${card.username}`)} style={styles.personTop}>
+        <Critter seed={card.username} size={72} />
         <View style={styles.personName}>
           <Text numberOfLines={1} style={[styles.title, { color: t.text, fontFamily: t.fontDisplay, fontSize: 26 }]}>
             @{card.username}
@@ -77,7 +78,7 @@ function PersonBody({ card }: { card: PersonCard }) {
             {card.role}, {card.level}, {card.occupation}
           </Text>
         </View>
-      </View>
+      </Pressable>
       <Text numberOfLines={2} style={[styles.body, { color: t.text, fontFamily: t.fontBody }]}>
         {card.skills.join(', ')}
       </Text>
@@ -136,6 +137,5 @@ const styles = StyleSheet.create({
   pill: { flexShrink: 1, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 },
   personTop: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   personName: { flex: 1, gap: 2 },
-  avatar: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
   prompt: { flexGrow: 1, borderRadius: 20, padding: 16, gap: 6, justifyContent: 'center' },
 });
