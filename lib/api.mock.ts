@@ -674,3 +674,25 @@ export function __emitMockRedteamRun(kind: 'oracle' | 'rls', version: 'v1' | 'v2
       : { id: newId('rt'), kind, version, attempts: 12, revealed: 0, denied: 12, details: { simulated: true }, createdAt: nowIso() };
   redteamListeners.forEach((cb) => cb(clone(run)));
 }
+
+// ---------- reliability events (mock of 0011_reliability.sql) ----------
+
+const completedProjects = new Set<string>();
+
+function mockAdjust(label: string, delta: number): void {
+  demoScoreEvents.push({ label, delta });
+  if (me) me = { ...me, reliability: Math.max(0, Math.min(100, me.reliability + delta)) };
+}
+
+export async function completeProject(projectId: string): Promise<{ members: number }> {
+  if (completedProjects.has(projectId)) throw new Error('project already completed');
+  completedProjects.add(projectId);
+  mockAdjust('Finished a project', 5);
+  return wait({ members: 3 });
+}
+
+export async function leaveTeam(projectId: string): Promise<void> {
+  if (completedProjects.has(projectId)) throw new Error('project already completed');
+  mockAdjust('Left a team with notice', -3);
+  return wait(undefined);
+}

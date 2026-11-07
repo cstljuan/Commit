@@ -644,3 +644,18 @@ export async function getScoreEvents(): Promise<ScoreEvent[]> {
   if (diff !== 0) events.push({ label: 'Seeded demo history', delta: diff });
   return events;
 }
+
+// ---------- reliability events (0011_reliability.sql) ----------
+
+/** Owner marks a project finished: every active member, owner included, gets +5 once. */
+export async function completeProject(projectId: string): Promise<{ members: number }> {
+  const { data, error } = await supabase.rpc('complete_project', { p_project: projectId });
+  fail(error);
+  return { members: Number((data as { members?: number } | null)?.members ?? 0) };
+}
+
+/** A member leaves a team with notice: -3, and their role slot opens again. Owners cannot leave. */
+export async function leaveTeam(projectId: string): Promise<void> {
+  const { error } = await supabase.rpc('leave_team', { p_project: projectId });
+  fail(error);
+}
