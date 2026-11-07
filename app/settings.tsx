@@ -79,7 +79,7 @@ export default function SettingsScreen() {
   return (
     <Screen title="Settings">
       <Reveal index={0}>
-        <PressScale accessibilityLabel="See all creatures" onPress={() => router.push('/creatures')} style={[styles.me, { backgroundColor: `${me.colour}1F` }]}>
+        <PressScale accessibilityLabel="See all creatures" onPress={() => router.push('/creatures')} style={[styles.me, { backgroundColor: `${me.color}1F` }]}>
           <Critter seed="you" size={84} animated />
           <View style={styles.rowText}>
             <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: type.title }}>{me.name}</Text>

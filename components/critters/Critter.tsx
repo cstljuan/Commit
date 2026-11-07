@@ -21,15 +21,15 @@ type Props = {
   disc?: boolean;
   /** Overrides what the seed picked, for the gallery. */
   species?: Species;
-  colour?: string;
+  color?: string;
 };
 
-export function Critter({ seed, size = 56, animated = false, disc = true, species, colour }: Props) {
+export function Critter({ seed, size = 56, animated = false, disc = true, species, color }: Props) {
   const motionOff = useMotionOff();
   const id = critterFor(seed);
   const shape = SHAPES[species ?? id.species];
-  const base = colour ?? id.colour;
-  // On a disc the creature is white on its own solid colour. The eyes cut through to the colour.
+  const base = color ?? id.color;
+  // On a disc the creature is white on its own solid color. The eyes cut through to the color.
   const fill = disc ? '#FFFFFF' : base;
   const [blink, setBlink] = useState(false);
   const bob = useSharedValue(0);

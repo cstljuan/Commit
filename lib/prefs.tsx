@@ -14,7 +14,7 @@ export type Prefs = {
   notifyMatches: boolean;
   notifyCopyAlerts: boolean;
   hachiAccessory: 'auto' | 'band' | 'bow' | 'party' | 'none';
-  /** 'auto' follows the mode colour, otherwise a hex picked on the Meet screen. */
+  /** 'auto' follows the mode color, otherwise a hex picked on the Meet screen. */
   hachiColor: string;
 };
 

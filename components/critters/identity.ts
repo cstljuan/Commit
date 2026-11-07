@@ -6,7 +6,7 @@
 export const SPECIES = ['jellyfish', 'crab', 'whale', 'puffer', 'shark', 'ray', 'turtle', 'axolotl', 'cat', 'dog'] as const;
 export type Species = (typeof SPECIES)[number];
 
-export const COLOURS = [
+export const COLORS = [
   { name: 'Coral', hex: '#E8552F' },
   { name: 'Amber', hex: '#C97A00' },
   { name: 'Aonori', hex: '#4E8A1E' },
@@ -32,11 +32,11 @@ function hash(seed: string) {
 export function critterFor(seed: string) {
   const h = hash(seed);
   const species = SPECIES[h % SPECIES.length];
-  const colour = COLOURS[Math.floor(h / SPECIES.length) % COLOURS.length];
+  const color = COLORS[Math.floor(h / SPECIES.length) % COLORS.length];
   return {
     species,
-    colour: colour.hex,
-    name: `${colour.name} ${species[0].toUpperCase()}${species.slice(1)}`,
+    color: color.hex,
+    name: `${color.name} ${species[0].toUpperCase()}${species.slice(1)}`,
     fingerprint: h.toString(16).padStart(8, '0').slice(0, 6),
   };
 }

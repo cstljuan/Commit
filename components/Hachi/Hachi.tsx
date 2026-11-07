@@ -55,7 +55,7 @@ type Props = {
   /** Holds this state. Leave out and use the ref or the `hachi` bus instead. */
   state?: HachiState | string;
   size?: number;
-  /** Overrides the mode colour, for example on a coloured background. */
+  /** Overrides the mode color, for example on a colored background. */
   color?: string;
   /** Runs the live engine. Off draws one still frame, for long lists. */
   animated?: boolean;

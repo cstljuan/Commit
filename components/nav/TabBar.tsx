@@ -28,7 +28,7 @@ export const useTabInset = () => {
   return 56 + Math.max(bottom - 8, space.s) + space.s;
 };
 
-/** A floating bar whose highlight slides between tabs, in the colour of the current mode. */
+/** A floating bar whose highlight slides between tabs, in the color of the current mode. */
 export function TabBar({ state, descriptors, navigateToTab }: BottomTabBarProps) {
   const { t } = useMode();
   const { bottom } = useSafeAreaInsets();

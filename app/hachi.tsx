@@ -37,8 +37,8 @@ const ACCESSORIES: { value: Prefs['hachiAccessory']; label: string }[] = [
   { value: 'party', label: 'Party' },
 ];
 
-const COLOURS: { value: string; label: string }[] = [
-  { value: 'auto', label: 'Mode colour' },
+const COLORS: { value: string; label: string }[] = [
+  { value: 'auto', label: 'Mode color' },
   { value: '#FF6B35', label: 'Takoyaki' },
   { value: '#FF2E93', label: 'Pink' },
   { value: '#22D3EE', label: 'Cyan' },
@@ -118,9 +118,9 @@ export default function HachiScreen() {
         </View>
       </Reveal>
       <Reveal index={1} style={styles.block}>
-        <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: type.small }}>Colour, everywhere in the app</Text>
+        <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: type.small }}>Color, everywhere in the app</Text>
         <View style={styles.swatches}>
-          {COLOURS.map((c) => {
+          {COLORS.map((c) => {
             const on = (prefs.hachiColor ?? 'auto') === c.value;
             return (
               <Pressable

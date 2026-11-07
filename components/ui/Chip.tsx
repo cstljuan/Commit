@@ -5,7 +5,7 @@ import { useMode } from '@/lib/theme';
 
 type Props = { label: string; selected: boolean; onPress: () => void };
 
-/** Tappable chip for multi or single choice. Selected state uses colour and a check mark, never colour alone. */
+/** Tappable chip for multi or single choice. Selected state uses color and a check mark, never color alone. */
 export function Chip({ label, selected, onPress }: Props) {
   const { t } = useMode();
   const [pressed, setPressed] = useState(false);

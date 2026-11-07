@@ -16,7 +16,7 @@ const luminance = (hex: string) => {
   });
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 };
-/** Text on a coloured art block: dark on light colours like orange and gold, white on deep ones. */
+/** Text on a colored art block: dark on light colors like orange and gold, white on deep ones. */
 const inkOn = (hex: string) => {
   if (!/^#[0-9a-f]{6}$/i.test(hex)) return '#FFFFFF';
   const l = luminance(hex);
@@ -51,13 +51,13 @@ function Reliability({ score }: { score: number }) {
 
 function ProjectBody({ card }: { card: ProjectCard }) {
   const { t } = useMode();
-  const art = critterFor(card.ownerBoxPublicKey ?? card.ownerUsername).colour;
+  const art = critterFor(card.ownerBoxPublicKey ?? card.ownerUsername).color;
   const ink = inkOn(art);
   return (
     <>
       <View style={[styles.art, { backgroundColor: art }]}>
         <View style={styles.artCritter}>
-          <Critter seed={card.ownerBoxPublicKey ?? card.ownerUsername} size={128} disc={false} colour="#FFFFFF" />
+          <Critter seed={card.ownerBoxPublicKey ?? card.ownerUsername} size={128} disc={false} color="#FFFFFF" />
         </View>
         <Text style={{ color: ink, fontFamily: t.fontBold, fontSize: 14 }}>
           {card.theme} · {card.timeframe[0]?.toUpperCase()}{card.timeframe.slice(1)}
@@ -87,7 +87,7 @@ function ProjectBody({ card }: { card: ProjectCard }) {
 function PersonBody({ card }: { card: PersonCard }) {
   const { t } = useMode();
   const prompt = card.prompts[0];
-  const art = critterFor(card.boxPublicKey ?? card.username).colour;
+  const art = critterFor(card.boxPublicKey ?? card.username).color;
   return (
     <>
       <Pressable accessibilityRole="button" accessibilityLabel={`Open @${card.username}`} onPress={() => router.push(`/person/${card.username}`)} style={styles.personTop}>

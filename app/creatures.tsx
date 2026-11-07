@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { ZoomIn } from 'react-native-reanimated';
 
-import { COLOURS, critterFor, SPECIES, type Species } from '@/components/critters/identity';
+import { COLORS, critterFor, SPECIES, type Species } from '@/components/critters/identity';
 import { Critter, useCritterHop } from '@/components/critters/Critter';
 import { HashChip } from '@/components/motion/HashChip';
 import { PressScale } from '@/components/motion/PressScale';
@@ -28,7 +28,7 @@ function Tile({ species, index }: { species: Species; index: number }) {
         }}
         style={[styles.tile, { backgroundColor: t.surface }]}>
         <Animated.View style={style}>
-          <Critter seed={species} species={species} colour={COLOURS[index % COLOURS.length].hex} size={72} animated disc={false} />
+          <Critter seed={species} species={species} color={COLORS[index % COLORS.length].hex} size={72} animated disc={false} />
         </Animated.View>
         <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: type.small }}>{species[0].toUpperCase() + species.slice(1)}</Text>
       </PressScale>
@@ -45,10 +45,10 @@ export default function CreaturesScreen() {
   return (
     <Screen title="The creatures">
       <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: type.body, lineHeight: 22 }}>
-        Nobody has a photo here. Your creature and colour come from your key, so the same key always gives the same creature.
+        Nobody has a photo here. Your creature and color come from your key, so the same key always gives the same creature.
       </Text>
 
-      <View style={[styles.lab, { backgroundColor: `${id.colour}1F` }]}>
+      <View style={[styles.lab, { backgroundColor: `${id.color}1F` }]}>
         <Animated.View key={id.name} entering={ZoomIn.springify().damping(11).stiffness(240)}>
           <Critter seed={seed || ' '} size={132} animated disc={false} />
         </Animated.View>
