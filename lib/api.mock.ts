@@ -412,11 +412,6 @@ export async function signInWithProvider(_provider: 'github' | 'google'): Promis
   return wait(undefined, 600);
 }
 
-export async function signInWithPassword(email: string, _password: string): Promise<void> {
-  if (!email.includes('@')) throw new Error('Enter a valid email');
-  return wait(undefined);
-}
-
 export async function signUpWithPassword(email: string, _password: string): Promise<{ needsConfirmation: boolean }> {
   if (!email.includes('@')) throw new Error('Enter a valid email');
   return wait({ needsConfirmation: false });
@@ -545,10 +540,6 @@ export async function getTeam(projectId: string): Promise<Team> {
     ].slice(0, isHackTeam ? 4 : undefined),
     roles: roles(['Backend', 1, 1], ['Design', 1, committed.some((m) => m.role === 'Design') ? 1 : 0], ['Frontend', 1, 0]),
   });
-}
-
-export async function getMyProjects(): Promise<MyProject[]> {
-  return wait(demoProjects);
 }
 
 export async function getMyProjects(): Promise<MyProject[]> {
