@@ -291,6 +291,16 @@ export async function getReply(chatId: string, username: string | undefined, his
   }
   if (isHachi) return { ...hachiReply(chatId, last), source: 'built-in' };
   const project = peers.get(chatId)?.project ?? demoMatches.find((m) => m.username === username)?.project ?? 'the project';
+  // Confused? Explain the last thing we said instead of changing the subject.
+  if (/\b(what (do|does) (you|that|dat|it) mean|what dat mean|what does that mean|you just said|who are you talking to|huh|confus|what are you (on|saying))\b/i.test(last) || /^what\b.{0,30}\?*$/i.test(last.trim())) {
+    const said = [...history].reverse().find((m) => !m.mine)?.body;
+    const texts = /who are you talking to/i.test(last)
+      ? ['you, sorry, I was thinking out loud', `I mean ${project}: what part do you want to take?`]
+      : said
+        ? [`my bad, I meant: ${said.replace(/^(my bad, I meant: )+/i, '')}`, `basically, how do you want to split ${project}?`]
+        : [`sorry, I mean ${project}. what part do you want to take?`];
+    return { texts, source: 'built-in' };
+  }
   const texts = personaReply(chatId, username ?? 'ben_codes', last).map((t) => t.replace('{project}', project));
   return { texts, source: 'built-in' };
 }

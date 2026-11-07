@@ -5,7 +5,26 @@
  * Set EXPO_PUBLIC_LLM_URL=http://<laptop-ip>:8080 in .env. With no URL, or if the laptop stops
  * answering, chat falls back to the replies built into lib/chatbot.ts, so a demo never hangs.
  */
-const URL_BASE = process.env.EXPO_PUBLIC_LLM_URL?.replace(/\/$/, '') || undefined;
+import Constants from 'expo-constants';
+
+/**
+ * The laptop's Wi-Fi address changes from network to network, and the model runs on the same laptop
+ * that serves the app in development. So keep the port from .env but take the host the app itself
+ * was loaded from. A release build has no dev host and uses .env as written.
+ */
+function resolveBase(): string | undefined {
+  const raw = process.env.EXPO_PUBLIC_LLM_URL?.replace(/\/$/, '');
+  if (!raw) return undefined;
+  const devHost = Constants.expoConfig?.hostUri?.split(':')[0];
+  if (!devHost) return raw;
+  try {
+    const u = new URL(raw);
+    return `${u.protocol}//${devHost}:${u.port || '8080'}`;
+  } catch {
+    return raw;
+  }
+}
+const URL_BASE = resolveBase();
 const MODEL = process.env.EXPO_PUBLIC_LLM_MODEL || 'local';
 const KEY = process.env.EXPO_PUBLIC_LLM_KEY;
 // A teammate who takes longer than this to answer feels broken, so fall back to a built-in reply.
