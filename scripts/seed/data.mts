@@ -136,3 +136,25 @@ export const projects: SeedProject[] = [
     idea: 'Students leaving for the summer list their rooms, and interns search by office location and dates. It flags overlapping leases and handles the first message for you.',
     roles: [{ role: 'Backend', open: 1 }, { role: 'PM', open: 1 }] },
 ];
+
+// Copy alert on Alice's Pocket Tutor. Posted through post_idea_v1 with hidden: true, so it never reaches a deck.
+export const copyRewrite = {
+  by: 'sam',
+  title: 'Quiz My Notes',
+  teaser: 'Upload your lecture notes and get quizzes on the parts you forget.',
+  idea: 'A study app that reads your lecture notes, makes short quizzes out of them, and uses spaced repetition to bring back the exact facts you got wrong last time. It tracks the topics you keep forgetting and schedules a quick five minute review before each class.',
+};
+
+// Bob's sample match, so his Matches tab is not empty before the live demo. The project is hidden.
+export const sampleMatch = {
+  owner: 'priya',
+  title: 'Sticker Lab',
+  theme: 'Design',
+  teaser: 'Design custom laptop stickers with friends and order one shared print run.',
+  idea: 'Friends design stickers together on a shared canvas, vote on the final set, and split one print order so shipping stays cheap.',
+  chat: [
+    { from: 'priya', text: 'Hey Bob! Saw you like Postgres. Want to own the backend for Sticker Lab?' },
+    { from: 'bob', text: 'Yes, I can sketch the tables tonight.' },
+    { from: 'priya', text: 'Perfect, I will share the Figma file after class.' },
+  ],
+};
