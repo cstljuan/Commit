@@ -82,20 +82,36 @@ export default function LoginScreen() {
   const [usePassword, setUsePassword] = useState(true);
   const [passwordBusy, setPasswordBusy] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  // Say what is missing instead of greying the buttons out.
+  const passwordReady = (forNewAccount: boolean) => {
+    if (!emailValid) {
+      setEmailError('Enter a full email, like you@email.com');
+      emailRef.current?.focus();
+      return false;
+    }
+    if (!password || (forNewAccount && password.length < 6)) {
+      setPasswordError(forNewAccount ? 'Pick a password with at least 6 characters.' : 'Enter your password.');
+      return false;
+    }
+    return true;
+  };
+
   const withPassword = async () => {
+    if (!passwordReady(false)) return;
     setPasswordBusy(true);
     setPasswordError(null);
     try {
       await signInWithPassword(email.trim().toLowerCase(), password);
       await done();
     } catch {
-      setPasswordError('That email and password did not work.');
+      setPasswordError('That email and password did not work. New here? Tap Create account.');
     } finally {
       setPasswordBusy(false);
     }
   };
 
   const createAccount = async () => {
+    if (!passwordReady(true)) return;
     setPasswordBusy(true);
     setPasswordError(null);
     try {
@@ -236,15 +252,19 @@ export default function LoginScreen() {
                   <TextField
                     label="Password"
                     value={password}
-                    onChangeText={setPassword}
+                    onChangeText={(v) => {
+                      setPassword(v);
+                      if (passwordError) setPasswordError(null);
+                    }}
                     error={passwordError}
+                    hint="At least 6 characters."
                     secureTextEntry
                     textContentType="password"
                     autoCapitalize="none"
                     autoCorrect={false}
                   />
-                  <Button label="Sign in" onPress={withPassword} loading={passwordBusy} disabled={!emailValid || !password || passwordBusy} />
-                  <Button label="Create account" variant="outline" onPress={createAccount} disabled={!emailValid || password.length < 6 || passwordBusy} />
+                  <Button label="Sign in" onPress={withPassword} loading={passwordBusy} disabled={busy || passwordBusy} />
+                  <Button label="Create account" variant="outline" onPress={createAccount} disabled={busy || passwordBusy} />
                 </>
               ) : (
                 <Button
