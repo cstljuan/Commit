@@ -2,9 +2,11 @@
 // UI lanes build against this until the real Supabase functions land.
 // All data is synthetic. Avatars are null so the UI shows illustrated placeholders, never real photos.
 
-import { demoProjects } from './demoData';
+import { demoActivity, demoProjects, demoScoreEvents } from './demoData';
 import type {
   MyProject,
+  ActivityEvent,
+  ScoreEvent,
   Card,
   ChatMessage,
   CopyAlert,
@@ -495,6 +497,32 @@ export async function undoLastSwipe(): Promise<void> {
 
 export async function getInterested(): Promise<{ count: number; cards: Interested[] }> {
   return wait({ count: interested.length, cards: clone(interested) });
+}
+
+export async function respondToInterested(swipeRef: string, like: boolean): Promise<{ matched: boolean; match?: Match }> {
+  const i = interested.findIndex((c) => c.swipeRef === swipeRef);
+  if (i < 0) throw new Error('Card not found');
+  const [card] = interested.splice(i, 1);
+  if (!like) return wait({ matched: false });
+  const match: Match = {
+    id: newId('m'), projectId: 'p_bob_main', role: card.role, otherUsername: `secret_${card.role.toLowerCase().replace('/', '')}`,
+    otherAvatarUrl: null, projectTitle: 'Bob main project', iCommitted: false, theyCommitted: false, isTeam: false,
+  };
+  matches = [match, ...matches];
+  messages[match.id] = [];
+  return wait({ matched: true, match: clone(match) });
+}
+
+export async function setHackRoles(_roles: { role: Role; open: number }[]): Promise<void> {
+  return wait(undefined);
+}
+
+export async function getActivity(): Promise<ActivityEvent[]> {
+  return wait(demoActivity.map((e) => ({ ...e, createdAt: new Date().toISOString() })));
+}
+
+export async function getScoreEvents(): Promise<ScoreEvent[]> {
+  return wait(clone(demoScoreEvents));
 }
 
 // ---------- matches and teams ----------

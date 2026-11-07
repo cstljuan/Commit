@@ -11,6 +11,8 @@ import { encryptForTeam } from './crypto';
 import { createTeamKey, shareTeamKey, storeOwnTeamKey } from './teamKeys';
 import { appendVault, hashIdea } from './vault';
 import type {
+  ActivityEvent,
+  ScoreEvent,
   Card,
   ChatMessage,
   CopyAlert,
@@ -543,4 +545,88 @@ export function subscribeRedteamRuns(cb: (r: RedteamRun) => void): () => void {
   }>('redteam', 'redteam_runs', undefined, (r) =>
     cb({ id: r.id, kind: r.kind, version: r.version, attempts: r.attempts, revealed: r.revealed, denied: r.denied, details: r.details, createdAt: r.created_at }),
   );
+}
+
+// ---------- Who wants you, Hack needs, Activity, Score ----------
+
+/**
+ * Like or pass on a blurred card (F5). Identity is never sent before this. A like creates the match,
+ * and the returned match carries the other person's username.
+ */
+export async function respondToInterested(swipeRef: string, like: boolean): Promise<{ matched: boolean; match?: Match }> {
+  const { data, error } = await supabase.rpc('respond_interested', { p_swipe_ref: swipeRef, p_like: like });
+  fail(error);
+  const res = data as { matched: boolean; matchId?: string };
+  if (!res.matched || !res.matchId) return { matched: false };
+  return { matched: true, match: (await getMatches()).find((m) => m.id === res.matchId) };
+}
+
+/** Saves what the caller's hack team still needs. Creates the hidden team shell on first use. */
+export async function setHackRoles(roles: { role: Role; open: number }[]): Promise<void> {
+  const { error } = await supabase.rpc('ensure_hack_team', { p_roles: roles });
+  fail(error);
+}
+
+function ago(iso: string): string {
+  const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)} hour${s < 7200 ? '' : 's'} ago`;
+  return `${Math.floor(s / 86400)} day${s < 172800 ? '' : 's'} ago`;
+}
+
+/** Newest first: matches, anonymous Super Commits, copy alerts, people joining my projects, my vault entries. */
+export async function getActivity(): Promise<ActivityEvent[]> {
+  const me = await uid();
+  const [matches, alerts, { data: owned }, { data: vault }, interested] = await Promise.all([
+    getMatches(),
+    getCopyAlerts(),
+    supabase.from('projects').select('id, title').eq('owner_id', me).neq('type', 'hackathon'),
+    supabase.from('vault_log').select('seq, project_id, ts').eq('author_id', me).order('seq', { ascending: false }).limit(10),
+    getInterested(),
+  ]);
+  const titles = new Map((owned ?? []).map((p) => [p.id, p.title]));
+  const { data: matchTimes } = await supabase.from('matches').select('id, created_at').in('id', matches.map((m) => m.id));
+  const matchAt = new Map((matchTimes ?? []).map((m) => [m.id, m.created_at as string]));
+  const { data: joins } = titles.size
+    ? await supabase.from('team_members').select('project_id, user_id, joined_at')
+        .in('project_id', [...titles.keys()]).neq('user_id', me).eq('status', 'active')
+    : { data: [] as { project_id: string; user_id: string; joined_at: string }[] };
+  await Promise.all([...new Set((joins ?? []).map((j) => j.user_id))].map(usernameOf));
+
+  const events: Omit<ActivityEvent, 'when'>[] = [
+    ...alerts.map((a) => ({ id: `alert:${a.id}`, kind: 'alert' as const, seed: 'unknown', title: `Someone reworded ${a.originalTitle}`, createdAt: a.createdAt, href: '/alert' })),
+    ...matches.map((m) => ({
+      id: `match:${m.id}`, kind: 'match' as const, seed: m.otherUsername, title: `You matched with @${m.otherUsername}`,
+      createdAt: matchAt.get(m.id) ?? new Date(0).toISOString(), href: `/chat/${m.id}`,
+    })),
+    ...(joins ?? []).map((j) => {
+      const name = usernames.get(j.user_id) ?? 'someone';
+      return { id: `team:${j.project_id}:${j.user_id}`, kind: 'team' as const, seed: name, title: `@${name} committed to ${titles.get(j.project_id) ?? 'your project'}`, createdAt: j.joined_at, href: `/project/${j.project_id}` };
+    }),
+    ...(vault ?? []).map((v) => ({ id: `commit:${v.seq}`, kind: 'commit' as const, seed: 'you', title: `${titles.get(v.project_id) ?? 'Your idea'} was committed to the vault`, createdAt: v.ts, href: '/commits' })),
+  ];
+  // Super Commits stay anonymous until you like back (F5).
+  const supers = interested.cards.filter((c) => c.isSuper);
+  if (supers.length) {
+    events.push({ id: 'super', kind: 'super', seed: 'unknown', title: supers.length === 1 ? 'Someone sent you a Super Commit' : `${supers.length} people sent you a Super Commit`, createdAt: new Date().toISOString(), href: '/likes' });
+  }
+  return events
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((e) => ({ ...e, when: ago(e.createdAt) }));
+}
+
+/** Reliability history. Starts at 70; anything the log does not explain is labelled as seeded demo history. */
+export async function getScoreEvents(): Promise<ScoreEvent[]> {
+  const me = await uid();
+  const [{ data: profile, error: e1 }, { data: rows, error: e2 }] = await Promise.all([
+    supabase.from('profiles').select('reliability_score').eq('id', me).single(),
+    supabase.from('reliability_events').select('label, delta, created_at').eq('user_id', me).order('created_at'),
+  ]);
+  fail(e1);
+  fail(e2);
+  const events: ScoreEvent[] = [{ label: 'Everyone starts here', delta: 70 }, ...(rows ?? []).map((r) => ({ label: r.label, delta: r.delta }))];
+  const diff = (profile?.reliability_score ?? 70) - events.reduce((a, e) => a + e.delta, 0);
+  if (diff !== 0) events.push({ label: 'Seeded demo history', delta: diff });
+  return events;
 }

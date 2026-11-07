@@ -76,6 +76,20 @@ export type MyProject = {
   roles: { role: Role; username: string | null }[];
 };
 
+/** One row on the Activity screen. `seed` drives the Critter; 'unknown' when identity must stay hidden. */
+export type ActivityEvent = {
+  id: string;
+  kind: 'match' | 'super' | 'alert' | 'team' | 'commit';
+  seed: string;
+  title: string;
+  when: string; // relative, e.g. '4 min ago'
+  createdAt: string; // ISO
+  href: string;
+};
+
+/** One line on the Score screen. The deltas add up to the current reliability score. */
+export type ScoreEvent = { label: string; delta: number };
+
 /** Blurred card. MUST contain no identity. The server only sends identity on reveal. */
 export type Interested = { swipeRef: string; role: Role; level: Level; isSuper: boolean };
 
