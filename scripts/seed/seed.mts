@@ -1,6 +1,8 @@
 // Seed and reset demo data in one command.
 //   npx tsx scripts/seed/seed.mts             reset, then seed clean demo state
 //   npx tsx scripts/seed/seed.mts --reset     reset only
+// For the full demo reset (QA cleanup, demo keys cleared, checklist) use scripts/seed/reset-demo.mts,
+// which imports reset() and seed() from here.
 // Reads scripts/.env (never committed): SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
 // DEMO_ALICE_EMAIL/PASSWORD, DEMO_BOB_EMAIL/PASSWORD. Adds SEED_USER_PASSWORD on first run.
 //
@@ -11,12 +13,12 @@
 
 import { randomBytes } from 'node:crypto';
 import { readFileSync, appendFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import nacl from 'tweetnacl';
 import naclUtil from 'tweetnacl-util';
 
-import { DEMO_DOMAIN, projects, users, type SeedUser } from './data.mts';
+import { DEMO_DOMAIN, projects, users, copyRewrite, sampleMatch, type SeedUser } from './data.mts';
 
 const { encodeBase64, decodeUTF8 } = naclUtil;
 const here = dirname(fileURLToPath(import.meta.url));
@@ -31,7 +33,7 @@ function loadEnv(): Record<string, string> {
   return env;
 }
 
-const env = loadEnv();
+export const env = loadEnv();
 if (!env.SEED_USER_PASSWORD) {
   env.SEED_USER_PASSWORD = randomBytes(12).toString('base64url');
   appendFileSync(envPath, `SEED_USER_PASSWORD=${env.SEED_USER_PASSWORD}\n`);
@@ -42,22 +44,22 @@ if (!URL || !SECRET) throw new Error('scripts/.env needs SUPABASE_URL and SUPABA
 
 const H = { apikey: SECRET, 'Content-Type': 'application/json' };
 
-async function api(path: string, init: RequestInit = {}): Promise<any> {
+export async function api(path: string, init: RequestInit = {}): Promise<any> {
   const res = await fetch(URL + path, { ...init, headers: { ...H, ...(init.headers as any) } });
   const text = await res.text();
   if (!res.ok) throw new Error(`${init.method ?? 'GET'} ${path.split('?')[0]} ${res.status}: ${text.slice(0, 200)}`);
   return text ? JSON.parse(text) : null;
 }
-const rest = (path: string, init: RequestInit = {}) =>
+export const rest = (path: string, init: RequestInit = {}) =>
   api('/rest/v1/' + path, { ...init, headers: { Prefer: 'return=representation', ...(init.headers as any) } });
-const inList = (ids: string[]) => `in.(${ids.join(',')})`;
+export const inList = (ids: string[]) => `in.(${ids.join(',')})`;
 
-const emailFor = (u: SeedUser) =>
+export const emailFor = (u: SeedUser) =>
   u.key === 'alice' ? env.DEMO_ALICE_EMAIL : u.key === 'bob' ? env.DEMO_BOB_EMAIL : `${u.key}@${DEMO_DOMAIN}`;
-const passwordFor = (u: SeedUser) =>
+export const passwordFor = (u: SeedUser) =>
   u.key === 'alice' ? env.DEMO_ALICE_PASSWORD : u.key === 'bob' ? env.DEMO_BOB_PASSWORD : env.SEED_USER_PASSWORD;
 
-async function demoAuthUsers(): Promise<{ id: string; email: string }[]> {
+export async function demoAuthUsers(): Promise<{ id: string; email: string }[]> {
   const out: { id: string; email: string }[] = [];
   for (let page = 1; page < 20; page++) {
     const j = await api(`/auth/v1/admin/users?page=${page}&per_page=200`);
@@ -68,7 +70,7 @@ async function demoAuthUsers(): Promise<{ id: string; email: string }[]> {
   return out;
 }
 
-async function reset() {
+export async function reset() {
   const all = await demoAuthUsers();
   const demoEmails = new Set([env.DEMO_ALICE_EMAIL, env.DEMO_BOB_EMAIL]);
   const keep = all.filter((u) => demoEmails.has(u.email));
@@ -91,6 +93,13 @@ async function reset() {
     await rest(`matches?user_id=${inList(keepIds)}`, { method: 'DELETE' });
     await rest(`team_members?user_id=${inList(keepIds)}&ownership=neq.owner`, { method: 'DELETE' });
     await rest(`projects?owner_id=${inList(keepIds)}${notLocked}`, { method: 'DELETE' });
+  }
+  // match_messages.sender_id and messages.sender_id have no cascade, so chat rows written by a synthetic
+  // user would block deleting that user. They are demo data, so they go first.
+  const synthIds = synthetic.map((u) => u.id);
+  if (synthIds.length) {
+    await rest(`match_messages?sender_id=${inList(synthIds)}`, { method: 'DELETE' });
+    await rest(`messages?sender_id=${inList(synthIds)}`, { method: 'DELETE' });
   }
   let deleted = 0;
   for (const u of synthetic) {
@@ -120,26 +129,37 @@ async function ensureUser(u: SeedUser, existing: Map<string, string>): Promise<s
 
 type Keys = { boxPub: string; boxSec: Uint8Array };
 
-/** Signs in as the user and posts through the deployed post_idea function. Returns the project id. */
-async function postIdeaAs(u: SeedUser, body: Record<string, unknown>): Promise<string> {
+/** Signs in with the publishable key, like the app does. Returns the access token. */
+export async function signInToken(email: string, password: string): Promise<string> {
   const pub = env.SUPABASE_PUBLISHABLE_KEY;
   if (!pub) throw new Error('scripts/.env needs SUPABASE_PUBLISHABLE_KEY');
   const tok = await fetch(URL + '/auth/v1/token?grant_type=password', {
     method: 'POST', headers: { apikey: pub, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: emailFor(u), password: passwordFor(u) }),
+    body: JSON.stringify({ email, password }),
   }).then((r) => r.json());
-  if (!tok.access_token) throw new Error(`could not sign in as ${u.key}`);
-  const res = await fetch(URL + '/functions/v1/post_idea', {
+  if (!tok.access_token) throw new Error(`could not sign in as ${email.split('@')[0]}`);
+  return tok.access_token;
+}
+
+/** Signs in as the user and posts through a deployed post_idea function. Returns the function's JSON. */
+async function callPostIdea(u: SeedUser, body: Record<string, unknown>, fn: 'post_idea' | 'post_idea_v1'): Promise<any> {
+  const token = await signInToken(emailFor(u), passwordFor(u));
+  const res = await fetch(URL + '/functions/v1/' + fn, {
     method: 'POST',
-    headers: { apikey: pub, Authorization: `Bearer ${tok.access_token}`, 'Content-Type': 'application/json' },
+    headers: { apikey: env.SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
   const j = await res.json().catch(() => ({}));
-  if (!res.ok || !j.projectId) throw new Error(`post_idea as ${u.key} failed: ${res.status} ${JSON.stringify(j)}`);
-  return j.projectId;
+  if (!res.ok || !j.projectId) throw new Error(`${fn} as ${u.key} failed: ${res.status} ${JSON.stringify(j)}`);
+  return j;
 }
 
-async function seed() {
+/** Signs in as the user and posts through the deployed post_idea function. Returns the project id. */
+async function postIdeaAs(u: SeedUser, body: Record<string, unknown>): Promise<string> {
+  return (await callPostIdea(u, body, 'post_idea')).projectId;
+}
+
+export async function seed() {
   const existing = new Map((await demoAuthUsers()).map((u) => [u.email, u.id]));
   const ids = new Map<string, string>();
   const keys = new Map<string, Keys>();
@@ -239,9 +259,58 @@ async function seed() {
   ];
   await rest('swipes', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(swipes) });
   console.log('seed: demo swipes (Alice liked Bob for Pocket Tutor; rio and omar liked Bob in Hack mode)');
+
+  // Copy alert on Alice's Pocket Tutor: a synthetic user posts a close rewrite through post_idea_v1
+  // (the real copy detection path). hidden: true keeps the rewrite out of every deck.
+  const copier = users.find((u) => u.key === copyRewrite.by)!;
+  const copy = await callPostIdea(copier, {
+    title: copyRewrite.title, shortPitch: copyRewrite.teaser, type: 'original', theme: 'Education', timeframe: 'weekend',
+    visibility: 'public', hidden: true, roles: [], fullIdea: copyRewrite.idea,
+  }, 'post_idea_v1');
+  const copyHit = copy.similarTo === projectIds.get('tutor');
+  console.log(`seed: copy rewrite posted by ${copier.username} (hidden), ` +
+    (copyHit ? `matched Pocket Tutor at ${Number(copy.similarity).toFixed(3)}, alert created`
+             : `WARNING: did not match Pocket Tutor (similarTo=${copy.similarTo ?? 'none'})`));
+
+  // A sample match for Bob so his Matches tab is not empty: a hidden project by a synthetic owner
+  // (hidden, so it never shows in a deck), Bob matched as Backend, and a short plain chat.
+  // Plain on purpose: Bob has no device keys until his phone registers them, so nothing can be sealed to him yet.
+  const mOwner = ids.get(sampleMatch.owner)!;
+  const [mp] = await rest('projects', {
+    method: 'POST',
+    body: JSON.stringify({ owner_id: mOwner, title: sampleMatch.title, short_pitch: sampleMatch.teaser, type: 'original',
+      theme: sampleMatch.theme, field: sampleMatch.theme, timeframe: 'weekend', visibility: 'public',
+      idea_public: sampleMatch.idea, hidden: true }),
+  });
+  await rest('project_roles', {
+    method: 'POST', headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ project_id: mp.id, role: 'Backend', slots_open: 1 }),
+  });
+  await rest('team_members', {
+    method: 'POST', headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ project_id: mp.id, user_id: mOwner, role: users.find((u) => u.key === sampleMatch.owner)!.role, ownership: 'owner' }),
+  });
+  const base = Date.now() - 60 * 60_000;
+  const [match] = await rest('matches', {
+    method: 'POST',
+    body: JSON.stringify({ project_id: mp.id, user_id: bob, role: 'Backend', created_at: new Date(base).toISOString() }),
+  });
+  await rest('match_messages', {
+    method: 'POST', headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify(sampleMatch.chat.map((c, i) => ({
+      match_id: match.id, sender_id: ids.get(c.from), body: c.text,
+      created_at: new Date(base + (i + 1) * 5 * 60_000).toISOString(),
+    }))),
+  });
+  console.log(`seed: sample match for Bob with ${sampleMatch.owner} on "${sampleMatch.title}" (hidden project), ${sampleMatch.chat.length} plain messages`);
+
+  return { ids, projectIds, copyProjectId: copy.projectId as string, copyHit, sampleMatchId: match.id as string };
 }
 
-const resetOnly = process.argv.includes('--reset');
-await reset();
-if (!resetOnly) await seed();
-console.log(resetOnly ? 'done: reset only' : 'done: clean demo state');
+const isMain = !!process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMain) {
+  const resetOnly = process.argv.includes('--reset');
+  await reset();
+  if (!resetOnly) await seed();
+  console.log(resetOnly ? 'done: reset only' : 'done: clean demo state');
+}

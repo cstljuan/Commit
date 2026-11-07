@@ -61,3 +61,7 @@ export const setHackRoles: typeof real.setHackRoles = (...a) => impl.setHackRole
 export const getHackRoles: typeof real.getHackRoles = (...a) => impl.getHackRoles(...a);
 export const getActivity: typeof real.getActivity = (...a) => impl.getActivity(...a);
 export const getScoreEvents: typeof real.getScoreEvents = (...a) => impl.getScoreEvents(...a);
+
+// reliability events
+export const completeProject: typeof real.completeProject = (...a) => impl.completeProject(...a);
+export const leaveTeam: typeof real.leaveTeam = (...a) => impl.leaveTeam(...a);
