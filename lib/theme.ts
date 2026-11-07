@@ -1,0 +1,87 @@
+import { createContext, createElement, useContext, useMemo, useState, type ReactNode } from 'react';
+
+import { copy, type ModeCopy } from './copy';
+
+export type Mode = 'normal' | 'women' | 'hack';
+
+export type ThemeTokens = {
+  bg: string;
+  surface: string;
+  primary: string;
+  onPrimary: string;
+  text: string;
+  muted: string;
+  like: string;
+  pass: string;
+  accent: string;
+  line: string;
+  fontDisplay: string;
+  fontBody: string;
+  fontBold: string;
+};
+
+// Provisional until Juan approves them in Figma, page 03 Colour lab.
+export const themes: Record<Mode, ThemeTokens> = {
+  normal: {
+    bg: '#F7F7FB',
+    surface: '#FFFFFF',
+    primary: '#6C5CE7',
+    onPrimary: '#FFFFFF',
+    text: '#1E1E2F',
+    muted: '#6B6B80',
+    like: '#00D2A0',
+    pass: '#FF6B6B',
+    accent: '#F59E0B',
+    line: '#E2E2EC',
+    fontDisplay: 'BricolageGrotesque_800ExtraBold',
+    fontBody: 'Figtree_400Regular',
+    fontBold: 'Figtree_700Bold',
+  },
+  women: {
+    bg: '#FFE3F1',
+    surface: '#FFF5FA',
+    primary: '#FF2E93',
+    onPrimary: '#FFFFFF',
+    text: '#3A0A24',
+    muted: '#8A3A63',
+    like: '#FF2E93',
+    pass: '#B45CFF',
+    accent: '#D9C2FF',
+    line: '#FFC6E2',
+    fontDisplay: 'Shrikhand_400Regular',
+    fontBody: 'Figtree_400Regular',
+    fontBold: 'Figtree_700Bold',
+  },
+  hack: {
+    bg: '#0F0F14',
+    surface: '#1C1C24',
+    primary: '#22D3EE',
+    onPrimary: '#0F0F14',
+    text: '#E5E7EB',
+    muted: '#9CA3AF',
+    like: '#00D2A0',
+    pass: '#FF6B6B',
+    accent: '#E879F9',
+    line: '#2C2C38',
+    fontDisplay: 'JetBrainsMono_700Bold',
+    fontBody: 'JetBrainsMono_400Regular',
+    fontBold: 'JetBrainsMono_700Bold',
+  },
+};
+
+type ModeValue = { mode: Mode; setMode: (m: Mode) => void; t: ThemeTokens; copy: ModeCopy };
+
+const ModeContext = createContext<ModeValue | null>(null);
+
+export function ModeProvider({ children }: { children: ReactNode }) {
+  const [mode, setMode] = useState<Mode>('normal');
+  const value = useMemo(() => ({ mode, setMode, t: themes[mode], copy: copy[mode] }), [mode]);
+  return createElement(ModeContext.Provider, { value }, children);
+}
+
+/** Every screen takes colours from `t` and words from `copy`. Never hardcode either. */
+export function useMode(): ModeValue {
+  const value = useContext(ModeContext);
+  if (!value) throw new Error('useMode must be used inside ModeProvider');
+  return value;
+}
