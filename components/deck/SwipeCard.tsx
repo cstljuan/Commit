@@ -1,37 +1,126 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Critter } from '@/components/critters/Critter';
+import { HashChip } from '@/components/motion/HashChip';
 import { useMode } from '@/lib/theme';
 
-/** Static first pass for test 7. Drag, stamps and haptics land in components/deck next. */
-export function SwipeCard() {
-  const { t, mode } = useMode();
-  const hack = mode === 'hack';
+import type { Card, PersonCard, ProjectCard, RoleCount } from './cardTypes';
+
+const rolesText = (roles: RoleCount[]) => {
+  const open = roles.filter((r) => r.open > 0).map((r) => `${r.open} ${r.role}`);
+  return open.length ? `Need ${open.join(', ')}` : 'Team is full';
+};
+
+function Reason({ text }: { text: string }) {
+  const { t } = useMode();
   return (
-    <View style={[styles.card, { backgroundColor: t.surface, shadowColor: t.primary }]}>
-      <View style={[styles.art, { backgroundColor: t.primary + '24' }]} />
-      <Text style={[styles.title, { color: t.text, fontFamily: t.fontDisplay }]}>
-        {hack ? '@maya_builds' : 'AI study buddy'}
+    <View style={[styles.pill, { backgroundColor: t.like + '2E' }]}>
+      <Text numberOfLines={1} style={{ color: t.text, fontFamily: t.fontBold, fontSize: 13 }}>
+        {text}
       </Text>
-      <Text style={[styles.body, { color: t.muted, fontFamily: t.fontBody }]}>
-        {hack
-          ? 'TypeScript, Postgres, Rust. Student. Worst commit message: "fix fix fix"'
-          : 'Turns your notes into quizzes that find what you keep forgetting.'}
-      </Text>
-      <Text style={[styles.roles, { color: t.text, fontFamily: t.fontBold }]}>
-        {hack ? 'Need 2 Backend, 1 Design' : 'Need 1 Backend, 1 Design'}
-      </Text>
-      <View style={[styles.pill, { backgroundColor: t.like + '2E' }]}>
-        <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 13 }}>
-          {hack ? 'fills: backend' : 'Fills your backend gap'}
+    </View>
+  );
+}
+
+function Reliability({ score }: { score: number }) {
+  const { t } = useMode();
+  return (
+    <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 13 }}>Shows up {score}</Text>
+  );
+}
+
+function ProjectBody({ card }: { card: ProjectCard }) {
+  const { t } = useMode();
+  return (
+    <>
+      <View style={[styles.art, { backgroundColor: t.primary + '24' }]}>
+        <View style={styles.artCritter}>
+          <Critter seed={card.ownerUsername} size={128} disc={false} />
+        </View>
+        <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: 13 }}>
+          {card.theme} · {card.timeframe}
         </Text>
+        <View style={styles.row}>
+          <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 13 }}>
+            {card.visibility === 'private' ? 'Private idea' : 'Public idea'}
+          </Text>
+          <HashChip hash={card.commitHash} />
+        </View>
       </View>
+      <Text numberOfLines={2} style={[styles.title, { color: t.text, fontFamily: t.fontDisplay }]}>
+        {card.title}
+      </Text>
+      <Text numberOfLines={3} style={[styles.body, { color: t.muted, fontFamily: t.fontBody }]}>
+        {card.teaser}
+      </Text>
+      <Text style={[styles.roles, { color: t.text, fontFamily: t.fontBold }]}>{rolesText(card.roles)}</Text>
+      <View style={styles.row}>
+        <Reason text={card.reason} />
+        <Reliability score={card.ownerReliability} />
+      </View>
+    </>
+  );
+}
+
+function PersonBody({ card }: { card: PersonCard }) {
+  const { t } = useMode();
+  const prompt = card.prompts[0];
+  return (
+    <>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Open @${card.username}`} onPress={() => router.push(`/person/${card.username}`)} style={styles.personTop}>
+        <Critter seed={card.username} size={72} />
+        <View style={styles.personName}>
+          <Text numberOfLines={1} style={[styles.title, { color: t.text, fontFamily: t.fontDisplay, fontSize: 26 }]}>
+            @{card.username}
+          </Text>
+          <Text style={[styles.body, { color: t.muted, fontFamily: t.fontBody }]}>
+            {card.role}, {card.level}, {card.occupation}
+          </Text>
+        </View>
+      </Pressable>
+      <Text numberOfLines={2} style={[styles.body, { color: t.text, fontFamily: t.fontBody }]}>
+        {card.skills.join(', ')}
+      </Text>
+      {prompt ? (
+        <View style={[styles.prompt, { backgroundColor: t.primary + '14' }]}>
+          <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 13 }}>{prompt.q}</Text>
+          <Text numberOfLines={2} style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 22 }}>
+            {prompt.a}
+          </Text>
+        </View>
+      ) : null}
+      {card.rolesNeeded ? (
+        <Text style={[styles.roles, { color: t.text, fontFamily: t.fontBold }]}>{rolesText(card.rolesNeeded)}</Text>
+      ) : null}
+      <View style={styles.row}>
+        <Reason text={card.reason} />
+        <Reliability score={card.reliability} />
+      </View>
+    </>
+  );
+}
+
+export function SwipeCard({ card }: { card: Card }) {
+  const { t, copy } = useMode();
+  return (
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: t.surface, shadowColor: t.primary },
+        card.isSuper && { borderColor: t.accent, borderWidth: 3 },
+      ]}>
+      {card.isSuper ? (
+        <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: 13 }}>{copy.stampUp}</Text>
+      ) : null}
+      {card.kind === 'project' ? <ProjectBody card={card} /> : <PersonBody card={card} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    width: '100%',
+    flex: 1,
     borderRadius: 32,
     padding: 24,
     gap: 12,
@@ -39,9 +128,14 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 12 },
   },
-  art: { height: 150, borderRadius: 20 },
+  art: { flexGrow: 1, minHeight: 90, borderRadius: 20, padding: 16, justifyContent: 'flex-end', gap: 2 },
+  artCritter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 30 },
   body: { fontSize: 16, lineHeight: 22 },
   roles: { fontSize: 16 },
-  pill: { alignSelf: 'flex-start', borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  pill: { flexShrink: 1, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 },
+  personTop: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  personName: { flex: 1, gap: 2 },
+  prompt: { flexGrow: 1, borderRadius: 20, padding: 16, gap: 6, justifyContent: 'center' },
 });

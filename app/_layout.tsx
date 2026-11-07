@@ -11,6 +11,10 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { IntroSplash } from '@/components/motion/IntroSplash';
+import { ModeWipeProvider } from '@/components/motion/ModeWipe';
+import { noteTouch, noteTouchStart } from '@/lib/hachi';
+import { PrefsProvider } from '@/lib/prefs';
 import { ModeProvider, useMode } from '@/lib/theme';
 
 function AppStack() {
@@ -45,9 +49,20 @@ export default function RootLayout() {
   // Never block the app on fonts: if they fail, it still opens.
   if (!loaded && !error) return null;
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView
+      style={{ flex: 1 }}
+      onTouchStart={(e) => {
+        noteTouchStart();
+        noteTouch(e.nativeEvent.pageX, e.nativeEvent.pageY, performance.now());
+      }}
+      onTouchMove={(e) => noteTouch(e.nativeEvent.pageX, e.nativeEvent.pageY, performance.now())}>
       <ModeProvider>
-        <AppStack />
+        <PrefsProvider>
+          <ModeWipeProvider>
+            <AppStack />
+            <IntroSplash />
+          </ModeWipeProvider>
+        </PrefsProvider>
       </ModeProvider>
     </GestureHandlerRootView>
   );

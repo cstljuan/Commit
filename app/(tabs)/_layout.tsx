@@ -1,20 +1,12 @@
 import { Tabs } from 'expo-router';
 
-import { useMode } from '@/lib/theme';
+import { TabBar } from '@/components/nav/TabBar';
 
 export default function TabsLayout() {
-  const { t } = useMode();
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: t.primary,
-        tabBarInactiveTintColor: t.muted,
-        tabBarStyle: { backgroundColor: t.surface, borderTopColor: t.line },
-        tabBarLabelStyle: { fontFamily: t.fontBold },
-        tabBarIconStyle: { display: 'none' },
-      }}>
+    <Tabs tabBar={(props) => <TabBar {...props} />} screenOptions={{ headerShown: false }}>
       <Tabs.Screen name="index" options={{ title: 'Swipe' }} />
+      <Tabs.Screen name="projects" options={{ title: 'Projects' }} />
       <Tabs.Screen name="teams" options={{ title: 'Matches' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
     </Tabs>
