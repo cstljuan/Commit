@@ -152,3 +152,23 @@ const hack: Card[] = [
 ];
 
 export const sampleDecks = { normal, women, hack };
+
+/** Liking these sample cards makes a match, so the moment can be built before lib/api.ts lands. */
+export const sampleMatches = new Set(['n2', 'n3', 'w2', 'w3', 'h1', 'h3']);
+
+/** Same shape as the contract's Interested: role, level and super flag, no identity. */
+export type Interested = { swipeRef: string; role: string; level: string; isSuper: boolean };
+
+export const sampleInterested: Interested[] = [
+  { swipeRef: 'i1', role: 'Backend', level: 'intermediate', isSuper: true },
+  { swipeRef: 'i2', role: 'Backend', level: 'advanced', isSuper: false },
+  { swipeRef: 'i3', role: 'Design', level: 'beginner', isSuper: false },
+];
+
+const REVEALS: Record<string, string> = { i1: 'ben_codes', i2: 'lena_ships', i3: 'kai_draws' };
+
+export const sampleReveal = (item: Interested) => ({
+  id: item.swipeRef,
+  role: item.role,
+  otherUsername: REVEALS[item.swipeRef] ?? 'builder',
+});
