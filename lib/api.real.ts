@@ -163,7 +163,10 @@ export async function getMyProfile(): Promise<Profile | null> {
   return data ? toProfile(data as ProfileRow) : null;
 }
 
-/** Writes only client-editable columns. Reliability is server side only (F1). */
+/**
+ * Writes only client-editable columns. Reliability is server side only (F1).
+ * Women mode is server-set only (0009): p.womenOnly is ignored, the team grants access for the demo.
+ */
 export async function saveProfile(p: ProfileInput): Promise<void> {
   const id = await uid();
   const { error } = await supabase.from('profiles').upsert(
@@ -180,7 +183,6 @@ export async function saveProfile(p: ProfileInput): Promise<void> {
       prompts: p.prompts,
       hours_per_week: p.hoursPerWeek,
       timezone: p.timezone,
-      women_only: p.womenOnly,
     },
     { onConflict: 'id' },
   );

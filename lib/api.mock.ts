@@ -434,7 +434,8 @@ export async function getMyProfile(): Promise<Profile | null> {
 }
 
 export async function saveProfile(p: ProfileInput): Promise<void> {
-  me = { ...p, id: ME_ID, reliability: me?.reliability ?? 70 };
+  // Women mode is server-set only (0009), like reliability: the input's womenOnly is ignored.
+  me = { ...p, id: ME_ID, reliability: me?.reliability ?? 70, womenOnly: me?.womenOnly ?? false };
   return wait(undefined);
 }
 

@@ -108,11 +108,14 @@ export type Profile = {
   prompts: Prompt[];
   hoursPerWeek: number | null;
   timezone: string | null;
-  womenOnly: boolean;
+  womenOnly: boolean; // read only, server-set (0009). Self-identification is not verified, so no self-serve switch
   reliability: number; // read only, the server owns it
 };
 
-/** What the onboarding and profile screens can write. Reliability is server side only. */
+/**
+ * What the onboarding and profile screens can write. Reliability is server side only.
+ * womenOnly stays in the type for compatibility but saveProfile ignores it (server-set only, 0009).
+ */
 export type ProfileInput = Omit<Profile, 'id' | 'reliability'>;
 
 export type TeamMember = {
@@ -153,7 +156,7 @@ export type PostIdeaInput = {
   timeframe: string; // 'weekend', '1 month', 'semester', 'ongoing'
   githubUrl?: string;
   roles: { role: Role; open: number; level?: Level }[];
-  womenOnly: boolean;
+  womenOnly: boolean; // only allowed for Women mode accounts; the server rejects it otherwise (0009)
 };
 
 export type CopyAlert = {
