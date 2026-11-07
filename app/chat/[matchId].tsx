@@ -1,4 +1,4 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, {
@@ -18,7 +18,10 @@ import { Critter } from '@/components/critters/Critter';
 import { HoldToCommit } from '@/components/motion/HoldToCommit';
 import { PressScale } from '@/components/motion/PressScale';
 import { Hachi } from '@/components/Hachi/Hachi';
-import { demoIcebreakers, demoMatches, demoMessages, type DemoMessage } from '@/lib/demoData';
+import { getReply, getThread, HACHI_CHAT, saveThread } from '@/lib/chatbot';
+import { demoIcebreakers, demoMatches, demoThreads, HACHI_CHIPS, type DemoMessage } from '@/lib/demoData';
+import { hachi } from '@/lib/hachi';
+import { llmAvailable } from '@/lib/llm';
 import { useMode } from '@/lib/theme';
 
 function Dot({ i, color }: { i: number; color: string }) {
@@ -34,30 +37,70 @@ export default function ChatScreen() {
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
   const { t } = useMode();
   const { bottom } = useSafeAreaInsets();
+  const isHachi = matchId === HACHI_CHAT;
   const match = demoMatches.find((m) => m.id === matchId) ?? demoMatches[0];
-  const [messages, setMessages] = useState<DemoMessage[]>(demoMessages);
+  const chatId = isHachi ? HACHI_CHAT : match.id;
+  const initial = demoThreads[chatId] ?? demoThreads.m1;
+  const [messages, setMessages] = useState<DemoMessage[]>(() => getThread(chatId, initial));
   const [draft, setDraft] = useState('');
   const [typing, setTyping] = useState(false);
-  const [showCommit, setShowCommit] = useState(!match.iCommitted);
+  const [source, setSource] = useState<'local' | 'built-in'>(llmAvailable() ? 'local' : 'built-in');
+  const [showCommit, setShowCommit] = useState(!isHachi && !match.iCommitted);
   const [committed, setCommitted] = useState(match.iCommitted);
   const list = useRef<FlatList<DemoMessage>>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const latest = useRef(messages);
+  const alive = useRef(true);
+  const turn = useRef(0);
 
-  useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+
+  const push = (message: Omit<DemoMessage, 'id'>) => {
+    latest.current = [...latest.current, { ...message, id: `${Date.now()}-${latest.current.length}` }];
+    saveThread(chatId, latest.current);
+    setMessages(latest.current);
+  };
+
+  const wait = (ms: number) => new Promise((done) => setTimeout(done, ms));
+
+  /** Their side of the conversation: typing, a pause that fits the length, then each text in turn. */
+  const respond = async () => {
+    const mine = ++turn.current;
+    setTyping(true);
+    const started = Date.now();
+    const reply = await getReply(chatId, isHachi ? undefined : match.username, latest.current);
+    if (!alive.current || mine !== turn.current) return;
+    setSource(reply.source);
+    for (let i = 0; i < reply.texts.length; i++) {
+      const text = reply.texts[i];
+      const pause = Math.min(1700, 450 + text.length * 16) - (i === 0 ? Date.now() - started : 0);
+      if (pause > 0) await wait(pause);
+      if (!alive.current || mine !== turn.current) return;
+      const isLast = i === reply.texts.length - 1;
+      push({ mine: false, body: text, action: isLast ? reply.action : undefined });
+      if (isLast) setTyping(false);
+      else await wait(250);
+    }
+    if (isHachi) hachi.play('happy');
+  };
 
   const send = (body: string) => {
     const text = body.trim();
     if (!text) return;
     setDraft('');
-    setMessages((m) => [...m, { id: String(Date.now()), mine: true, body: text }]);
-    // Stands in for subscribeMessages until lib/api.ts lands.
-    setTyping(true);
-    clearTimeout(timer.current);
-    timer.current = setTimeout(() => {
-      setTyping(false);
-      setMessages((m) => [...m, { id: String(Date.now()), mine: false, body: 'Love it. Commit when you are ready.' }]);
-    }, 1400);
+    push({ mine: true, body: text });
+    respond();
   };
+
+  const stateLine = isHachi
+    ? source === 'local'
+      ? 'Hachi is running on a model on our own laptop'
+      : 'Hachi answers from what is built into the app'
+    : `Sample teammate, not a real person. ${source === 'local' ? 'Replies from a local model.' : 'Replies are built in.'}`;
 
   return (
     <KeyboardAvoidingView
@@ -66,8 +109,8 @@ export default function ChatScreen() {
       keyboardVerticalOffset={90}>
       <Stack.Screen
         options={{
-          title: `@${match.username}`,
-          headerRight: () => (
+          title: isHachi ? 'Hachi' : `@${match.username}`,
+          headerRight: () => isHachi ? null : (
             <PressScale accessibilityLabel={`Open @${match.username}`} onPress={() => router.push(`/person/${match.username}`)}>
               <Critter seed={match.username} size={34} />
             </PressScale>
@@ -75,15 +118,19 @@ export default function ChatScreen() {
         }}
       />
       <View style={[styles.honest, { backgroundColor: t.surface }]}>
-        <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 12, textAlign: 'center' }}>
-          Not end-to-end encrypted yet
-        </Text>
+        <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 12, textAlign: 'center' }}>{stateLine}</Text>
       </View>
+      {isHachi ? (
+        <View style={[styles.stage, { backgroundColor: t.surface }]}>
+          <Hachi size={84} animated listen sleepAfter={0} state={typing ? 'thinking' : 'idle'} />
+        </View>
+      ) : null}
       <FlatList
         ref={list}
         data={messages}
         keyExtractor={(m) => m.id}
         contentContainerStyle={styles.list}
+        keyboardShouldPersistTaps="handled"
         onContentSizeChange={() => list.current?.scrollToEnd({ animated: true })}
         renderItem={({ item }) => (
           <Animated.View
@@ -98,6 +145,14 @@ export default function ChatScreen() {
             <Text style={{ color: item.mine ? t.onPrimary : t.text, fontFamily: t.fontBody, fontSize: 16, lineHeight: 22 }}>
               {item.body}
             </Text>
+            {item.action ? (
+              <PressScale
+                accessibilityLabel={item.action.label}
+                onPress={() => router.push(item.action!.href as Href)}
+                style={[styles.action, { backgroundColor: t.primary }]}>
+                <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: 14 }}>{item.action.label}</Text>
+              </PressScale>
+            ) : null}
           </Animated.View>
         )}
         ListFooterComponent={
@@ -119,6 +174,9 @@ export default function ChatScreen() {
                   onCommit={() => {
                     setCommitted(true);
                     setTimeout(() => setShowCommit(false), 1600);
+                    setTimeout(() => {
+                      if (alive.current) push({ mine: false, body: `lets go, ${match.project} is official. I will start tonight` });
+                    }, 1900);
                   }}
                 />
               </Animated.View>
@@ -126,15 +184,16 @@ export default function ChatScreen() {
           </View>
         }
       />
-      {messages.length <= demoMessages.length ? (
+      {(isHachi || messages.length <= initial.length) && !typing ? (
         <FlatList
           horizontal
+          style={styles.chipRow}
           showsHorizontalScrollIndicator={false}
-          data={demoIcebreakers(match.username)}
+          data={isHachi ? HACHI_CHIPS : demoIcebreakers(match.username)}
           keyExtractor={(s) => s}
           contentContainerStyle={styles.chips}
           keyboardShouldPersistTaps="handled"
-          ListHeaderComponent={<Hachi size={36} animated sleepAfter={0} state={typing ? 'waiting' : 'idle'} />}
+          ListHeaderComponent={isHachi ? undefined : <Hachi size={36} animated interactive={false} sleepAfter={0} />}
           renderItem={({ item, index }) => (
             <Animated.View entering={FadeInDown.delay(index * 70)}>
               <PressScale
@@ -173,11 +232,14 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   honest: { paddingVertical: 6 },
   list: { padding: 16, gap: 8, flexGrow: 1 },
+  stage: { alignItems: 'center', paddingBottom: 8, paddingTop: 2 },
+  action: { alignSelf: 'flex-start', marginTop: 8, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999 },
   bubble: { maxWidth: '82%', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 20 },
   footer: { gap: 12, marginTop: 4 },
   typing: { flexDirection: 'row', gap: 5, alignSelf: 'flex-start', padding: 14, borderRadius: 18 },
   dot: { width: 7, height: 7, borderRadius: 4 },
   commit: { alignItems: 'center', gap: 12, padding: 18, borderRadius: 24, marginTop: 8 },
+  chipRow: { flexGrow: 0 },
   chips: { paddingHorizontal: 16, paddingVertical: 8, gap: 8, alignItems: 'center' },
   chip: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingTop: 8, borderTopWidth: 1 },

@@ -7,12 +7,13 @@ import Svg, { Path } from 'react-native-svg';
 
 import * as Haptics from '@/lib/haptics';
 import { useMode } from '@/lib/theme';
-import { radius, space, type } from '@/lib/tokens';
+import { radius, space } from '@/lib/tokens';
 
 type BottomTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 
 const ICONS: Record<string, string> = {
   index: 'M8 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM3 7v10',
+  projects: 'M3 7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
   teams: 'M21 12a8 8 0 0 1-8 8H4l2.5-3A8 8 0 1 1 21 12z',
   profile: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
 };
@@ -59,10 +60,10 @@ export function TabBar({ state, descriptors, navigateToTab }: BottomTabBarProps)
                 Haptics.selectionAsync();
                 if (!on) navigateToTab(route.key);
               }}>
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <Svg width={19} height={19} viewBox="0 0 24 24" fill="none">
                 <Path d={ICONS[route.name] ?? ICONS.index} stroke={on ? t.onPrimary : t.muted} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
-              <Text style={{ color: on ? t.onPrimary : t.muted, fontFamily: t.fontBold, fontSize: type.small }}>{label}</Text>
+              <Text style={{ color: on ? t.onPrimary : t.muted, fontFamily: t.fontBold, fontSize: 11 }}>{label}</Text>
             </Pressable>
           );
         })}
@@ -82,5 +83,5 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
   },
   pill: { position: 'absolute', top: 5, bottom: 5, left: 0, borderRadius: radius.full, transform: [{ scaleX: 0.96 }] },
-  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 1 },
 });

@@ -51,13 +51,71 @@ export const demoTeam = {
   ],
 };
 
-export type DemoMessage = { id: string; mine: boolean; body: string };
+export type DemoMessage = { id: string; mine: boolean; body: string; action?: { label: string; href: string } };
 
 // Real source: getMessages(matchId), subscribeMessages(matchId)
-export const demoMessages: DemoMessage[] = [
-  { id: '1', mine: false, body: 'Saw you need backend. I can start on the schema tonight.' },
-  { id: '2', mine: true, body: 'Perfect. Have you used Supabase?' },
-  { id: '3', mine: false, body: 'A few times. Row level security and all.' },
+export const demoThreads: Record<string, DemoMessage[]> = {
+  m1: [
+    { id: '1', mine: false, body: 'Saw you need backend. I can start on the schema tonight.' },
+    { id: '2', mine: true, body: 'Perfect. Have you used Supabase?' },
+    { id: '3', mine: false, body: 'A few times. Row level security and all.' },
+  ],
+  m2: [
+    { id: '1', mine: false, body: 'I read the study buddy idea. Picking what to ask again is the fun part.' },
+    { id: '2', mine: true, body: 'That is exactly the part I need help with.' },
+    { id: '3', mine: false, body: 'Tabs or spaces, be honest' },
+  ],
+  m3: [
+    { id: '1', mine: true, body: 'How is the add expense flow looking?' },
+    { id: '2', mine: false, body: 'Three taps so far. Trying to get it to two.' },
+    { id: '3', mine: false, body: 'Sent you the first screens' },
+  ],
+  hachi: [{ id: '1', mine: false, body: 'Hey, I\'m Hachi. Ask me about teammates, your pitch, your score or how proof works.' }],
+};
+
+export const HACHI_CHIPS = ['Who should I swipe on?', 'Write my pitch', 'What do I text first?', 'How does my score work?', 'What if someone copies me?'];
+
+export type DemoProject = {
+  id: string;
+  title: string;
+  commitHash: string;
+  idea: string;
+  status: 'recruiting' | 'building' | 'private';
+  mine: boolean;
+  wantIn: number;
+  roles: { role: Role; username: string | null }[];
+};
+
+// Real source: my projects query in lib/api.ts.
+export const demoProjects: DemoProject[] = [
+  { ...demoTeam, status: 'recruiting', mine: true, wantIn: 3 },
+  {
+    id: 'p3',
+    title: 'Campus lost and found',
+    commitHash: 'c81e0a94b2d3f617',
+    idea: 'Snap a photo of what you found and it tells the person who lost it, without either of you sharing a number.',
+    status: 'private',
+    mine: true,
+    wantIn: 0,
+    roles: [
+      { role: 'Mobile' as Role, username: 'you' },
+      { role: 'Backend' as Role, username: null },
+    ],
+  },
+  {
+    id: 'p2',
+    title: 'Rent splitter',
+    commitHash: '7be2d40c19fa6e83',
+    idea: 'Add a bill in two taps, see who owes what at a glance, and settle up without the awkward group chat.',
+    status: 'building',
+    mine: false,
+    wantIn: 0,
+    roles: [
+      { role: 'Design' as Role, username: 'dev_ana' },
+      { role: 'Frontend' as Role, username: 'you' },
+      { role: 'Backend' as Role, username: 'ben_codes' },
+    ],
+  },
 ];
 
 export const demoIcebreakers = (username: string) => [

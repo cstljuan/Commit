@@ -1,5 +1,5 @@
 import * as Haptics from '@/lib/haptics';
-import { router, Stack } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
@@ -16,7 +16,7 @@ import { Burst } from '@/components/motion/Particles';
 import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
 import { Hachi } from '@/components/Hachi/Hachi';
-import { demoTeam } from '@/lib/demoData';
+import { demoProjects } from '@/lib/demoData';
 import { useMode } from '@/lib/theme';
 
 function RoleSlot({ role, username, index, filled, onFilled }: { role: string; username: string | null; index: number; filled: boolean; onFilled?: () => void }) {
@@ -60,16 +60,18 @@ function RoleSlot({ role, username, index, filled, onFilled }: { role: string; u
 
 export default function TeamScreen() {
   const { t } = useMode();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const team = demoProjects.find((p) => p.id === id) ?? demoProjects[0];
   const [fire, setFire] = useState(0);
-  const filled = demoTeam.roles.filter((r) => r.username).length;
-  const total = demoTeam.roles.length;
+  const filled = team.roles.filter((r) => r.username).length;
+  const total = team.roles.length;
   return (
     <ScrollView style={{ backgroundColor: t.bg }} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: 'Team' }} />
+      <Stack.Screen options={{ title: team.status === 'private' ? 'Private idea' : 'Team' }} />
       <Reveal>
-        <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 34 }}>{demoTeam.title}</Text>
+        <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 34 }}>{team.title}</Text>
         <View style={{ marginTop: 6 }}>
-          <HashChip hash={demoTeam.commitHash} />
+          <HashChip hash={team.commitHash} />
         </View>
       </Reveal>
 
@@ -86,7 +88,7 @@ export default function TeamScreen() {
       </Reveal>
 
       <View style={styles.grid}>
-        {demoTeam.roles.map((r, i) => (
+        {team.roles.map((r, i) => (
           <RoleSlot
             key={r.role}
             role={r.role}
@@ -102,7 +104,7 @@ export default function TeamScreen() {
       <Reveal index={3} style={[styles.idea, { backgroundColor: t.surface }]}>
         <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 13 }}>The idea, decrypted for this team</Text>
         <DecodeText
-          text={demoTeam.idea}
+          text={team.idea}
           delayMs={600}
           durationMs={1100}
           style={{ color: t.text, fontFamily: t.fontBody, fontSize: 16, lineHeight: 24 }}

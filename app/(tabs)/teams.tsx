@@ -1,4 +1,5 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -8,6 +9,7 @@ import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
 import { useTabInset } from '@/components/nav/TabBar';
 import { Hachi } from '@/components/Hachi/Hachi';
+import { lastLineOf } from '@/lib/chatbot';
 import { demoMatches, demoTeam, type DemoMatch } from '@/lib/demoData';
 import { useMode } from '@/lib/theme';
 
@@ -33,10 +35,30 @@ function MatchRow({ match, index }: { match: DemoMatch; index: number }) {
             @{match.username}
           </Text>
           <Text numberOfLines={1} style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 14 }}>
-            {match.lastLine}
+            {lastLineOf(match.id) ?? match.lastLine}
           </Text>
           <Text style={{ color: yourMove ? t.primary : t.muted, fontFamily: t.fontBold, fontSize: 13 }}>
             {match.role} · {status(match)}
+          </Text>
+        </View>
+      </PressScale>
+    </Reveal>
+  );
+}
+
+function AskHachi() {
+  const { t } = useMode();
+  return (
+    <Reveal>
+      <PressScale
+        accessibilityLabel="Ask Hachi"
+        onPress={() => router.push('/chat/hachi')}
+        style={[styles.row, { backgroundColor: t.surface }]}>
+        <Hachi size={56} animated interactive={false} sleepAfter={0} />
+        <View style={styles.rowText}>
+          <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 17 }}>Ask Hachi</Text>
+          <Text numberOfLines={1} style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 14 }}>
+            {lastLineOf('hachi') ?? 'Teammates, your pitch, your score, proof'}
           </Text>
         </View>
       </PressScale>
@@ -48,10 +70,14 @@ export default function MatchesScreen() {
   const { t, mode } = useMode();
   const { top } = useSafeAreaInsets();
   const inset = useTabInset();
+  // Coming back from a chat refreshes the last line of each row.
+  const [seen, setSeen] = useState(0);
+  useFocusEffect(useCallback(() => setSeen((n) => n + 1), []));
   return (
     <View style={[styles.root, { backgroundColor: t.bg }]}>
       <FlatList
         data={demoMatches}
+        extraData={seen}
         keyExtractor={(m) => m.id}
         contentContainerStyle={[styles.list, { paddingTop: top + 12, paddingBottom: inset }]}
         ListHeaderComponent={
@@ -90,6 +116,7 @@ export default function MatchesScreen() {
                 <Text style={{ color: t.onPrimary, fontFamily: t.fontBody, fontSize: 14 }}>3 of 4 roles filled</Text>
               </PressScale>
             </Reveal>
+            <AskHachi />
           </View>
         }
         renderItem={({ item, index }) => <MatchRow match={item} index={index + 2} />}
