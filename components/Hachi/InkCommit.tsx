@@ -1,3 +1,4 @@
+import { sfx } from '@/lib/sound';
 import * as Haptics from '@/lib/haptics';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -51,6 +52,7 @@ export function InkCommit({ text, commitHash, onDone }: Props) {
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    sfx('ink');
     ink.value = withTiming(1, { duration: 700 });
     fade.value = withDelay(120, withTiming(1, { duration: 500 }));
     const tick = setInterval(() => setSeed((s) => s + 1), 70);

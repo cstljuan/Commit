@@ -1,28 +1,25 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeOut } from 'react-native-reanimated';
 
 import { Hachi } from '@/components/Hachi/Hachi';
+import { Wordmark } from '@/components/brand/Wordmark';
 import { DecodeText } from '@/components/motion/DecodeText';
 import { useMode } from '@/lib/theme';
 import { useMotionOff } from '@/lib/prefs';
 
-const WORD = 'commit';
 const TOTAL_MS = 1500;
 
 /** Opens the app like a terminal command, once per launch, and any tap skips it. */
 export function IntroSplash() {
   const { t } = useMode();
   const reduced = useMotionOff();
-  const [letters, setLetters] = useState(0);
   const [gone, setGone] = useState(!!reduced);
 
   useEffect(() => {
     if (reduced) return;
-    const typing = setInterval(() => setLetters((n) => Math.min(WORD.length, n + 1)), 75);
     const done = setTimeout(() => setGone(true), TOTAL_MS);
     return () => {
-      clearInterval(typing);
       clearTimeout(done);
     };
   }, [reduced]);
@@ -33,10 +30,7 @@ export function IntroSplash() {
       <Pressable accessibilityLabel="Skip intro" style={StyleSheet.absoluteFill} onPress={() => setGone(true)} />
       <View pointerEvents="none" style={styles.center}>
         <Hachi size={110} state="wave" animated sleepAfter={0} />
-        <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 52 }}>
-          {WORD.slice(0, letters)}
-          <Text style={{ color: t.primary }}>{letters < WORD.length ? '_' : ''}</Text>
-        </Text>
+        <Wordmark height={72} />
         <DecodeText
           text="find your team. keep your idea."
           delayMs={500}

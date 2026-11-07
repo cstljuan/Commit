@@ -11,6 +11,7 @@ import { Reveal } from '@/components/motion/Reveal';
 import { ScoreRing } from '@/components/motion/ScoreRing';
 import { useTabInset } from '@/components/nav/TabBar';
 import { getMyProfile } from '@/lib/api';
+import { LAB } from '@/lib/demoData';
 import { useMode } from '@/lib/theme';
 import type { Profile } from '@/lib/types';
 
@@ -30,7 +31,7 @@ export default function ProfileScreen() {
   const seed = me?.username ?? 'you';
   const prompt = me?.prompts[0];
   return (
-    <ScrollView style={{ backgroundColor: t.bg }} contentContainerStyle={[styles.content, { paddingTop: top + 12, paddingBottom: inset }]}>
+    <ScrollView style={{ backgroundColor: t.bg }} contentContainerStyle={[styles.content, { paddingTop: top + 12, paddingBottom: inset + 24 }]}>
       <Reveal style={styles.head}>
         <PressScale accessibilityLabel="Your creature" onPress={() => router.push('/creatures')}>
           <Critter seed={seed} size={84} animated />
@@ -38,6 +39,10 @@ export default function ProfileScreen() {
         <View style={styles.headText}>
           <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 28 }}>@{seed}</Text>
           <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 15 }}>{critterFor(seed).name}. {me?.role ?? 'Frontend'}, {me?.occupation ?? 'student'}.</Text>
+          {me?.bio ? <Text style={{ color: t.text, fontFamily: t.fontBody, fontSize: 15 }}>{me.bio}</Text> : null}
+          <PressScale accessibilityLabel="Edit profile" onPress={() => router.push('/onboarding/edit')}>
+            <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 14, marginTop: 4 }}>Edit profile</Text>
+          </PressScale>
         </View>
         <PressScale accessibilityLabel="Settings" onPress={() => router.push('/settings')} style={styles.gear}>
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
@@ -53,7 +58,7 @@ export default function ProfileScreen() {
         <View style={styles.headText}>
           <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 18 }}>Shows up score</Text>
           <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 14, lineHeight: 20 }}>
-            Everyone starts at 70. Finishing projects raises it, ghosting lowers it, and it recovers.
+            Everyone starts at 70. Finishing projects raises it, ghosting lowers it, and finishing more earns it back.
           </Text>
         </View>
       </Reveal>
@@ -72,6 +77,13 @@ export default function ProfileScreen() {
       <Reveal index={3} style={[styles.card, { backgroundColor: t.surface }]}>
         <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 13 }}>{prompt?.q ?? 'My 3 AM snack'}</Text>
         <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 24 }}>{prompt?.a ?? 'Whatever the vending machine gives me'}</Text>
+      </Reveal>
+
+      <Reveal index={4}>
+        <PressScale accessibilityLabel="Security" onPress={() => router.push('/security')} style={[styles.card, { backgroundColor: LAB.card }]}>
+          <Text style={{ color: LAB.ok, fontFamily: LAB.monoBold, fontSize: 13 }}>Security</Text>
+          <Text style={{ color: LAB.text, fontFamily: t.fontDisplay, fontSize: 24 }}>What we can see, and what we can&apos;t</Text>
+        </PressScale>
       </Reveal>
 
       <Reveal index={4}>

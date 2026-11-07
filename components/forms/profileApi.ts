@@ -1,8 +1,5 @@
-/**
- * TEMPORARY local stub of the profile part of lib/api.ts (03-CONTRACTS.md, section 4).
- * Swap for a re-export once shahd-agent lands lib/types.ts and lib/api.mock.ts.
- * The types below mirror 03-CONTRACTS.md section 2 and 3 and should move to lib/types.ts.
- */
+import * as api from '@/lib/api';
+
 
 export type Role = 'Frontend' | 'Backend' | 'AI/ML' | 'Security' | 'Mobile' | 'Design' | 'PM' | 'Hardware';
 export type Level = 'beginner' | 'intermediate' | 'advanced';
@@ -10,6 +7,7 @@ export type Prompt = { q: string; a: string };
 
 export type ProfileInput = {
   username: string;
+  bio: string; // the profile tagline, matches Profile.bio in lib/types.ts
   role: Role | null;
   level: Level | null;
   occupation: 'student' | 'working' | null;
@@ -20,16 +18,25 @@ export type ProfileInput = {
 
 export type Profile = ProfileInput & { id: string; reliability: number };
 
-let saved: Profile | null = null;
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
+/** Onboarding's shape over the shared API. Fields this form does not edit keep their saved values. */
 export async function getMyProfile(): Promise<Profile | null> {
-  await wait(200);
-  return saved;
+  return api.getMyProfile();
 }
 
 export async function saveProfile(p: ProfileInput): Promise<void> {
-  await wait(500);
-  if (p.username.toLowerCase() === 'taken') throw new Error('duplicate key value violates unique constraint');
-  saved = { ...p, id: 'me', reliability: saved?.reliability ?? 100 };
+  const current = await api.getMyProfile().catch(() => null);
+  await api.saveProfile({
+    name: current?.name ?? p.username,
+    hoursPerWeek: current?.hoursPerWeek ?? null,
+    timezone: current?.timezone ?? null,
+    womenOnly: current?.womenOnly ?? false,
+    username: p.username,
+    avatarUrl: p.avatarUrl,
+    bio: p.bio,
+    role: p.role ?? current?.role ?? 'Backend',
+    level: p.level ?? current?.level ?? 'intermediate',
+    occupation: p.occupation ?? current?.occupation ?? 'student',
+    skills: p.skills,
+    prompts: p.prompts,
+  });
 }

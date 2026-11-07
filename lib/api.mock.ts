@@ -2,7 +2,11 @@
 // UI lanes build against this until the real Supabase functions land.
 // All data is synthetic. Avatars are null so the UI shows illustrated placeholders, never real photos.
 
+import { demoActivity, demoProjects, demoScoreEvents } from './demoData';
 import type {
+  MyProject,
+  ActivityEvent,
+  ScoreEvent,
   Card,
   ChatMessage,
   CopyAlert,
@@ -198,14 +202,14 @@ const normalDeck: Card[] = [
 
 const womenDeck: Card[] = [
   project({
-    id: 'p_cyclesafe',
-    title: 'CycleSafe',
-    teaser: 'Period tracker where your data never leaves your phone.',
+    id: 'p_courtside',
+    title: 'Courtside',
+    teaser: 'Live stats for pickup basketball, kept by whoever is on the bench.',
     ownerUsername: 'nina_nodes',
     ownerReliability: 89,
-    theme: 'Health',
+    theme: 'Sports',
     timeframe: '1 month',
-    roles: roles(['Security', 1, 0], ['Mobile', 1, 0]),
+    roles: roles(['Backend', 1, 0], ['Mobile', 1, 0]),
     reason: 'Needs your backend skills',
     isSuper: true,
   }),
@@ -220,15 +224,15 @@ const womenDeck: Card[] = [
     reason: 'Your team has no frontend yet',
   }),
   project({
-    id: 'p_mentormatch',
-    title: 'MentorMatch',
-    teaser: 'Pairs first year CS students with seniors who took the same classes.',
+    id: 'p_sublet',
+    title: 'Sublet Sync',
+    teaser: 'Find a summer sublet near your internship, matched by your move-in dates.',
     visibility: 'public',
     fullIdea:
-      'Seniors list classes they aced and hours they can give. First years get matched by class and schedule, with a 20 minute first call template so nobody has to plan it.',
+      'Students leaving for the summer list their rooms, and interns search by office location and dates. It flags overlapping leases and handles the first message for you.',
     ownerUsername: 'aisha_algo',
     ownerReliability: 83,
-    theme: 'Education',
+    theme: 'Campus',
     timeframe: 'semester',
     roles: roles(['Backend', 1, 0], ['PM', 1, 1]),
     reason: 'Needs a backend dev, you are one',
@@ -326,7 +330,7 @@ const hackDeck: Card[] = [
 const decks: Record<Mode, Card[]> = { normal: normalDeck, women: womenDeck, hack: hackDeck };
 
 // Cards whose owner (or person) already swiped right on Bob. A right swipe on these makes a match.
-const likesMe = new Set(['p_alice_tutor', 'u_priya', 'p_cyclesafe', 'u_rio', 'u_omar']);
+const likesMe = new Set(['p_alice_tutor', 'u_priya', 'p_courtside', 'u_rio', 'u_omar']);
 
 // ---------- mutable mock state ----------
 
@@ -401,6 +405,20 @@ export async function verifyEmailCode(_email: string, code: string): Promise<voi
   return wait(undefined);
 }
 
+export async function signInWithPassword(email: string, password: string): Promise<void> {
+  if (!email.includes('@') || !password) throw new Error('Enter your email and password');
+  return wait(undefined);
+}
+
+export async function signUpWithPassword(email: string, _password: string): Promise<{ needsConfirmation: boolean }> {
+  if (!email.includes('@')) throw new Error('Enter a valid email');
+  return wait({ needsConfirmation: false });
+}
+
+export async function authProviders(): Promise<{ github: boolean; google: boolean }> {
+  return { github: true, google: true };
+}
+
 export async function signInWithProvider(_provider: 'github' | 'google'): Promise<void> {
   return wait(undefined, 600);
 }
@@ -416,7 +434,8 @@ export async function getMyProfile(): Promise<Profile | null> {
 }
 
 export async function saveProfile(p: ProfileInput): Promise<void> {
-  me = { ...p, id: ME_ID, reliability: me?.reliability ?? 70 };
+  // Women mode is server-set only (0009), like reliability: the input's womenOnly is ignored.
+  me = { ...p, id: ME_ID, reliability: me?.reliability ?? 70, womenOnly: me?.womenOnly ?? false };
   return wait(undefined);
 }
 
@@ -426,7 +445,13 @@ export async function getDeck(mode: Mode): Promise<Card[]> {
   const deck = decks[mode].filter((c) => !swiped.has(c.id));
   // Super cards float up, otherwise keep the seeded (deterministic) order.
   const sorted = [...deck.filter((c) => c.isSuper), ...deck.filter((c) => !c.isSuper)];
-  return wait(clone(sorted));
+  // Same rule as the real deck: a reason only claims a need the team really saved.
+  const needReason = (role: Role) => {
+    const need = hackRoles.find((r) => r.role === role && r.open > 0);
+    return need ? `Your team needs ${need.open} ${role}` : 'Strong reliability';
+  };
+  const reasoned = mode === 'hack' ? sorted.map((c) => (c.kind === 'person' ? { ...c, reason: needReason(c.role) } : c)) : sorted;
+  return wait(clone(reasoned));
 }
 
 export async function superCommitsLeft(): Promise<number> {
@@ -481,6 +506,39 @@ export async function getInterested(): Promise<{ count: number; cards: Intereste
   return wait({ count: interested.length, cards: clone(interested) });
 }
 
+export async function respondToInterested(swipeRef: string, like: boolean): Promise<{ matched: boolean; match?: Match }> {
+  const i = interested.findIndex((c) => c.swipeRef === swipeRef);
+  if (i < 0) throw new Error('Card not found');
+  const [card] = interested.splice(i, 1);
+  if (!like) return wait({ matched: false });
+  const match: Match = {
+    id: newId('m'), projectId: 'p_bob_main', role: card.role, otherUsername: `secret_${card.role.toLowerCase().replace('/', '')}`,
+    otherAvatarUrl: null, projectTitle: 'Bob main project', iCommitted: false, theyCommitted: false, isTeam: false,
+  };
+  matches = [match, ...matches];
+  messages[match.id] = [];
+  return wait({ matched: true, match: clone(match) });
+}
+
+let hackRoles: { role: Role; open: number }[] = [{ role: 'Backend', open: 2 }, { role: 'Design', open: 1 }];
+
+export async function setHackRoles(roles: { role: Role; open: number }[]): Promise<void> {
+  hackRoles = roles;
+  return wait(undefined);
+}
+
+export async function getHackRoles(): Promise<{ role: Role; open: number }[]> {
+  return wait(clone(hackRoles));
+}
+
+export async function getActivity(): Promise<ActivityEvent[]> {
+  return wait(demoActivity.map((e) => ({ ...e, createdAt: new Date().toISOString() })));
+}
+
+export async function getScoreEvents(): Promise<ScoreEvent[]> {
+  return wait(clone(demoScoreEvents));
+}
+
 // ---------- matches and teams ----------
 
 export async function getMatches(): Promise<Match[]> {
@@ -524,6 +582,10 @@ export async function getTeam(projectId: string): Promise<Team> {
     ].slice(0, isHackTeam ? 4 : undefined),
     roles: roles(['Backend', 1, 1], ['Design', 1, committed.some((m) => m.role === 'Design') ? 1 : 0], ['Frontend', 1, 0]),
   });
+}
+
+export async function getMyProjects(): Promise<MyProject[]> {
+  return wait(clone(demoProjects) as MyProject[]);
 }
 
 // ---------- chat at match (plain text) ----------
@@ -617,4 +679,26 @@ export function __emitMockRedteamRun(kind: 'oracle' | 'rls', version: 'v1' | 'v2
         }
       : { id: newId('rt'), kind, version, attempts: 12, revealed: 0, denied: 12, details: { simulated: true }, createdAt: nowIso() };
   redteamListeners.forEach((cb) => cb(clone(run)));
+}
+
+// ---------- reliability events (mock of 0011_reliability.sql) ----------
+
+const completedProjects = new Set<string>();
+
+function mockAdjust(label: string, delta: number): void {
+  demoScoreEvents.push({ label, delta });
+  if (me) me = { ...me, reliability: Math.max(0, Math.min(100, me.reliability + delta)) };
+}
+
+export async function completeProject(projectId: string): Promise<{ members: number }> {
+  if (completedProjects.has(projectId)) throw new Error('project already completed');
+  completedProjects.add(projectId);
+  mockAdjust('Finished a project', 5);
+  return wait({ members: 3 });
+}
+
+export async function leaveTeam(projectId: string): Promise<void> {
+  if (completedProjects.has(projectId)) throw new Error('project already completed');
+  mockAdjust('Left a team with notice', -3);
+  return wait(undefined);
 }

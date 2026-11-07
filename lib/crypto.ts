@@ -3,6 +3,8 @@ import nacl from 'tweetnacl';
 import { encodeBase64, decodeBase64, encodeUTF8, decodeUTF8 } from 'tweetnacl-util';
 import * as SecureStore from 'expo-secure-store';
 
+import { open as openSealed, seal } from './e2eeCore';
+
 const BUNDLE = 'commit_keys_v1';
 const BOX_SK = 'commit_box_sk';
 const SIGN_SK = 'commit_sign_sk';
@@ -78,4 +80,13 @@ export async function unwrapTeamKey(encrypted: string, nonce: string, senderPubl
   const value = nacl.box.open(decodeBase64(encrypted), decodeBase64(nonce), decodeBase64(senderPublicKey), decodeBase64((await keys()).box));
   if (!value || value.length !== nacl.secretbox.keyLength) throw new Error('Could not unwrap team key');
   return encodeBase64(value);
+}
+/** Seals a chat message for one person. The secret key stays in this file. See lib/e2eeCore.ts. */
+export async function sealForPeer(text: string, matchId: string, peerPublicKey: string): Promise<string> {
+  const secret = decodeBase64((await keys()).box);
+  const mine = encodeBase64(nacl.box.keyPair.fromSecretKey(secret).publicKey);
+  return seal(text, matchId, mine, peerPublicKey, secret);
+}
+export async function openFromPeer(body: string, matchId: string, expectedSender: string, peerPublicKey: string): Promise<string> {
+  return openSealed(body, matchId, expectedSender, peerPublicKey, decodeBase64((await keys()).box));
 }

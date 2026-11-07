@@ -1,3 +1,4 @@
+import { signOut } from '@/lib/api';
 import { router, type Href } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -35,6 +36,14 @@ function Row({ title, note, right }: { title: string; note?: string; right?: Rea
       </View>
       {right}
     </View>
+  );
+}
+
+function SignOutRow() {
+  return (
+    <PressScale accessibilityLabel="Sign out" onPress={() => signOut().catch(() => {})}>
+      <Row title="Sign out" />
+    </PressScale>
   );
 }
 
@@ -95,6 +104,8 @@ export default function SettingsScreen() {
       </Section>
 
       <Section title="Feel" index={2}>
+        <Row title="Sounds" note="Swipes, matches, commits and Hachi" right={<Switch label="Sounds" value={prefs.sound} onChange={(v) => setPref('sound', v)} />} />
+        <LinkRow title="Hear every sound" href="/sounds" />
         <Row title="Haptics" note="The little taps when things happen" right={<Switch label="Haptics" value={prefs.haptics} onChange={(v) => setPref('haptics', v)} />} />
         <Row title="Calm motion" note="Turns off decorative animation" right={<Switch label="Calm motion" value={prefs.calmMotion} onChange={(v) => setPref('calmMotion', v)} />} />
       </Section>
@@ -105,6 +116,7 @@ export default function SettingsScreen() {
       </Section>
 
       <Section title="Proof" index={4}>
+        <LinkRow title="Security Center" note="What we can see, and what we can't" href="/security" />
         <LinkRow title="Your commits" note="Everything you have signed" href="/commits" />
         <LinkRow title="Verify the chain" href="/verify" />
         <LinkRow title="Security Lab" note="Watch us try to break it" href="/lab" />
@@ -112,7 +124,8 @@ export default function SettingsScreen() {
 
       <Section title="Account" index={5}>
         <LinkRow title="Edit profile" href="/onboarding/profile" />
-        <LinkRow title="Sign in again" href="/login" />
+        <LinkRow title="Sign in" href="/login" />
+        <SignOutRow />
         <LinkRow title="Replay the welcome" href="/welcome" />
       </Section>
 

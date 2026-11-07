@@ -1,3 +1,4 @@
+import { sfx } from '@/lib/sound';
 import * as Haptics from '@/lib/haptics';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
@@ -51,6 +52,7 @@ export function ModeWipeProvider({ children }: { children: ReactNode }) {
     (next, x, y) => {
       if (next === mode) return;
       Haptics.selectionAsync();
+      sfx('mode');
       if (reduced) {
         setMode(next);
         return;

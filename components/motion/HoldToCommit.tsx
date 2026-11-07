@@ -1,3 +1,4 @@
+import { sfx, stopSfx } from '@/lib/sound';
 import * as Haptics from '@/lib/haptics';
 import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -47,6 +48,8 @@ export function HoldToCommit({ label = 'Hold to commit', doneLabel = 'Committed'
 
   const complete = () => {
     stopTicks();
+    stopSfx('hold');
+    sfx('commit');
     setDone(true);
     setFire((n) => n + 1);
     hachi.play('success');
@@ -56,6 +59,7 @@ export function HoldToCommit({ label = 'Hold to commit', doneLabel = 'Committed'
 
   const begin = () => {
     if (done) return;
+    sfx('hold');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     ticks.current = [
       setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), HOLD_MS * 0.3),
@@ -74,6 +78,7 @@ export function HoldToCommit({ label = 'Hold to commit', doneLabel = 'Committed'
 
   const cancel = () => {
     if (done) return;
+    stopSfx('hold');
     stopTicks();
     cancelAnimation(fill);
     fill.value = withTiming(0, { duration: 220 });
@@ -99,7 +104,7 @@ export function HoldToCommit({ label = 'Hold to commit', doneLabel = 'Committed'
         onPressIn={begin}
         onPressOut={cancel}>
         <Animated.View style={[styles.button, body]}>
-          <Svg width={SIZE} height={SIZE} style={StyleSheet.absoluteFill}>
+          <Svg width={SIZE} height={SIZE} style={[StyleSheet.absoluteFill, { transform: [{ rotate: '-90deg' }] }]}>
             <Circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} stroke={t.primary + '33'} strokeWidth={STROKE} fill="none" />
             <AnimatedCircle
               cx={SIZE / 2}
@@ -111,9 +116,6 @@ export function HoldToCommit({ label = 'Hold to commit', doneLabel = 'Committed'
               strokeLinecap="round"
               strokeDasharray={LENGTH}
               animatedProps={ring}
-              rotation={-90}
-              originX={SIZE / 2}
-              originY={SIZE / 2}
             />
           </Svg>
           <Text style={{ color: done ? t.onPrimary : t.primary, fontFamily: t.fontBold, fontSize: done ? 40 : 15 }}>

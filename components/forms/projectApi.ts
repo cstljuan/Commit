@@ -1,7 +1,5 @@
-/**
- * TEMPORARY local stub of postIdea from lib/api.ts (03-CONTRACTS.md, section 4).
- * Swap for a re-export once shahd-agent lands lib/api.mock.ts or lib/api.ts.
- */
+import * as api from '@/lib/api';
+
 import type { Level, Role } from './profileApi';
 
 export type RoleNeed = { role: Role; level: Level; count: number };
@@ -17,11 +15,17 @@ export type PostIdeaInput = {
   timeframe: string;
 };
 
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 export async function postIdea(input: PostIdeaInput): Promise<{ projectId: string; commitHash: string }> {
-  await wait(900);
-  if (input.title.toLowerCase().includes('fail')) throw new Error('post_idea failed');
-  const hex = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-  return { projectId: `p_${Date.now()}`, commitHash: hex };
+  return api.postIdea({
+    title: input.title,
+    teaser: input.teaser || input.idea.slice(0, 120),
+    fullIdea: input.idea,
+    visibility: input.visibility,
+    type: 'original',
+    theme: input.theme,
+    timeframe: input.timeframe,
+    githubUrl: input.githubUrl,
+    roles: input.roles.map((r) => ({ role: r.role, open: r.count, level: r.level })),
+    womenOnly: false,
+  });
 }

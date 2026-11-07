@@ -16,6 +16,7 @@ import { IntroSplash } from '@/components/motion/IntroSplash';
 import { ModeWipeProvider } from '@/components/motion/ModeWipe';
 import { API_IS_MOCK, getMyProfile } from '@/lib/api';
 import { noteTouch, noteTouchStart } from '@/lib/hachi';
+import { preloadSfx, setSoundMode } from '@/lib/sound';
 import { PrefsProvider } from '@/lib/prefs';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { ModeProvider, useMode } from '@/lib/theme';
@@ -44,6 +45,12 @@ function useSignInGate() {
 function AppStack() {
   const { mode, t } = useMode();
   useSignInGate();
+  useEffect(() => {
+    setSoundMode(mode);
+  }, [mode]);
+  useEffect(() => {
+    preloadSfx();
+  }, []);
   return (
     <>
       <StatusBar barStyle={mode === 'hack' ? 'light-content' : 'dark-content'} />

@@ -77,9 +77,9 @@ const normal: Card[] = [
 const women: Card[] = [
   project({
     id: 'w1',
-    title: 'Safe walk home',
-    teaser: 'Walk with someone you trust, and a route that stays lit.',
-    theme: 'Safety',
+    title: 'Patchnotes',
+    teaser: 'Turns your GitHub commits into a changelog people actually read.',
+    theme: 'Dev tools',
     reason: 'Fills your backend gap',
     commitHash: 'e40b2a6',
     roles: [
@@ -98,9 +98,9 @@ const women: Card[] = [
   }),
   project({
     id: 'w3',
-    title: 'First PR club',
-    teaser: 'Pairs first-time contributors with a mentor for their first merge.',
-    theme: 'Education',
+    title: 'Beatgrid',
+    teaser: 'Practice DJ transitions in your browser, with feedback on your timing.',
+    theme: 'Music',
     timeframe: 'Semester',
     isSuper: true,
     reason: 'Needs your exact stack',

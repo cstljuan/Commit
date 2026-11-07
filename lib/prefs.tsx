@@ -3,10 +3,12 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { ReduceMotion, ReducedMotionConfig, useReducedMotion } from 'react-native-reanimated';
 
 import { setHapticsEnabled } from './haptics';
+import { setSoundEnabled } from './sound';
 import { useMode, type Mode } from './theme';
 
 export type Prefs = {
   haptics: boolean;
+  sound: boolean;
   calmMotion: boolean;
   startMode: Mode;
   notifyMatches: boolean;
@@ -14,7 +16,7 @@ export type Prefs = {
   hachiAccessory: 'auto' | 'band' | 'bow' | 'party' | 'none';
 };
 
-const DEFAULTS: Prefs = { haptics: true, calmMotion: false, startMode: 'normal', notifyMatches: true, notifyCopyAlerts: true, hachiAccessory: 'auto' };
+const DEFAULTS: Prefs = { haptics: true, sound: true, calmMotion: false, startMode: 'normal', notifyMatches: true, notifyCopyAlerts: true, hachiAccessory: 'auto' };
 const KEY = 'commit.prefs';
 
 type Value = { prefs: Prefs; setPref: <K extends keyof Prefs>(key: K, value: Prefs[K]) => void };
@@ -31,6 +33,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
         const saved = { ...DEFAULTS, ...JSON.parse(raw) } as Prefs;
         setPrefs(saved);
         setHapticsEnabled(saved.haptics);
+        setSoundEnabled(saved.sound);
         setMode(saved.startMode);
       })
       // Bad or missing saved settings just mean defaults.
@@ -47,6 +50,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
           return updated;
         });
         if (key === 'haptics') setHapticsEnabled(next as boolean);
+        if (key === 'sound') setSoundEnabled(next as boolean);
       },
     }),
     [prefs],

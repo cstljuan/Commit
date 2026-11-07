@@ -8,6 +8,21 @@ import { useMode } from '@/lib/theme';
 
 import type { Card, PersonCard, ProjectCard, RoleCount } from './cardTypes';
 
+const DARK_INK = '#2A1408';
+const luminance = (hex: string) => {
+  const [r, g, b] = [1, 3, 5].map((i) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+/** Text on a coloured art block: dark on light colours like orange and gold, white on deep ones. */
+const inkOn = (hex: string) => {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) return '#FFFFFF';
+  const l = luminance(hex);
+  return (l + 0.05) / (luminance(DARK_INK) + 0.05) > 1.05 / (l + 0.05) ? DARK_INK : '#FFFFFF';
+};
+
 const rolesText = (roles: RoleCount[]) => {
   const open = roles.filter((r) => r.open > 0).map((r) => `${r.open} ${r.role}`);
   return open.length ? `Need ${open.join(', ')}` : 'Team is full';
@@ -36,17 +51,19 @@ function Reliability({ score }: { score: number }) {
 
 function ProjectBody({ card }: { card: ProjectCard }) {
   const { t } = useMode();
+  const art = critterFor(card.ownerBoxPublicKey ?? card.ownerUsername).colour;
+  const ink = inkOn(art);
   return (
     <>
-      <View style={[styles.art, { backgroundColor: critterFor(card.ownerBoxPublicKey ?? card.ownerUsername).colour }]}>
+      <View style={[styles.art, { backgroundColor: art }]}>
         <View style={styles.artCritter}>
           <Critter seed={card.ownerBoxPublicKey ?? card.ownerUsername} size={128} disc={false} colour="#FFFFFF" />
         </View>
-        <Text style={{ color: '#FFFFFF', fontFamily: t.fontBold, fontSize: 14 }}>
+        <Text style={{ color: ink, fontFamily: t.fontBold, fontSize: 14 }}>
           {card.theme} · {card.timeframe[0]?.toUpperCase()}{card.timeframe.slice(1)}
         </Text>
         <View style={styles.row}>
-          <Text style={{ color: '#FFFFFF', fontFamily: t.fontBody, fontSize: 13 }}>
+          <Text style={{ color: ink, fontFamily: t.fontBody, fontSize: 13 }}>
             {card.visibility === 'private' ? 'Private idea' : 'Public idea'}
           </Text>
           <HashChip hash={card.commitHash} solid />
@@ -70,6 +87,7 @@ function ProjectBody({ card }: { card: ProjectCard }) {
 function PersonBody({ card }: { card: PersonCard }) {
   const { t } = useMode();
   const prompt = card.prompts[0];
+  const art = critterFor(card.boxPublicKey ?? card.username).colour;
   return (
     <>
       <Pressable accessibilityRole="button" accessibilityLabel={`Open @${card.username}`} onPress={() => router.push(`/person/${card.username}`)} style={styles.personTop}>
@@ -87,9 +105,9 @@ function PersonBody({ card }: { card: PersonCard }) {
         {card.skills.join(', ')}
       </Text>
       {prompt ? (
-        <View style={[styles.prompt, { backgroundColor: critterFor(card.boxPublicKey ?? card.username).colour }]}>
-          <Text style={{ color: '#FFFFFF', fontFamily: t.fontBold, fontSize: 13 }}>{prompt.q}</Text>
-          <Text numberOfLines={3} style={{ color: '#FFFFFF', fontFamily: t.fontDisplay, fontSize: 26 }}>
+        <View style={[styles.prompt, { backgroundColor: art }]}>
+          <Text style={{ color: inkOn(art), fontFamily: t.fontBold, fontSize: 13 }}>{prompt.q}</Text>
+          <Text numberOfLines={3} style={{ color: inkOn(art), fontFamily: t.fontDisplay, fontSize: 26 }}>
             {prompt.a}
           </Text>
         </View>

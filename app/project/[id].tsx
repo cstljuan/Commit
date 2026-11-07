@@ -10,13 +10,18 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Critter } from '@/components/critters/Critter';
+import { Switch } from '@/components/motion/Controls';
 import { DecodeText } from '@/components/motion/DecodeText';
 import { HashChip } from '@/components/motion/HashChip';
 import { Burst } from '@/components/motion/Particles';
 import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
 import { Hachi } from '@/components/Hachi/Hachi';
-import { demoProjects } from '@/lib/demoData';
+import { API_IS_MOCK, getMatches, getMyProjects } from '@/lib/api';
+import { LAB } from '@/lib/demoData';
+import { serverCopyOfIdea } from '@/lib/e2ee';
+import { readIdea } from '@/lib/teamKeys';
+import type { MyProject } from '@/lib/types';
 import { useMode } from '@/lib/theme';
 
 function RoleSlot({ role, username, index, filled, onFilled }: { role: string; username: string | null; index: number; filled: boolean; onFilled?: () => void }) {
@@ -61,8 +66,37 @@ function RoleSlot({ role, username, index, filled, onFilled }: { role: string; u
 export default function TeamScreen() {
   const { t } = useMode();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const team = demoProjects.find((p) => p.id === id) ?? demoProjects[0];
+  const [team, setTeam] = useState<MyProject | null>(null);
+  const [missing, setMissing] = useState(false);
+  const [idea, setIdea] = useState<string | null>(null);
+  const [chatId, setChatId] = useState<string | null>(null);
   const [fire, setFire] = useState(0);
+  const [serverView, setServerView] = useState(false);
+  const [serverCopy, setServerCopy] = useState<string | null>(null);
+  useEffect(() => {
+    getMyProjects()
+      .then((list) => {
+        const found = list.find((p) => p.id === id) ?? null;
+        setTeam(found);
+        setMissing(!found);
+        setIdea(found?.idea ?? null);
+        // Private ideas decrypt on this phone. Until a key arrives, the public pitch shows.
+        if (found?.status === 'private') readIdea(found.id).then(setIdea).catch(() => {});
+      })
+      .catch(() => setMissing(true));
+    getMatches()
+      .then((list) => setChatId(list.find((m) => m.projectId === id)?.id ?? null))
+      .catch(() => {});
+  }, [id]);
+  if (!team) {
+    return (
+      <View style={[styles.waiting, { backgroundColor: t.bg }]}>
+        <Stack.Screen options={{ title: 'Team' }} />
+        <Hachi size={110} state={missing ? 'confused' : 'thinking'} animated />
+        <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 16 }}>{missing ? 'This project is not on your list' : 'Loading the team'}</Text>
+      </View>
+    );
+  }
   const filled = team.roles.filter((r) => r.username).length;
   const total = team.roles.length;
   return (
@@ -90,7 +124,7 @@ export default function TeamScreen() {
       <View style={styles.grid}>
         {team.roles.map((r, i) => (
           <RoleSlot
-            key={r.role}
+            key={`${r.role}${i}`}
             role={r.role}
             username={r.username}
             index={i}
@@ -102,17 +136,49 @@ export default function TeamScreen() {
       </View>
 
       <Reveal index={3} style={[styles.idea, { backgroundColor: t.surface }]}>
-        <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 13 }}>The idea, decrypted for this team</Text>
-        <DecodeText
-          text={team.idea}
-          delayMs={600}
-          durationMs={1100}
-          style={{ color: t.text, fontFamily: t.fontBody, fontSize: 16, lineHeight: 24 }}
-        />
+        <View style={styles.ideaTop}>
+          <View style={{ flex: 1 }}>
+          <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 13 }}>{team.status === 'private' ? 'The idea, decrypted for this team' : 'The idea'}</Text>
+          </View>
+          {team.status === 'private' && !API_IS_MOCK ? (
+            <View style={styles.serverSwitch}>
+              <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 11 }}>Server view</Text>
+              <Switch
+                label="Show what the server stores"
+                value={serverView}
+                onChange={(next) => {
+                  setServerView(next);
+                  if (next && serverCopy === null) {
+                    serverCopyOfIdea(team.id)
+                      .then((copy) => setServerCopy(copy ?? 'Nothing stored for this idea.'))
+                      .catch(() => setServerCopy('Could not reach the server.'));
+                  }
+                }}
+              />
+            </View>
+          ) : null}
+        </View>
+        {serverView ? (
+          <Text selectable style={{ color: t.text, fontFamily: LAB.mono, fontSize: 12, lineHeight: 18 }}>{serverCopy ?? 'Loading'}</Text>
+        ) : (
+          <DecodeText
+            key={idea ?? ''}
+            text={idea ?? team.idea}
+            delayMs={600}
+            durationMs={1100}
+            style={{ color: t.text, fontFamily: t.fontBody, fontSize: 16, lineHeight: 24 }}
+          />
+        )}
       </Reveal>
 
       <Reveal index={4}>
-        <PressScale onPress={() => router.push('/chat/m1')} style={[styles.button, { backgroundColor: t.primary }]}>
+        <PressScale accessibilityLabel="Proof receipt" onPress={() => router.push(`/proof/${team.id}`)} style={[styles.button, { backgroundColor: t.surface }]}>
+          <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 17 }}>Proof receipt</Text>
+        </PressScale>
+      </Reveal>
+
+      <Reveal index={5}>
+        <PressScale onPress={() => router.push(chatId ? `/chat/${chatId}` : id === 'p1' ? '/chat/m1' : '/teams')} style={[styles.button, { backgroundColor: t.primary }]}>
           <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: 17 }}>Open chat</Text>
         </PressScale>
       </Reveal>
@@ -121,6 +187,7 @@ export default function TeamScreen() {
 }
 
 const styles = StyleSheet.create({
+  waiting: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
   content: { padding: 20, gap: 18, paddingBottom: 40 },
   meter: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   meterText: { flex: 1, gap: 2 },
@@ -129,5 +196,7 @@ const styles = StyleSheet.create({
   badge: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   open: { borderStyle: 'dashed' },
   idea: { padding: 18, borderRadius: 22, gap: 8 },
+  ideaTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  serverSwitch: { alignItems: 'center', gap: 2 },
   button: { height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
 });

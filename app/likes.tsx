@@ -1,10 +1,12 @@
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { MatchMoment, type MatchInfo } from '@/components/match/MatchMoment';
 import { sampleReveal } from '@/components/deck/sampleCards';
-import { getInterested } from '@/lib/api';
+import { API_IS_MOCK, commitToMatch, getInterested, respondToInterested } from '@/lib/api';
+import { hachi } from '@/lib/hachi';
+import { sfx } from '@/lib/sound';
 import type { Interested } from '@/lib/types';
 import { useMode } from '@/lib/theme';
 
@@ -23,7 +25,24 @@ export default function LikesScreen() {
       .catch(() => setItems([]));
   }, []);
 
-  const remove = (ref: string) => setItems((list) => list.filter((i) => i.swipeRef !== ref));
+  /** The name only exists once you like back: the server sends it in the match, never on the card (F5). */
+  const answer = (item: Interested, like: boolean) => {
+    sfx(like ? 'like' : 'pass');
+    setItems((list) => list.filter((i) => i.swipeRef !== item.swipeRef));
+    if (API_IS_MOCK) {
+      if (like) setMatch(sampleReveal(item));
+      return;
+    }
+    respondToInterested(item.swipeRef, like)
+      .then(({ match: made }) => {
+        if (made) setMatch({ id: made.id, role: made.role, otherUsername: made.otherUsername });
+      })
+      .catch(() => {
+        // The server said no, so bring the card back.
+        sfx('error');
+        setItems((list) => [item, ...list]);
+      });
+  };
 
   return (
     <View style={[styles.root, { backgroundColor: t.bg }]}>
@@ -49,26 +68,23 @@ export default function LikesScreen() {
               { backgroundColor: t.surface },
               item.isSuper && { backgroundColor: t.accent },
             ]}>
-            <View style={[styles.mystery, { backgroundColor: t.primary + '2E' }]}>
-              <Text style={{ color: t.primary, fontFamily: t.fontDisplay, fontSize: 40 }}>?</Text>
+            <View style={[styles.mystery, { backgroundColor: item.isSuper ? '#2A14081F' : t.primary + '2E' }]}>
+              <Text style={{ color: item.isSuper ? '#2A1408' : t.primary, fontFamily: t.fontDisplay, fontSize: 40 }}>?</Text>
             </View>
-            <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 16 }}>{item.role}</Text>
-            <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 14 }}>{item.level}</Text>
+            <Text style={{ color: item.isSuper ? '#2A1408' : t.text, fontFamily: t.fontBold, fontSize: 16 }}>{item.role}</Text>
+            <Text style={{ color: item.isSuper ? '#2A1408' : t.muted, fontFamily: t.fontBody, fontSize: 14 }}>{item.level}</Text>
             <View style={styles.actions}>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`Pass on this ${item.role}`}
-                onPress={() => remove(item.swipeRef)}
+                onPress={() => answer(item, false)}
                 style={[styles.action, { backgroundColor: t.pass }]}>
                 <Text style={{ color: t.bg, fontFamily: t.fontBold, fontSize: 16 }}>{'✕︎'}</Text>
               </Pressable>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`Like this ${item.role} and reveal them`}
-                onPress={() => {
-                  remove(item.swipeRef);
-                  setMatch(sampleReveal(item));
-                }}
+                onPress={() => answer(item, true)}
                 style={[styles.action, { backgroundColor: t.like }]}>
                 <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: 16 }}>{'♥︎'}</Text>
               </Pressable>
@@ -79,8 +95,17 @@ export default function LikesScreen() {
       {match ? (
         <MatchMoment
           match={match}
-          onSayHi={() => setMatch(null)}
-          onCommit={() => setMatch(null)}
+          onSayHi={() => {
+            setMatch(null);
+            if (!API_IS_MOCK) router.push(`/chat/${match.id}`);
+          }}
+          onCommit={() => {
+            setMatch(null);
+            if (API_IS_MOCK) return;
+            commitToMatch(match.id)
+              .then(() => hachi.play('success'))
+              .catch(() => hachi.play('blocked'));
+          }}
           onDismiss={() => setMatch(null)}
         />
       ) : null}

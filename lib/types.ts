@@ -58,10 +58,37 @@ export type Match = {
   role: Role;
   otherUsername: string;
   otherAvatarUrl: string | null;
+  projectTitle?: string; // missing for hack teams
   iCommitted: boolean;
   theyCommitted: boolean;
   isTeam: boolean;
 };
+
+/** A project on the Projects tab. A seat with no username is open. */
+export type MyProject = {
+  id: string;
+  title: string;
+  commitHash: string;
+  idea: string;
+  status: 'recruiting' | 'building' | 'private';
+  mine: boolean;
+  wantIn: number;
+  roles: { role: Role; username: string | null }[];
+};
+
+/** One row on the Activity screen. `seed` drives the Critter; 'unknown' when identity must stay hidden. */
+export type ActivityEvent = {
+  id: string;
+  kind: 'match' | 'super' | 'alert' | 'team' | 'commit';
+  seed: string;
+  title: string;
+  when: string; // relative, e.g. '4 min ago'
+  createdAt: string; // ISO
+  href: string;
+};
+
+/** One line on the Score screen. The deltas add up to the current reliability score. */
+export type ScoreEvent = { label: string; delta: number };
 
 /** Blurred card. MUST contain no identity. The server only sends identity on reveal. */
 export type Interested = { swipeRef: string; role: Role; level: Level; isSuper: boolean };
@@ -81,11 +108,14 @@ export type Profile = {
   prompts: Prompt[];
   hoursPerWeek: number | null;
   timezone: string | null;
-  womenOnly: boolean;
+  womenOnly: boolean; // read only, server-set (0009). Self-identification is not verified, so no self-serve switch
   reliability: number; // read only, the server owns it
 };
 
-/** What the onboarding and profile screens can write. Reliability is server side only. */
+/**
+ * What the onboarding and profile screens can write. Reliability is server side only.
+ * womenOnly stays in the type for compatibility but saveProfile ignores it (server-set only, 0009).
+ */
 export type ProfileInput = Omit<Profile, 'id' | 'reliability'>;
 
 export type TeamMember = {
@@ -126,7 +156,7 @@ export type PostIdeaInput = {
   timeframe: string; // 'weekend', '1 month', 'semester', 'ongoing'
   githubUrl?: string;
   roles: { role: Role; open: number; level?: Level }[];
-  womenOnly: boolean;
+  womenOnly: boolean; // only allowed for Women mode accounts; the server rejects it otherwise (0009)
 };
 
 export type CopyAlert = {

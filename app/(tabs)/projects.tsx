@@ -1,5 +1,5 @@
-import { router, type Href } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect, type Href } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -12,7 +12,8 @@ import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
 import { SampleBadge } from '@/components/motion/SampleBadge';
 import { useTabInset } from '@/components/nav/TabBar';
-import { demoProjects, type DemoProject } from '@/lib/demoData';
+import { API_IS_MOCK, getMyProjects } from '@/lib/api';
+import type { MyProject as DemoProject } from '@/lib/types';
 import { useMode } from '@/lib/theme';
 import { radius, space, type } from '@/lib/tokens';
 
@@ -50,10 +51,11 @@ function ProjectCard({ project, index }: { project: DemoProject; index: number }
   const tint = project.status === 'private' ? t.muted : project.status === 'building' ? t.like : t.primary;
   return (
     <Reveal index={index + 1}>
+      <View style={[styles.card, { backgroundColor: t.surface, shadowColor: t.line }]}>
       <PressScale
         accessibilityLabel={`Open ${project.title}`}
         onPress={() => router.push(`/project/${project.id}` as Href)}
-        style={[styles.card, { backgroundColor: t.surface, shadowColor: t.line }]}>
+        style={styles.cardMain}>
         <View style={styles.cardTop}>
           <View style={[styles.status, { backgroundColor: `${tint}22` }]}>
             <Text style={{ color: project.status === 'private' ? t.muted : t.text, fontFamily: t.fontBold, fontSize: 12 }}>{STATUS[project.status]}</Text>
@@ -75,6 +77,7 @@ function ProjectCard({ project, index }: { project: DemoProject; index: number }
             {need.length ? `Needs ${need.join(', ')}` : 'Team is full'}
           </Text>
         </View>
+      </PressScale>
         {project.wantIn ? (
           <PressScale
             accessibilityLabel={`${project.wantIn} builders want in`}
@@ -83,7 +86,7 @@ function ProjectCard({ project, index }: { project: DemoProject; index: number }
             <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: type.small }}>{project.wantIn} builders want in</Text>
           </PressScale>
         ) : null}
-      </PressScale>
+      </View>
     </Reveal>
   );
 }
@@ -94,7 +97,15 @@ export default function ProjectsScreen() {
   const { top } = useSafeAreaInsets();
   const inset = useTabInset();
   const [filter, setFilter] = useState<Filter>('all');
-  const shown = demoProjects.filter((p) => filter === 'all' || (filter === 'mine' ? p.mine : !p.mine));
+  const [projects, setProjects] = useState<DemoProject[] | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      getMyProjects()
+        .then(setProjects)
+        .catch(() => setProjects([]));
+    }, []),
+  );
+  const shown = (projects ?? []).filter((p) => filter === 'all' || (filter === 'mine' ? p.mine : !p.mine));
   return (
     <ScrollView style={{ backgroundColor: t.bg }} contentContainerStyle={[styles.content, { paddingTop: top + space.m, paddingBottom: inset + space.l }]}>
       <View style={styles.head}>
@@ -113,7 +124,13 @@ export default function ProjectsScreen() {
         </PressScale>
       </Reveal>
       <Segmented options={FILTERS} value={filter} onChange={setFilter} />
-      <SampleBadge color={t.bg} background={t.muted} />
+      {API_IS_MOCK ? <SampleBadge color={t.bg} background={t.muted} /> : null}
+      {projects && !shown.length ? (
+        <View style={styles.none}>
+          <Hachi size={110} state="thinking" animated />
+          <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: type.body }}>No projects here yet. Post your first idea.</Text>
+        </View>
+      ) : null}
       {shown.map((p, i) => (
         <ProjectCard key={p.id} project={p} index={i} />
       ))}
@@ -123,9 +140,11 @@ export default function ProjectsScreen() {
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: space.gutter, gap: space.m },
+  none: { alignItems: 'center', gap: space.m, paddingVertical: space.xl },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   newCard: { height: 56, borderRadius: radius.control, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.s },
   card: { padding: space.l, borderRadius: radius.card, gap: space.s + 2, shadowOpacity: 1, shadowRadius: 0, shadowOffset: { width: 0, height: 5 } },
+  cardMain: { gap: space.s + 2 },
   cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   status: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: radius.full },
   track: { height: 6, borderRadius: 3, overflow: 'hidden' },
