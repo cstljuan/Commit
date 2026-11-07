@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 
 import { Critter } from '@/components/critters/Critter';
 import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
 import { useTabInset } from '@/components/nav/TabBar';
-import { Tako } from '@/components/Tako/Tako';
+import { Hachi } from '@/components/Hachi/Hachi';
 import { demoMatches, demoTeam, type DemoMatch } from '@/lib/demoData';
 import { useMode } from '@/lib/theme';
 
@@ -55,15 +56,22 @@ export default function MatchesScreen() {
         contentContainerStyle={[styles.list, { paddingTop: top + 12, paddingBottom: inset }]}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 34 }}>
-              {mode === 'hack' ? 'git log' : 'Matches'}
-            </Text>
+            <View style={styles.titleRow}>
+              <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 34 }}>
+                {mode === 'hack' ? 'git log' : 'Matches'}
+              </Text>
+              <PressScale accessibilityLabel="Activity" onPress={() => router.push('/activity')} style={styles.bell}>
+                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                  <Path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4l2-2zM10 21h4" stroke={t.text} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+              </PressScale>
+            </View>
             <Reveal>
                 <PressScale
                   accessibilityLabel="Copy alert. Someone posted a reworded version of your idea. Tap to see your proof."
                   onPress={() => router.push('/alert')}
                   style={[styles.alert, { backgroundColor: t.pass + '1F', borderColor: t.pass }]}>
-                  <Tako size={44} state="alert" animated />
+                  <Hachi size={52} state="guard" animated />
                   <View style={styles.rowText}>
                     <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 15 }}>Someone reworded your idea</Text>
                     <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 13 }}>
@@ -97,5 +105,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: 22 },
   rowText: { flex: 1, gap: 2 },
   alert: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, borderWidth: 2 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  bell: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   team: { padding: 18, borderRadius: 24, gap: 4 },
 });

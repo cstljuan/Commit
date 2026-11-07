@@ -35,7 +35,7 @@ function ProjectBody({ card }: { card: ProjectCard }) {
   return (
     <>
       <View style={[styles.art, { backgroundColor: t.primary + '24' }]}>
-        <View style={styles.artTako}>
+        <View style={styles.artCritter}>
           <Critter seed={card.ownerUsername} size={128} disc={false} />
         </View>
         <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: 13 }}>
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 12 },
   },
   art: { flexGrow: 1, minHeight: 90, borderRadius: 20, padding: 16, justifyContent: 'flex-end', gap: 2 },
-  artTako: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  artCritter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 30 },
   body: { fontSize: 16, lineHeight: 22 },
   roles: { fontSize: 16 },

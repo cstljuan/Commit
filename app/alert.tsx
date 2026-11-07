@@ -8,7 +8,7 @@ import { Reveal } from '@/components/motion/Reveal';
 import { SampleBadge } from '@/components/motion/SampleBadge';
 import { ScoreRing } from '@/components/motion/ScoreRing';
 import { Screen } from '@/components/nav/Screen';
-import { Tako } from '@/components/Tako/Tako';
+import { Hachi } from '@/components/Hachi/Hachi';
 import { demoAlert } from '@/lib/demoData';
 import { useMode } from '@/lib/theme';
 import { radius, space, type } from '@/lib/tokens';
@@ -20,7 +20,7 @@ export default function AlertScreen() {
     <Screen title="Someone reworded your idea">
       <SampleBadge color={t.bg} background={t.muted} />
       <Reveal style={[styles.head, { backgroundColor: `${t.pass}1F` }]}>
-        <Tako size={72} state="alert" animated />
+        <Hachi size={80} state="guard" animated interactive />
         <View style={styles.text}>
           <DecodeText text="Only you can see this." durationMs={500} style={{ color: t.text, fontFamily: t.fontBold, fontSize: type.lead }} />
           <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: type.small, lineHeight: 20 }}>

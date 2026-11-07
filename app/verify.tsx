@@ -13,7 +13,7 @@ import Animated, {
 
 import { PressScale } from '@/components/motion/PressScale';
 import { SampleBadge } from '@/components/motion/SampleBadge';
-import { Tako } from '@/components/Tako/Tako';
+import { Hachi } from '@/components/Hachi/Hachi';
 import { demoChainBroken, demoChainGood, LAB, type ChainRow } from '@/lib/demoData';
 
 const STEP_MS = 340;
@@ -79,7 +79,7 @@ export default function VerifyScreen() {
       />
       <SampleBadge color={LAB.bg} background={LAB.accent} />
       <View style={styles.head}>
-        <Tako size={72} state={broken ? 'broken' : running ? 'idle' : 'happy'} color={LAB.primary} animated />
+        <Hachi size={84} state={broken ? 'broken' : running ? 'inspect' : 'verified'} color={LAB.primary} animated interactive />
         <Text style={{ color: verdictColor, fontFamily: LAB.display, fontSize: 34, flex: 1 }}>{verdict}</Text>
       </View>
       <View>

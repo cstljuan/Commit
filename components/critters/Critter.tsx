@@ -6,7 +6,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useMotionOff } from '@/lib/prefs';
 
 import { critterFor, type Species } from './identity';
-import { SHAPES } from './shapes';
+import { LIMB, SHAPES } from './shapes';
 
 const eye = (cx: number, cy: number, rx: number, ry: number) =>
   `M${cx - rx} ${cy}a${rx} ${ry} 0 1 0 ${2 * rx} 0a${rx} ${ry} 0 1 0 ${-2 * rx} 0Z`;
@@ -52,20 +52,24 @@ export function Critter({ seed, size = 56, animated = false, disc = true, specie
 
   const style = useAnimatedStyle(() => ({ transform: [{ translateY: bob.value }] }));
 
-  const rx = 5.5;
-  const ry = blink ? 0.9 : 8;
-  const eyes = eye(shape.eyes[0], shape.eyeY, rx, ry) + eye(shape.eyes[1], shape.eyeY, rx, ry);
-  const nose = shape.nose ? `M${50 - 4.5} ${shape.eyeY + 13}h9l-4.5 5.5Z` : '';
-  // The first body path carries the face, so the eyes cut through it.
+  const r = shape.eyeR ?? 10.5;
+  const ry = blink ? 1.4 : r;
+  const eyes = eye(shape.eyes[0], shape.eyeY, r, ry) + eye(shape.eyes[1], shape.eyeY, r, ry);
+  const noseY = shape.eyeY + r + 5;
+  const nose = shape.nose ? `M72 ${noseY}h16l-8 9Z` : '';
+  // The first body path carries the face, so the eyes cut through it. Limbs are drawn first,
+  // with roots inside the body, so a limb never reads as detached.
   const [main, ...rest] = shape.body;
 
   const art = (
-    <Svg width={disc ? size * 0.78 : size} height={disc ? size * 0.78 : size} viewBox="0 0 100 100" fill="none">
+    <Svg width={disc ? size * 0.82 : size} height={disc ? size * 0.82 : size} viewBox="0 0 160 160" fill="none">
+      {shape.limbs?.map((limb) => {
+        const d = typeof limb === 'string' ? limb : limb.d;
+        const w = typeof limb === 'string' ? LIMB : limb.w;
+        return <Path key={d} d={d} stroke={fill} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" />;
+      })}
       {rest.map((d) => (
         <Path key={d} d={d} fill={fill} />
-      ))}
-      {shape.limbs?.map((d) => (
-        <Path key={d} d={d} stroke={fill} strokeWidth={7.5} strokeLinecap="round" />
       ))}
       <Path d={main + eyes + nose} fill={fill} fillRule="evenodd" clipRule="evenodd" />
     </Svg>

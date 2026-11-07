@@ -8,7 +8,7 @@ import { HashChip } from '@/components/motion/HashChip';
 import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
 import { Screen } from '@/components/nav/Screen';
-import { Tako } from '@/components/Tako/Tako';
+import { Hachi } from '@/components/Hachi/Hachi';
 import * as Haptics from '@/lib/haptics';
 import { useMode } from '@/lib/theme';
 import { radius, space, type } from '@/lib/tokens';
@@ -65,10 +65,10 @@ export default function CreaturesScreen() {
       </View>
 
       <View style={[styles.tako, { backgroundColor: t.surface }]}>
-        <Tako size={64} state="happy" animated />
+        <Hachi size={72} animated interactive />
         <View style={styles.takoText}>
-          <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: type.lead }}>Tako is the only octopus</Text>
-          <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: type.small }}>Nobody can roll one. Tako runs the place.</Text>
+          <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: type.lead }}>Hachi is the only octopus</Text>
+          <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: type.small }}>Nobody can roll one. Hachi runs the place.</Text>
         </View>
       </View>
 

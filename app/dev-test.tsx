@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import nacl from 'tweetnacl';
-import { InkCommit } from '@/components/Tako/InkCommit';
+import { InkCommit } from '@/components/Hachi/InkCommit';
 import { decodeBase64, decodeUTF8, encodeBase64, encodeUTF8 } from 'tweetnacl-util';
 
 type Row = { name: string; ok: boolean; note?: string };

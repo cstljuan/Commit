@@ -10,6 +10,7 @@ import { HashChip } from '@/components/motion/HashChip';
 import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
 import { Screen } from '@/components/nav/Screen';
+import { Hachi } from '@/components/Hachi/Hachi';
 import { usePrefs } from '@/lib/prefs';
 import { useMode, type Mode } from '@/lib/theme';
 import { radius, space, type } from '@/lib/tokens';
@@ -77,6 +78,16 @@ export default function SettingsScreen() {
         </PressScale>
       </Reveal>
 
+      <Reveal index={1}>
+        <PressScale accessibilityLabel="Meet Hachi" onPress={() => router.push('/hachi')} style={[styles.me, { backgroundColor: t.surface }]}>
+          <Hachi size={72} animated sleepAfter={0} />
+          <View style={styles.rowText}>
+            <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: type.title }}>Meet Hachi</Text>
+            <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: type.small }}>Play with Hachi and choose what to wear.</Text>
+          </View>
+        </PressScale>
+      </Reveal>
+
       <Section title="Open the app in" index={1}>
         <View style={styles.pad}>
           <Segmented options={MODES} value={prefs.startMode} onChange={(m) => setPref('startMode', m)} />
@@ -102,6 +113,7 @@ export default function SettingsScreen() {
       <Section title="Account" index={5}>
         <LinkRow title="Edit profile" href="/onboarding/profile" />
         <LinkRow title="Sign in again" href="/login" />
+        <LinkRow title="Replay the welcome" href="/welcome" />
       </Section>
 
       <Reveal index={6}>

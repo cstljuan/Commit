@@ -35,7 +35,9 @@ export default function ProfileScreen() {
       </Reveal>
 
       <Reveal index={1} style={[styles.card, styles.scoreCard, { backgroundColor: t.surface }]}>
-        <ScoreRing score={70} />
+        <PressScale accessibilityLabel="How your score works" onPress={() => router.push('/score')}>
+          <ScoreRing score={70} />
+        </PressScale>
         <View style={styles.headText}>
           <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 18 }}>Shows up score</Text>
           <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 14, lineHeight: 20 }}>

@@ -1,97 +1,120 @@
 import type { Species } from './identity';
 
 /**
- * One family, one set of rules, on a 100 x 100 grid: a single solid silhouette, two
- * negative-space eyes, no mouth, round stroke caps of width 7 or 8.
+ * Hachi's family: the same build on the same 160 grid. A capsule body, thick round limbs
+ * whose roots sit inside the body so they can never look detached, big round cut-out eyes
+ * and no mouth. Only Hachi gets a headband or eight-limbed octopus body.
  */
 export type Shape = {
-  /** Filled paths. */
+  /** Filled parts. The first carries the face. */
   body: string[];
-  /** Stroked parts such as tentacles and legs. */
-  limbs?: string[];
+  /** Stroked limbs. Width is LIMB unless the limb asks for its own. */
+  limbs?: (string | { d: string; w: number })[];
   eyes: [number, number];
   eyeY: number;
-  /** Optional cut-out nose. */
+  eyeR?: number;
   nose?: boolean;
 };
 
-const spiky = (cx: number, cy: number, inner: number, outer: number, spikes: number) => {
-  let d = '';
-  for (let i = 0; i < spikes * 2; i++) {
-    const r = i % 2 ? inner : outer;
-    const a = (Math.PI * i) / spikes - Math.PI / 2;
-    d += `${i ? 'L' : 'M'}${(cx + r * Math.cos(a)).toFixed(1)} ${(cy + r * Math.sin(a)).toFixed(1)}`;
+export const LIMB = 15;
+
+const spikes = (cx: number, cy: number, r0: number, r1: number, n: number) => {
+  const out: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = ((i + 0.5) / n) * Math.PI * 2;
+    out.push(`M${(cx + r0 * Math.cos(a)).toFixed(1)} ${(cy + r0 * Math.sin(a)).toFixed(1)}L${(cx + r1 * Math.cos(a)).toFixed(1)} ${(cy + r1 * Math.sin(a)).toFixed(1)}`);
   }
-  return `${d}Z`;
+  return out;
 };
+
+const mirror = (d: string) =>
+  // Mirrors absolute paths made only of M, L and C across the middle of the grid.
+  d.replace(/([MLC])([^MLC]*)/g, (_, cmd: string, rest: string) => {
+    const nums = rest.trim().split(/[ ,]+/).map(Number);
+    return cmd + nums.map((n, i) => (i % 2 === 0 ? 160 - n : n)).join(' ');
+  });
+
+const both = (...ds: string[]) => ds.flatMap((d) => [d, mirror(d)]);
 
 export const SHAPES: Record<Species, Shape> = {
   jellyfish: {
-    body: ['M18 52C18 24 36 12 50 12C64 12 82 24 82 52C82 56 78 58 74 58H26C22 58 18 56 18 52Z'],
-    limbs: ['M32 62C27 70 37 76 31 88', 'M50 62C45 72 55 78 50 92', 'M68 62C63 70 73 76 69 88'],
-    eyes: [39, 61],
-    eyeY: 38,
+    body: ['M28 72A52 56 0 0 1 132 72C132 84 124 90 114 90H46C36 90 28 84 28 72Z'],
+    limbs: ['M52 84C44 102 62 116 50 142', 'M80 84C72 106 90 122 80 152', 'M108 84C100 102 118 116 110 142'],
+    eyes: [60, 100],
+    eyeY: 60,
   },
   crab: {
     body: [
-      'M20 56C20 42 34 34 50 34C66 34 80 42 80 56C80 68 66 76 50 76C34 76 20 68 20 56Z',
-      'M6 22a11 11 0 0 1 20 -5L18 25L28 24a11 11 0 0 1 -22 -2Z',
-      'M94 22a11 11 0 0 0 -20 -5L82 25L72 24a11 11 0 0 0 22 -2Z',
+      'M28 88C28 66 52 58 80 58C108 58 132 66 132 88C132 108 108 118 80 118C52 118 28 108 28 88Z',
+      'M4 30A18 18 0 0 1 36 18L22 30L40 32A18 18 0 0 1 4 30Z',
+      'M156 30A18 18 0 0 0 124 18L138 30L120 32A18 18 0 0 0 156 30Z',
     ],
-    limbs: ['M22 46C16 42 14 38 15 32', 'M78 46C84 42 86 38 85 32', 'M26 68L14 78', 'M36 74L28 88', 'M74 68L86 78', 'M64 74L72 88'],
-    eyes: [40, 60],
-    eyeY: 50,
+    limbs: [...both('M38 76C24 70 18 56 22 38', 'M42 106C36 120 28 128 14 134', 'M62 112C60 126 54 138 42 150')],
+    eyes: [60, 100],
+    eyeY: 84,
   },
   whale: {
-    body: ['M8 58C8 36 30 28 50 28C68 28 78 40 82 50C86 44 90 40 96 36C97 50 94 62 86 70C76 80 60 84 42 84C22 84 8 74 8 58Z'],
-    limbs: ['M42 22C42 15 36 13 33 8', 'M42 22C42 15 48 13 51 8'],
-    eyes: [28, 46],
-    eyeY: 52,
+    body: ['M12 90C12 58 44 42 78 42C112 42 132 62 136 80C142 68 148 60 158 54C160 78 154 100 140 112C124 126 100 132 70 132C36 132 12 116 12 90Z'],
+    limbs: ['M72 44C72 28 60 22 54 10', 'M72 44C72 28 84 22 90 10', 'M60 124C56 136 46 146 32 150'],
+    eyes: [44, 84],
+    eyeY: 86,
   },
   puffer: {
-    body: [spiky(50, 52, 31, 44, 14)],
-    eyes: [39, 61],
-    eyeY: 48,
+    body: ['M36 84A44 44 0 1 1 124 84A44 44 0 1 1 36 84Z'],
+    limbs: spikes(80, 84, 38, 66, 12).map((d) => ({ d, w: 13 })),
+    eyes: [62, 98],
+    eyeY: 78,
   },
   shark: {
-    body: ['M4 56C16 42 36 36 52 35L62 14L68 38C76 40 82 44 86 48L98 32C98 46 96 58 98 74L84 60C74 72 60 78 44 78C26 78 12 68 4 56Z'],
-    eyes: [24, 40],
-    eyeY: 52,
+    body: [
+      'M8 94C24 64 54 52 88 52C112 52 130 64 138 80C144 70 150 62 158 56C160 82 158 104 152 124C148 112 144 106 136 100C122 120 98 130 70 128C44 126 22 114 8 94Z',
+      'M70 58C74 40 88 26 104 20C102 34 104 48 108 60Z',
+    ],
+    limbs: ['M78 118C76 132 68 144 54 150'],
+    eyes: [44, 80],
+    eyeY: 88,
   },
   ray: {
-    body: ['M50 22C64 22 68 32 96 46C80 62 64 64 56 72L52 94H48L44 72C36 64 20 62 4 46C32 32 36 22 50 22Z'],
-    eyes: [40, 60],
-    eyeY: 42,
+    body: ['M80 40C98 40 104 54 150 76C156 79 156 85 150 88C124 102 104 106 96 116C90 122 70 122 64 116C56 106 36 102 10 88C4 85 4 79 10 76C56 54 62 40 80 40Z'],
+    limbs: [{ d: 'M80 112C80 128 84 142 98 154', w: 11 }],
+    eyes: [62, 98],
+    eyeY: 74,
   },
   turtle: {
     body: [
-      'M10 62C10 38 28 24 48 24C68 24 84 38 84 62C84 65 82 66 79 66H15C12 66 10 65 10 62Z',
-      'M80 38C84 30 96 32 97 42C98 50 90 56 84 52Z',
+      'M18 96C18 60 46 42 78 42C110 42 138 60 138 96C138 104 132 108 126 108H30C24 108 18 104 18 96Z',
+      'M122 72C126 50 158 50 158 74C158 92 138 100 126 92Z',
     ],
-    limbs: ['M26 72L20 86', 'M68 72L74 86', 'M12 62L4 68'],
-    eyes: [36, 58],
-    eyeY: 44,
+    limbs: ['M44 100C42 118 38 130 26 142', 'M112 100C114 118 118 130 130 142', { d: 'M22 98C14 100 8 104 4 110', w: 11 }],
+    eyes: [58, 98],
+    eyeY: 74,
   },
   axolotl: {
-    body: ['M20 58C20 42 34 32 50 32C66 32 80 42 80 58C80 74 66 84 50 84C34 84 20 74 20 58Z'],
-    limbs: ['M26 44C18 42 13 36 11 26', 'M21 54C13 53 7 49 4 42', 'M23 66C14 67 8 64 4 59', 'M74 44C82 42 87 36 89 26', 'M79 54C87 53 93 49 96 42', 'M77 66C86 67 92 64 96 59'],
-    eyes: [33, 67],
-    eyeY: 54,
+    body: ['M30 88C30 62 52 48 80 48C108 48 130 62 130 88C130 112 108 124 80 124C52 124 30 112 30 88Z'],
+    limbs: [
+      ...both('M40 68C28 62 20 52 18 36', 'M34 84C22 82 12 74 6 62', 'M38 102C26 104 16 100 8 90').map((d) => ({ d, w: 11 })),
+      ...both('M58 114C56 128 50 140 40 150'),
+    ],
+    eyes: [56, 104],
+    eyeY: 86,
   },
   cat: {
-    body: ['M16 14L36 30C44 27 56 27 64 30L84 14V58C84 76 68 88 50 88C32 88 16 76 16 58V14Z'],
-    eyes: [36, 64],
-    eyeY: 54,
+    body: ['M34 26L58 44C70 40 90 40 102 44L126 26V92C126 106 106 114 80 114C54 114 34 106 34 92V26Z'],
+    limbs: [...both('M58 104C58 122 54 136 42 150'), 'M118 96C140 98 154 86 150 62'],
+    eyes: [60, 100],
+    eyeY: 74,
     nose: true,
   },
   dog: {
-    body: [
-      'M30 28C38 20 62 20 70 28C78 36 80 48 78 60C76 76 64 88 50 88C36 88 24 76 22 60C20 48 22 36 30 28Z',
-      'M32 26C18 20 6 30 8 52C10 64 20 62 25 50Z',
-      'M68 26C82 20 94 30 92 52C90 64 80 62 75 50Z',
+    body: ['M36 48C36 26 58 16 80 16C102 16 124 26 124 48V88C124 104 106 114 80 114C54 114 36 104 36 88V48Z'],
+    limbs: [
+      ...both('M42 34C22 30 14 48 20 74').map((d) => ({ d, w: 24 })),
+      ...both('M58 104C58 122 54 136 42 150'),
+      'M116 104C130 108 142 104 148 92',
     ],
-    eyes: [39, 61],
-    eyeY: 50,
+    eyes: [60, 100],
+    eyeY: 62,
+    eyeR: 11,
     nose: true,
   },
 };

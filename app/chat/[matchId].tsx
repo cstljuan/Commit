@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Critter } from '@/components/critters/Critter';
 import { HoldToCommit } from '@/components/motion/HoldToCommit';
 import { PressScale } from '@/components/motion/PressScale';
-import { Tako } from '@/components/Tako/Tako';
+import { Hachi } from '@/components/Hachi/Hachi';
 import { demoIcebreakers, demoMatches, demoMessages, type DemoMessage } from '@/lib/demoData';
 import { useMode } from '@/lib/theme';
 
@@ -134,7 +134,7 @@ export default function ChatScreen() {
           keyExtractor={(s) => s}
           contentContainerStyle={styles.chips}
           keyboardShouldPersistTaps="handled"
-          ListHeaderComponent={<Tako size={32} state="happy" />}
+          ListHeaderComponent={<Hachi size={36} animated sleepAfter={0} state={typing ? 'waiting' : 'idle'} />}
           renderItem={({ item, index }) => (
             <Animated.View entering={FadeInDown.delay(index * 70)}>
               <PressScale

@@ -1,3 +1,4 @@
+import { hachi } from '@/lib/hachi';
 import * as Haptics from '@/lib/haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -5,7 +6,7 @@ import { useSharedValue } from 'react-native-reanimated';
 
 import { Burst } from '@/components/motion/Particles';
 import { TypedLine } from '@/components/motion/TypedLine';
-import { Tako, type TakoState } from '@/components/Tako/Tako';
+import { Hachi, type HachiState } from '@/components/Hachi/Hachi';
 import { useMode } from '@/lib/theme';
 
 import type { Card, Direction, ProjectCard, Role } from './cardTypes';
@@ -18,8 +19,8 @@ type Props = {
   superPerDay?: number;
   onSwipe?: (card: Card, direction: Direction, role?: Role) => void;
   onUndo?: () => void;
-  /** Lets the screen react to the drag, for example Tako's face. */
-  onMood?: (mood: TakoState) => void;
+  /** Lets the screen react to the drag, for example Hachi's face. */
+  onMood?: (mood: HachiState) => void;
 };
 
 type Swiped = { dir: Direction };
@@ -49,7 +50,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
 
   const onZone = useCallback(
     (zone: Zone) => {
-      onMood?.(zone === 'none' ? 'idle' : zone === 'left' ? 'alert' : 'happy');
+      onMood?.(zone === 'none' ? 'idle' : zone === 'left' ? 'guard' : 'happy');
       if (zone === 'none') {
         Haptics.selectionAsync();
       } else if (zone === 'up') {
@@ -63,7 +64,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
 
   const onBlockedSuper = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    onMood?.('alert');
+    onMood?.('blocked');
   }, [onMood]);
 
   const advance = useCallback((dir: Direction) => {
@@ -81,6 +82,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
         setTyped(dir === 'left' ? `$ echo @${card.username} >> .gitignore` : `$ git add @${card.username}`);
       }
       if (dir === 'super') setSuperLeft((s) => Math.max(0, s - 1));
+      if (index + 1 >= cards.length) hachi.play('confused');
       const open = card.kind === 'project' ? card.roles.filter((r) => r.open > 0) : [];
       if (dir !== 'left' && card.kind === 'project' && open.length > 1) {
         // The card has flown off, so ask for the role before the swipe counts.
@@ -120,7 +122,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
       <View style={styles.stack}>
         {done ? (
           <View style={styles.empty}>
-            <Tako size={96} state="idle" />
+            <Hachi size={120} state="confused" animated interactive />
             <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 16, textAlign: 'center' }}>
               {copy.emptyDeck}
             </Text>

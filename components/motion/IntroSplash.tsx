@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeOut } from 'react-native-reanimated';
 
-import { Tako } from '@/components/Tako/Tako';
+import { Hachi } from '@/components/Hachi/Hachi';
 import { DecodeText } from '@/components/motion/DecodeText';
 import { useMode } from '@/lib/theme';
 import { useMotionOff } from '@/lib/prefs';
@@ -32,7 +32,7 @@ export function IntroSplash() {
     <Animated.View exiting={FadeOut.duration(220)} style={[StyleSheet.absoluteFill, styles.root, { backgroundColor: t.bg }]}>
       <Pressable accessibilityLabel="Skip intro" style={StyleSheet.absoluteFill} onPress={() => setGone(true)} />
       <View pointerEvents="none" style={styles.center}>
-        <Tako size={84} state="happy" animated />
+        <Hachi size={110} state="wave" animated sleepAfter={0} />
         <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 52 }}>
           {WORD.slice(0, letters)}
           <Text style={{ color: t.primary }}>{letters < WORD.length ? '_' : ''}</Text>

@@ -15,6 +15,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { Burst } from '@/components/motion/Particles';
+import { hachi } from '@/lib/hachi';
 import { useMode } from '@/lib/theme';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -48,6 +49,7 @@ export function HoldToCommit({ label = 'Hold to commit', doneLabel = 'Committed'
     stopTicks();
     setDone(true);
     setFire((n) => n + 1);
+    hachi.play('success');
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     onCommit();
   };

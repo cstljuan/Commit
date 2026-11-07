@@ -11,9 +11,10 @@ export type Prefs = {
   startMode: Mode;
   notifyMatches: boolean;
   notifyCopyAlerts: boolean;
+  hachiAccessory: 'auto' | 'band' | 'bow' | 'party' | 'none';
 };
 
-const DEFAULTS: Prefs = { haptics: true, calmMotion: false, startMode: 'normal', notifyMatches: true, notifyCopyAlerts: true };
+const DEFAULTS: Prefs = { haptics: true, calmMotion: false, startMode: 'normal', notifyMatches: true, notifyCopyAlerts: true, hachiAccessory: 'auto' };
 const KEY = 'commit.prefs';
 
 type Value = { prefs: Prefs; setPref: <K extends keyof Prefs>(key: K, value: Prefs[K]) => void };

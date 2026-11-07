@@ -15,7 +15,7 @@ import Animated, {
 
 import { ParticleField } from '@/components/motion/Particles';
 import { Critter } from '@/components/critters/Critter';
-import { Tako } from '@/components/Tako/Tako';
+import { Hachi } from '@/components/Hachi/Hachi';
 import { useMode } from '@/lib/theme';
 import { useMotionOff } from '@/lib/prefs';
 
@@ -116,7 +116,7 @@ export function MatchMoment({ match, onSayHi, onCommit, onDismiss }: Props) {
 
       <View pointerEvents="none" style={styles.center}>
         <Animated.View style={takoStyle}>
-          <Tako size={92} state="happy" color={onBg} />
+          <Hachi size={104} state="success" color={onBg} animated sleepAfter={0} />
         </Animated.View>
 
         <View style={styles.pair}>

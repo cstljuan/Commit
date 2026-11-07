@@ -134,3 +134,22 @@ export const demoPeople: Record<string, { role: string; level: string; occupatio
   priya_builds: { role: 'AI/ML', level: 'advanced', occupation: 'student', score: 95, skills: ['Python', 'PyTorch', 'Figma'], prompts: [{ q: 'Tabs or spaces', a: 'Whatever ships' }] },
   dev_ana: { role: 'Design', level: 'advanced', occupation: 'working', score: 84, skills: ['Figma', 'React', 'Motion'], prompts: [{ q: 'Tabs or spaces', a: 'Tabs. Fight me.' }] },
 };
+
+export type DemoEvent = { id: string; kind: 'match' | 'super' | 'alert' | 'team' | 'commit'; seed: string; title: string; when: string; href: string };
+
+// Real source: a notifications query. Sample until then.
+export const demoActivity: DemoEvent[] = [
+  { id: 'e1', kind: 'alert', seed: 'unknown', title: 'Someone reworded your idea', when: '4 min ago', href: '/alert' },
+  { id: 'e2', kind: 'super', seed: 'priya_builds', title: '@priya_builds sent you a Super Commit', when: '20 min ago', href: '/person/priya_builds' },
+  { id: 'e3', kind: 'match', seed: 'ben_codes', title: 'You matched with @ben_codes', when: '38 min ago', href: '/chat/m1' },
+  { id: 'e4', kind: 'team', seed: 'dev_ana', title: '@dev_ana committed to Rent splitter', when: '1 hour ago', href: '/project/p1' },
+  { id: 'e5', kind: 'commit', seed: 'you', title: 'AI study buddy was committed to the vault', when: '2 hours ago', href: '/commits' },
+];
+
+// Real source: reliability events for this user.
+export const demoScoreEvents = [
+  { label: 'Everyone starts here', delta: 70 },
+  { label: 'Finished Rent splitter', delta: 5 },
+  { label: 'Left a team with notice', delta: -3 },
+  { label: 'Showed up to every checkpoint', delta: 2 },
+];

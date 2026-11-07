@@ -15,7 +15,7 @@ import { HashChip } from '@/components/motion/HashChip';
 import { Burst } from '@/components/motion/Particles';
 import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
-import { Tako } from '@/components/Tako/Tako';
+import { Hachi } from '@/components/Hachi/Hachi';
 import { demoTeam } from '@/lib/demoData';
 import { useMode } from '@/lib/theme';
 
@@ -74,7 +74,7 @@ export default function TeamScreen() {
       </Reveal>
 
       <Reveal index={1} style={styles.meter}>
-        <Tako size={72} state={filled === total ? 'happy' : 'idle'} animated />
+        <Hachi size={84} animated interactive listen />
         <View style={styles.meterText}>
           <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: 28 }}>
             {filled} of {total} roles
