@@ -78,7 +78,8 @@ export default function LoginScreen() {
     authProviders().then(setSocial).catch(() => {});
   }, []);
   const [password, setPassword] = useState('');
-  const [usePassword, setUsePassword] = useState(false);
+  // Email codes only reach verified inboxes until the mail domain is verified, so password is the default.
+  const [usePassword, setUsePassword] = useState(true);
   const [passwordBusy, setPasswordBusy] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const withPassword = async () => {
@@ -126,7 +127,7 @@ export default function LoginScreen() {
       if (isResend) setCodeError('other');
       else {
         // Codes only reach verified inboxes for now, so offer the password path right away.
-        setEmailError('We could not email that address yet. Use a password below.');
+        setEmailError('We could not email that address yet. Use a password, GitHub or Google.');
         setUsePassword(true);
       }
     } finally {
@@ -191,6 +192,25 @@ export default function LoginScreen() {
                 </Text>
               </View>
 
+              {social.github ? (
+                <Button variant="outline" label="Continue with GitHub" onPress={() => withProvider('github')} loading={providerBusy === 'github'} disabled={busy} />
+              ) : null}
+              {social.google ? (
+                <Button variant="outline" label="Continue with Google" onPress={() => withProvider('google')} loading={providerBusy === 'google'} disabled={busy} />
+              ) : null}
+              {providerError ? (
+                <Text accessibilityLiveRegion="polite" style={[styles.center, { color: t.pass, fontFamily: t.fontBold }]}>
+                  {providerError}
+                </Text>
+              ) : null}
+              {social.github || social.google ? (
+                <View style={styles.dividerRow}>
+                  <View style={[styles.divider, { backgroundColor: t.line }]} />
+                  <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 14 }}>or use email</Text>
+                  <View style={[styles.divider, { backgroundColor: t.line }]} />
+                </View>
+              ) : null}
+
               <TextField
                 ref={emailRef}
                 label="Email"
@@ -201,25 +221,16 @@ export default function LoginScreen() {
                   if (emailError) setEmailError(null);
                 }}
                 error={emailError}
-                hint="Any email works."
+                hint={usePassword ? 'New here? Create account works right away.' : 'Codes reach verified inboxes only for now.'}
                 keyboardType="email-address"
                 textContentType="emailAddress"
                 autoComplete="email"
                 autoCapitalize="none"
                 autoCorrect={false}
-                returnKeyType="send"
-                onSubmitEditing={() => sendCode()}
+                returnKeyType={usePassword ? 'next' : 'send'}
+                onSubmitEditing={() => (usePassword ? undefined : sendCode())}
                 editable={!busy}
               />
-              <Button
-                testID="login-send-code"
-                label="Send code"
-                onPress={() => sendCode()}
-                loading={sending}
-                disabled={!emailValid || busy}
-              />
-
-              <Button variant="ghost" label={usePassword ? 'Use an email code instead' : 'Use a password instead'} onPress={() => setUsePassword((v) => !v)} />
               {usePassword ? (
                 <>
                   <TextField
@@ -235,27 +246,16 @@ export default function LoginScreen() {
                   <Button label="Sign in" onPress={withPassword} loading={passwordBusy} disabled={!emailValid || !password || passwordBusy} />
                   <Button label="Create account" variant="outline" onPress={createAccount} disabled={!emailValid || password.length < 6 || passwordBusy} />
                 </>
-              ) : null}
-
-              {social.github || social.google ? (
-                <View style={styles.dividerRow}>
-                  <View style={[styles.divider, { backgroundColor: t.line }]} />
-                  <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 14 }}>or</Text>
-                  <View style={[styles.divider, { backgroundColor: t.line }]} />
-                </View>
-              ) : null}
-
-              {social.github ? (
-                <Button variant="outline" label="Continue with GitHub" onPress={() => withProvider('github')} loading={providerBusy === 'github'} disabled={busy} />
-              ) : null}
-              {social.google ? (
-                <Button variant="outline" label="Continue with Google" onPress={() => withProvider('google')} loading={providerBusy === 'google'} disabled={busy} />
-              ) : null}
-              {providerError ? (
-                <Text accessibilityLiveRegion="polite" style={[styles.center, { color: t.pass, fontFamily: t.fontBold }]}>
-                  {providerError}
-                </Text>
-              ) : null}
+              ) : (
+                <Button
+                  testID="login-send-code"
+                  label="Send code"
+                  onPress={() => sendCode()}
+                  loading={sending}
+                  disabled={!emailValid || busy}
+                />
+              )}
+              <Button variant="ghost" label={usePassword ? 'Use an email code instead' : 'Use a password instead'} onPress={() => setUsePassword((v) => !v)} />
             </View>
           ) : (
             <View style={styles.stack}>
