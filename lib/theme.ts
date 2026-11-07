@@ -20,7 +20,7 @@ export type ThemeTokens = {
   fontBold: string;
 };
 
-// Takoyaki: batter orange, sauce brown, gold, aonori green. Flat colour only, no gradients or outlines.
+// Takoyaki: batter orange, sauce brown, gold, aonori green. Flat color only, no gradients or outlines.
 export const themes: Record<Mode, ThemeTokens> = {
   normal: {
     bg: '#FFEDE3',
@@ -79,7 +79,7 @@ export function ModeProvider({ children }: { children: ReactNode }) {
   return createElement(ModeContext.Provider, { value }, children);
 }
 
-/** Every screen takes colours from `t` and words from `copy`. Never hardcode either. */
+/** Every screen takes colors from `t` and words from `copy`. Never hardcode either. */
 export function useMode(): ModeValue {
   const value = useContext(ModeContext);
   if (!value) throw new Error('useMode must be used inside ModeProvider');

@@ -33,7 +33,7 @@ export default function PersonScreen() {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             fire();
           }}
-          style={[styles.hero, { backgroundColor: `${creature.colour}24` }]}>
+          style={[styles.hero, { backgroundColor: `${creature.color}24` }]}>
           <Animated.View style={style}>
             <Critter seed={username} size={160} animated disc={false} />
           </Animated.View>

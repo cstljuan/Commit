@@ -19,14 +19,14 @@ import { useMotionOff } from '@/lib/prefs';
 type Flip = (mode: Mode, x: number, y: number) => void;
 const FlipContext = createContext<Flip>(() => {});
 
-/** Switch modes with a colour wipe from where the finger is. */
+/** Switch modes with a color wipe from where the finger is. */
 export const useModeFlip = () => useContext(FlipContext);
 
 type Wipe = { mode: Mode; x: number; y: number };
 
 /**
  * The new mode pours out of the tapped chip and fills the screen, its name stamps in, and
- * the app is already that colour underneath when it clears. Under 700 ms, and it never
+ * the app is already that color underneath when it clears. Under 700 ms, and it never
  * blocks touches.
  */
 export function ModeWipeProvider({ children }: { children: ReactNode }) {

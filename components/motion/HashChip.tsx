@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { radius, space, type } from '@/lib/tokens';
 import { useMode } from '@/lib/theme';
 
-/** Anything committed shows one of these. Mono means machine truth. `solid` sits on a colour block. */
+/** Anything committed shows one of these. Mono means machine truth. `solid` sits on a color block. */
 export function HashChip({ hash, label = 'commit', center = false, solid = false }: { hash: string; label?: string; center?: boolean; solid?: boolean }) {
   const { t } = useMode();
   return (
