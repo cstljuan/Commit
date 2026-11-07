@@ -17,7 +17,7 @@ import { useMode } from '@/lib/theme';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
-const WIDTH = 364;
+const WIDTH = 358;
 const HEIGHT = 92;
 const STROKE = 13;
 const DRAW = 1000;
@@ -32,7 +32,7 @@ const leg = (x: number) => (s: number) => {
 };
 const tail = (s: number) => {
   'worklet';
-  return `V58C326 70 332 76 ${346 + s} ${70 - s * 0.6}`;
+  return `V58C320 70 326 76 ${340 + s} ${70 - s * 0.6}`;
 };
 
 // Stems sit 28 apart with room between each m, so the letters stay readable at small sizes.
@@ -44,12 +44,12 @@ const LETTERS: Stroke[][] = [
     { base: 'M150 50C150 34 178 34 178 50', foot: leg(178) },
   ],
   [
-    { base: 'M208 38', foot: leg(208) },
-    { base: 'M208 50C208 34 236 34 236 50', foot: leg(236) },
-    { base: 'M236 50C236 34 264 34 264 50', foot: leg(264) },
+    { base: 'M202 38', foot: leg(202) },
+    { base: 'M202 50C202 34 230 34 230 50', foot: leg(230) },
+    { base: 'M230 50C230 34 258 34 258 50', foot: leg(258) },
   ],
-  [{ base: 'M288 40V72' }],
-  [{ base: 'M326 20', foot: tail }, { base: 'M313 38H342' }],
+  [{ base: 'M282 40V72' }],
+  [{ base: 'M320 20', foot: tail }, { base: 'M307 38H336' }],
 ];
 
 function Part({ part, sway, drawn, color, phase }: { part: Stroke; sway: { value: number }; drawn: { value: number }; color: string; phase: number }) {
@@ -128,7 +128,7 @@ export function Wordmark({ height = 56, animated = true, color, accent }: { heig
         {LETTERS.slice(1).map((strokes, i) => (
           <Letter key={strokes[0].base} strokes={strokes} index={i + 2} sway={sway} animated={live} color={ink} />
         ))}
-        <AnimatedPath animatedProps={ballProps} d="M288 15h0.01" stroke={pop} strokeLinecap="round" fill="none" />
+        <AnimatedPath animatedProps={ballProps} d="M282 15h0.01" stroke={pop} strokeLinecap="round" fill="none" />
       </Svg>
     </View>
   );
