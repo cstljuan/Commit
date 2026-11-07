@@ -55,7 +55,7 @@ function Ball({ size, left, top, color, delay }: { size: number; left: number; t
   return <Animated.View style={[{ position: 'absolute', left, top, width: size, height: size, borderRadius: size / 2, backgroundColor: color }, style]} />;
 }
 
-/** The mood behind the deck: flat colour shapes, plus drifting glyphs in Women and Hack. */
+/** The mood behind the deck: flat color shapes, plus drifting glyphs in Women and Hack. */
 export function ModeBackdrop() {
   const { mode, t } = useMode();
   const { width, height } = useWindowDimensions();

@@ -258,7 +258,8 @@ const systemPrompt = (chatId: string, username?: string): string => {
   if (chatId === HACHI_CHAT || !username) {
     return [
       `You are ${mascot}, the small octopus mascot inside Commit, an app for finding hackathon and project teammates by swiping.`,
-      'Reply in one or two short, warm sentences. No emoji. No lists. Never invent app features or numbers.',
+      'Talk like a friendly, slightly cheeky friend in a chat app: usually one sentence, two at most. Answer what they actually asked, using their words.',
+      'No emoji, no lists, no "let me know if", no "as an AI", never start with "Sure" or "Great question". Never invent app features or numbers.',
       'Facts: people swipe on projects and builders by role. Both saying yes is a match. Joining takes a held press called a commit.',
       'The shows up score starts at 70: finishing is +5, leaving with notice is -3, ghosting is -15.',
       'Ideas get a hash chained to the previous one, like git, so tampering is detectable. Reworded copies raise a private alert to the owner.',
@@ -271,10 +272,21 @@ const systemPrompt = (chatId: string, username?: string): string => {
   return [
     `You are @${username}, a ${p?.level ?? ''} ${p?.role ?? peer?.role ?? ''} builder (${p?.occupation ?? 'student'}) texting a possible teammate about the project "${project}".`,
     p ? `You know ${p.skills.join(', ')}.` : '',
-    'Text like a real person: one or two short lowercase sentences, no emoji, no lists, stay on the project and move it forward with a concrete next step.',
-    'If asked whether you are real, say you are a demo teammate in the Commit app, not a real person.',
+    'You are texting, not writing an email. Usually 3 to 15 words, lowercase, casual, sometimes just a quick reaction like "oh nice" or "wait fr?".',
+    'React to exactly what they just said first. Ask a question back about half the time. Have opinions and small details (a time you are free, a tool you like, what you would build first).',
+    'Never repeat an earlier message, never sound like customer support, no emoji, no lists, no "let me know", no "sounds great!" openers.',
+    'If they are confused, explain your last message in plain words. If asked whether you are real, say you are a demo teammate in the Commit app, not a real person.',
   ].join(' ');
 };
+
+const TEXTING_EXAMPLES: LlmMessage[] = [
+  { role: 'user', content: 'you free tonight?' },
+  { role: 'assistant', content: 'ya after 9, lab till then' },
+  { role: 'user', content: 'what would you build first' },
+  { role: 'assistant', content: 'the quiz screen honestly. if that feels good the rest is easy' },
+  { role: 'user', content: 'i can do backend' },
+  { role: 'assistant', content: 'oh perfect, supabase? i can take the screens' },
+];
 
 /** Answers the latest message. Always resolves, with built-in replies if no model answers. */
 export async function getReply(chatId: string, username: string | undefined, history: DemoMessage[]): Promise<Reply> {
@@ -284,9 +296,13 @@ export async function getReply(chatId: string, username: string | undefined, his
   if (llmAvailable()) {
     const messages: LlmMessage[] = [
       { role: 'system', content: systemPrompt(chatId, username) },
+      // A small model copies examples better than it follows rules, so show it how a teammate texts.
+      ...(isHachi ? [] : TEXTING_EXAMPLES),
       ...history.slice(-12).map((m): LlmMessage => ({ role: m.mine ? 'user' : 'assistant', content: m.body })),
     ];
-    const text = await askLocalModel(messages);
+    let text = await askLocalModel(messages);
+    // Teammates text in lowercase; Hachi and Hana keep their capitals.
+    if (text && !isHachi) text = text.charAt(0).toLowerCase() + text.slice(1);
     if (text) return { texts: [text], action: isHachi ? hachiTopic(last)?.action : undefined, source: 'local' };
   }
   if (isHachi) return { ...hachiReply(chatId, last), source: 'built-in' };

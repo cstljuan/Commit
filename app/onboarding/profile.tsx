@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SkillsEditor } from '@/components/forms/SkillsEditor';
 import { saveProfile, type Level, type ProfileInput, type Role } from '@/components/forms/profileApi';
 import { Critter } from '@/components/critters/Critter';
-import { COLOURS, SPECIES, type Species } from '@/components/critters/identity';
+import { COLORS, SPECIES, type Species } from '@/components/critters/identity';
 import { critterAvatarUrl } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
@@ -31,7 +31,7 @@ const TITLES: Record<StepId, { title: string; sub: string }> = {
   skills: { title: 'Skills and languages', sub: 'Tap suggestions or add your own.' },
   occupation: { title: 'Student, working, or both?', sub: 'Helps match you with similar schedules.' },
   prompt: { title: 'One fun one', sub: 'Pick a prompt. It shows on your card.' },
-  avatar: { title: 'Choose your creature', sub: 'Pick a sea friend and a colour. You can change it later.' },
+  avatar: { title: 'Choose your creature', sub: 'Pick a sea friend and a color. You can change it later.' },
 };
 
 export default function OnboardingProfile() {
@@ -52,7 +52,7 @@ export default function OnboardingProfile() {
   const [promptQ, setPromptQ] = useState<string | null>(null);
   const [promptA, setPromptA] = useState('');
   const [species, setSpecies] = useState<Species>('axolotl');
-  const [colour, setColour] = useState(0);
+  const [color, setColor] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -72,7 +72,7 @@ export default function OnboardingProfile() {
       // Extra roles ride along as skills, so they show on your card.
       skills: [...roles.slice(1), ...skills].filter((s, n, all) => all.findIndex((x) => x.toLowerCase() === s.toLowerCase()) === n),
       prompts: promptQ && promptA.trim() ? [{ q: promptQ, a: promptA.trim() }] : [],
-      avatarUrl: critterAvatarUrl(species, colour),
+      avatarUrl: critterAvatarUrl(species, color),
     };
     try {
       await saveProfile(input);
@@ -218,9 +218,9 @@ export default function OnboardingProfile() {
           {step === 'avatar' && (
             <View style={styles.section}>
               <View style={styles.avatarPreview}>
-                <Critter seed={species} species={species} colour={COLOURS[colour].hex} size={124} animated />
+                <Critter seed={species} species={species} color={COLORS[color].hex} size={124} animated />
                 <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 17 }}>
-                  {COLOURS[colour].name} {species[0].toUpperCase() + species.slice(1)}
+                  {COLORS[color].name} {species[0].toUpperCase() + species.slice(1)}
                 </Text>
               </View>
               <View style={styles.avatarGrid}>
@@ -232,19 +232,19 @@ export default function OnboardingProfile() {
                     accessibilityState={{ selected: species === sp }}
                     onPress={() => setSpecies(sp)}
                     style={[styles.avatarCell, { backgroundColor: species === sp ? t.primary : t.surface }]}>
-                    <Critter seed={sp} species={sp} colour={COLOURS[colour].hex} size={48} />
+                    <Critter seed={sp} species={sp} color={COLORS[color].hex} size={48} />
                   </Pressable>
                 ))}
               </View>
               <View style={styles.swatches}>
-                {COLOURS.map((c, n) => (
+                {COLORS.map((c, n) => (
                   <Pressable
                     key={c.name}
                     accessibilityRole="button"
                     accessibilityLabel={c.name}
-                    accessibilityState={{ selected: colour === n }}
-                    onPress={() => setColour(n)}
-                    style={[styles.swatch, { backgroundColor: c.hex, transform: [{ scale: colour === n ? 1.15 : 1 }], opacity: colour === n ? 1 : 0.75 }]}
+                    accessibilityState={{ selected: color === n }}
+                    onPress={() => setColor(n)}
+                    style={[styles.swatch, { backgroundColor: c.hex, transform: [{ scale: color === n ? 1.15 : 1 }], opacity: color === n ? 1 : 0.75 }]}
                   />
                 ))}
               </View>
