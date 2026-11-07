@@ -14,6 +14,7 @@ import { API_IS_MOCK, getCopyAlerts, getMatches, getMyProjects } from '@/lib/api
 import type { MyProject } from '@/lib/types';
 import { lastLineOf, peerOf } from '@/lib/chatbot';
 import { demoMatches, type DemoMatch } from '@/lib/demoData';
+import { useMascotName } from '@/lib/mascot';
 import { useMode } from '@/lib/theme';
 
 function status(m: DemoMatch) {
@@ -49,17 +50,35 @@ function MatchRow({ match, index }: { match: DemoMatch; index: number }) {
   );
 }
 
-function AskHachi() {
+function FindPeopleRow() {
   const { t } = useMode();
   return (
     <Reveal>
+      <PressScale accessibilityLabel="Find people" onPress={() => router.push('/find')} style={[styles.row, { backgroundColor: t.primary }]}>
+        <View style={styles.rowText}>
+          <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: 17 }}>Find people</Text>
+          <Text numberOfLines={1} style={{ color: t.onPrimary, fontFamily: t.fontBody, fontSize: 14, opacity: 0.85 }}>
+            Add a teammate by username. Add each other and it is a match.
+          </Text>
+        </View>
+        <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: 22 }}>+</Text>
+      </PressScale>
+    </Reveal>
+  );
+}
+
+function AskHachi() {
+  const { t } = useMode();
+  const name = useMascotName();
+  return (
+    <Reveal>
       <PressScale
-        accessibilityLabel="Ask Hachi"
+        accessibilityLabel={`Ask ${name}`}
         onPress={() => router.push('/chat/hachi')}
         style={[styles.row, { backgroundColor: t.surface }]}>
         <Hachi size={56} animated interactive={false} sleepAfter={0} />
         <View style={styles.rowText}>
-          <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 17 }}>Ask Hachi</Text>
+          <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 17 }}>Ask {name}</Text>
           <Text numberOfLines={1} style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 14 }}>
             {lastLineOf('hachi') ?? 'Teammates, your pitch, your score, proof'}
           </Text>
@@ -150,6 +169,7 @@ export default function MatchesScreen() {
                 <Text style={{ color: t.onPrimary, fontFamily: t.fontBody, fontSize: 14 }}>{team.roles.filter((r) => r.username).length} of {team.roles.length} roles filled</Text>
               </PressScale>
             </Reveal> : null}
+            <FindPeopleRow />
             <AskHachi />
           </View>
         }

@@ -65,3 +65,11 @@ export const getScoreEvents: typeof real.getScoreEvents = (...a) => impl.getScor
 // reliability events
 export const completeProject: typeof real.completeProject = (...a) => impl.completeProject(...a);
 export const leaveTeam: typeof real.leaveTeam = (...a) => impl.leaveTeam(...a);
+
+// find people
+export type { FoundPerson, SmallProject } from './api.real';
+export const searchPeople: typeof real.searchPeople = (...a) => impl.searchPeople(...a);
+export const getProjectsOf: typeof real.getProjectsOf = (...a) => impl.getProjectsOf(...a);
+export const getMyOwnProjects: typeof real.getMyOwnProjects = (...a) => impl.getMyOwnProjects(...a);
+export const askToJoin: typeof real.askToJoin = (...a) => impl.askToJoin(...a);
+export const inviteToProject: typeof real.inviteToProject = (...a) => impl.inviteToProject(...a);

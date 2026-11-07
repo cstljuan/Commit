@@ -10,6 +10,7 @@ import { Reveal } from '@/components/motion/Reveal';
 import { Screen } from '@/components/nav/Screen';
 import { Hachi } from '@/components/Hachi/Hachi';
 import * as Haptics from '@/lib/haptics';
+import { useMascotName } from '@/lib/mascot';
 import { useMode } from '@/lib/theme';
 import { radius, space, type } from '@/lib/tokens';
 
@@ -38,6 +39,7 @@ function Tile({ species, index }: { species: Species; index: number }) {
 /** Type anything and watch the creature change: the same text always gives the same one. */
 export default function CreaturesScreen() {
   const { t } = useMode();
+  const name = useMascotName();
   const [seed, setSeed] = useState('your name');
   const id = critterFor(seed || ' ');
   return (
@@ -67,8 +69,8 @@ export default function CreaturesScreen() {
       <View style={[styles.tako, { backgroundColor: t.surface }]}>
         <Hachi size={72} animated interactive />
         <View style={styles.takoText}>
-          <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: type.lead }}>Hachi is the only octopus</Text>
-          <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: type.small }}>Nobody can roll one. Hachi runs the place.</Text>
+          <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: type.lead }}>{name} is the only octopus</Text>
+          <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: type.small }}>Nobody can roll one. {name} runs the place.</Text>
         </View>
       </View>
 

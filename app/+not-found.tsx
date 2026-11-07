@@ -3,16 +3,18 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Hachi } from '@/components/Hachi/Hachi';
 import { PressScale } from '@/components/motion/PressScale';
+import { useMascotName } from '@/lib/mascot';
 import { useMode } from '@/lib/theme';
 import { radius, space, type } from '@/lib/tokens';
 
 export default function NotFound() {
   const { t } = useMode();
+  const name = useMascotName();
   return (
     <View style={[styles.root, { backgroundColor: t.bg }]}>
       <Stack.Screen options={{ headerShown: false }} />
       <Hachi size={180} state="thinking" animated interactive sleepAfter={0} />
-      <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: type.display, textAlign: 'center' }}>Hachi can&apos;t find that</Text>
+      <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: type.display, textAlign: 'center' }}>{name} can&apos;t find that</Text>
       <Text style={{ color: t.muted, fontFamily: 'JetBrainsMono_400Regular', fontSize: type.small }}>fatal: not a valid object name</Text>
       <PressScale onPress={() => router.replace('/')} style={[styles.cta, { backgroundColor: t.primary }]}>
         <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: type.lead }}>Back to swiping</Text>

@@ -1,7 +1,9 @@
 import * as api from '@/lib/api';
 
 
-export type Role = 'Frontend' | 'Backend' | 'AI/ML' | 'Security' | 'Mobile' | 'Design' | 'PM' | 'Hardware';
+export type { Role } from '@/lib/types';
+import type { Role } from '@/lib/types';
+export type Occupation = 'student' | 'working' | 'both';
 export type Level = 'beginner' | 'intermediate' | 'advanced';
 export type Prompt = { q: string; a: string };
 
@@ -10,7 +12,7 @@ export type ProfileInput = {
   bio: string; // the profile tagline, matches Profile.bio in lib/types.ts
   role: Role | null;
   level: Level | null;
-  occupation: 'student' | 'working' | null;
+  occupation: Occupation | null;
   skills: string[];
   prompts: Prompt[];
   avatarUrl: string | null;
@@ -25,7 +27,7 @@ export async function getMyProfile(): Promise<Profile | null> {
 
 export async function saveProfile(p: ProfileInput): Promise<void> {
   const current = await api.getMyProfile().catch(() => null);
-  await api.saveProfile({
+  const row = {
     name: current?.name ?? p.username,
     hoursPerWeek: current?.hoursPerWeek ?? null,
     timezone: current?.timezone ?? null,
@@ -38,5 +40,12 @@ export async function saveProfile(p: ProfileInput): Promise<void> {
     occupation: p.occupation ?? current?.occupation ?? 'student',
     skills: p.skills,
     prompts: p.prompts,
-  });
+  };
+  try {
+    await api.saveProfile(row as Parameters<typeof api.saveProfile>[0]);
+  } catch (e) {
+    // 'both' needs migration 0015. Until it runs, save student instead of failing the whole profile.
+    if (row.occupation === 'both' && /occupation/i.test(String((e as Error)?.message))) await api.saveProfile({ ...row, occupation: 'student' } as Parameters<typeof api.saveProfile>[0]);
+    else throw e;
+  }
 }

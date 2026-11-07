@@ -831,7 +831,7 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
       onLayout={measure}
       accessible
       accessibilityRole={interactive ? 'button' : 'image'}
-      accessibilityLabel="Hachi, the Commit octopus"
+      accessibilityLabel={`${mode === 'women' ? 'Hana' : 'Hachi'}, the Commit octopus`}
       style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       {drawing}
     </View>

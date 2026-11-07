@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { TextField } from '@/components/ui/TextField';
 import { useMode } from '@/lib/theme';
+import { ROLES } from '@/lib/types';
 
-const ROLES: Role[] = ['Frontend', 'Backend', 'AI/ML', 'Security', 'Mobile', 'Design', 'PM', 'Hardware'];
+
 const LEVELS: Level[] = ['beginner', 'intermediate', 'advanced'];
 const LEVEL_LABEL: Record<Level, string> = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
 const THEMES = ['AI', 'Health', 'Education', 'Climate', 'Fintech', 'Games', 'Social good', 'Security', 'Other'];

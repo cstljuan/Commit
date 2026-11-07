@@ -7,6 +7,7 @@ import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
 import { Screen } from '@/components/nav/Screen';
 import { usePrefs, type Prefs } from '@/lib/prefs';
+import { useMascotName } from '@/lib/mascot';
 import { useMode } from '@/lib/theme';
 import { radius, space, type } from '@/lib/tokens';
 
@@ -52,6 +53,7 @@ function Chips({ names, onPick }: { names: HachiState[]; onPick: (n: HachiState)
 /** Hachi's room. Everything Hachi can do, the way Seams had its Arc preview on the settings page. */
 export default function HachiScreen() {
   const { t } = useMode();
+  const name = useMascotName();
   const { prefs, setPref } = usePrefs();
   const ref = useRef<HachiHandle>(null);
   const [found, setFound] = useState<HachiGesture[]>([]);
@@ -63,7 +65,7 @@ export default function HachiScreen() {
       return next;
     });
   return (
-    <Screen title="Meet Hachi">
+    <Screen title={`Meet ${name}`}>
       <Reveal style={[styles.stage, { backgroundColor: t.surface }]}>
         <View testID="hachi-stage" style={styles.stageInner}>
           <Hachi ref={ref} size={200} animated sleepAfter={0} onGesture={onGesture} />

@@ -9,9 +9,10 @@ import { Reveal } from '@/components/motion/Reveal';
 import { Screen } from '@/components/nav/Screen';
 import { getHackRoles, setHackRoles } from '@/lib/api';
 import { useMode } from '@/lib/theme';
+import { ROLES } from '@/lib/types';
 import { radius, space, type } from '@/lib/tokens';
 
-const ROLES: Role[] = ['Frontend', 'Backend', 'AI/ML', 'Security', 'Mobile', 'Design', 'PM', 'Hardware'];
+
 const MAX_OTHERS = 3; // Teams cap at 4, and one of them is you.
 
 function Stepper({ value, onChange, canAdd, label }: { value: number; onChange: (v: number) => void; canAdd: boolean; label: string }) {

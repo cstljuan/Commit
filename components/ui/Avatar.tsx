@@ -1,5 +1,7 @@
 import Svg, { Path } from 'react-native-svg';
 
+import { Critter } from '@/components/critters/Critter';
+import { COLOURS, SPECIES, type Species } from '@/components/critters/identity';
 import { useMode, type ThemeTokens } from '@/lib/theme';
 
 /**
@@ -43,4 +45,21 @@ export function Avatar({ id, size = 64 }: { id: string | null | undefined; size?
       <Path fill={t[color]} fillRule="evenodd" clipRule="evenodd" d={SHAPES[shape] + EYES} />
     </Svg>
   );
+}
+
+/** Creature avatars: "critter:<species>:<colour index>", picked in onboarding. */
+export function critterAvatarUrl(species: Species, colour: number) {
+  return `critter:${species}:${colour}`;
+}
+
+export function critterChoice(url: string | null | undefined): { species: Species; colour: string } | null {
+  const m = /^critter:([a-z]+):(\d+)$/.exec(url ?? '');
+  if (!m || !(SPECIES as readonly string[]).includes(m[1])) return null;
+  return { species: m[1] as Species, colour: COLOURS[Number(m[2]) % COLOURS.length].hex };
+}
+
+/** Shows the picked creature, or the one the seed gives when nothing was picked. */
+export function ProfileCreature({ url, seed, size = 84, animated = false }: { url: string | null | undefined; seed: string; size?: number; animated?: boolean }) {
+  const pick = critterChoice(url);
+  return <Critter seed={seed} species={pick?.species} colour={pick?.colour} size={size} animated={animated} />;
 }

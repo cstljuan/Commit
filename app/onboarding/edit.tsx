@@ -6,8 +6,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SkillsEditor } from '@/components/forms/SkillsEditor';
 import { getMyProfile, saveProfile, type Profile } from '@/components/forms/profileApi';
 import { Button } from '@/components/ui/Button';
+import { Chip } from '@/components/ui/Chip';
 import { TextField } from '@/components/ui/TextField';
 import { useMode } from '@/lib/theme';
+import { ROLES, type Role } from '@/lib/types';
 import { space, type } from '@/lib/tokens';
 
 const TAGLINE_MAX = 80;
@@ -26,6 +28,7 @@ export default function EditProfile() {
   const [loadError, setLoadError] = useState(false);
   const [tagline, setTagline] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
+  const [mainRole, setMainRole] = useState<Role | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -38,13 +41,14 @@ export default function EditProfile() {
         setProfile(p);
         setTagline(p.bio ?? '');
         setSkills(p.skills ?? []);
+        setMainRole((p.role as Role) ?? null);
       })
       .catch(() => setLoadError(true));
   }
   useEffect(load, []);
 
   const trimmed = tagline.trim().replace(/\s+/g, ' ');
-  const changed = !!profile && (trimmed !== (profile.bio ?? '') || !sameList(skills, profile.skills ?? []));
+  const changed = !!profile && (trimmed !== (profile.bio ?? '') || !sameList(skills, profile.skills ?? []) || mainRole !== profile.role);
 
   async function save() {
     if (!profile) return;
@@ -52,7 +56,7 @@ export default function EditProfile() {
     setSaveError(null);
     try {
       const { id: _id, reliability: _r, ...input } = profile;
-      await saveProfile({ ...input, bio: trimmed, skills });
+      await saveProfile({ ...input, role: mainRole ?? input.role, bio: trimmed, skills });
       router.back();
     } catch {
       setSaveError('Could not save your changes. Check your connection and try again.');
@@ -100,6 +104,23 @@ export default function EditProfile() {
               blurOnSubmit
             />
             {tagline ? <Button variant="ghost" label="Clear tagline" onPress={() => setTagline('')} /> : null}
+          </View>
+
+          <View style={[styles.divider, { backgroundColor: t.line }]} />
+
+          <View style={styles.section}>
+            <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: type.small }}>Main role</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              {ROLES.map((r) => (
+                <Chip key={r} label={r} selected={mainRole === r} onPress={() => setMainRole(r)} />
+              ))}
+            </View>
+            <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: type.small }}>Other roles you do: add them as skills below.</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              {ROLES.filter((r) => r !== mainRole && !skills.includes(r)).slice(0, 16).map((r) => (
+                <Chip key={r} label={`+ ${r}`} selected={false} onPress={() => setSkills([...skills, r])} />
+              ))}
+            </View>
           </View>
 
           <View style={[styles.divider, { backgroundColor: t.line }]} />

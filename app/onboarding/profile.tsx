@@ -5,13 +5,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SkillsEditor } from '@/components/forms/SkillsEditor';
 import { saveProfile, type Level, type ProfileInput, type Role } from '@/components/forms/profileApi';
-import { AVATAR_IDS, Avatar, avatarUrlFor } from '@/components/ui/Avatar';
+import { Critter } from '@/components/critters/Critter';
+import { COLOURS, SPECIES, type Species } from '@/components/critters/identity';
+import { critterAvatarUrl } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { TextField } from '@/components/ui/TextField';
 import { useMode } from '@/lib/theme';
+import { ROLES } from '@/lib/types';
 
-const ROLES: Role[] = ['Frontend', 'Backend', 'AI/ML', 'Security', 'Mobile', 'Design', 'PM', 'Hardware'];
 const LEVELS: { value: Level; label: string }[] = [
   { value: 'beginner', label: 'Beginner' },
   { value: 'intermediate', label: 'Intermediate' },
@@ -25,11 +27,11 @@ const STEPS: StepId[] = ['username', 'role', 'skills', 'occupation', 'prompt', '
 
 const TITLES: Record<StepId, { title: string; sub: string }> = {
   username: { title: 'Pick a username', sub: 'This is how teams will see you.' },
-  role: { title: 'What do you do?', sub: 'Your main role and how deep you are in it.' },
+  role: { title: 'What do you do?', sub: 'Pick every role that fits. The first one you tap is your main role.' },
   skills: { title: 'Skills and languages', sub: 'Tap suggestions or add your own.' },
-  occupation: { title: 'Student or working?', sub: 'Helps match you with similar schedules.' },
+  occupation: { title: 'Student, working, or both?', sub: 'Helps match you with similar schedules.' },
   prompt: { title: 'One fun one', sub: 'Pick a prompt. It shows on your card.' },
-  avatar: { title: 'Choose your avatar', sub: 'You can change it later.' },
+  avatar: { title: 'Choose your creature', sub: 'Pick a sea friend and a colour. You can change it later.' },
 };
 
 export default function OnboardingProfile() {
@@ -42,13 +44,15 @@ export default function OnboardingProfile() {
   const [i, setI] = useState(picked ? 1 : 0);
   const [username, setUsername] = useState(picked);
   const [usernameError, setUsernameError] = useState<string | null>(null);
-  const [role, setRole] = useState<Role | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [level, setLevel] = useState<Level | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
-  const [occupation, setOccupation] = useState<'student' | 'working' | null>(null);
+  const [skillDraft, setSkillDraft] = useState('');
+  const [occupation, setOccupation] = useState<'student' | 'working' | 'both' | null>(null);
   const [promptQ, setPromptQ] = useState<string | null>(null);
   const [promptA, setPromptA] = useState('');
-  const [avatar, setAvatar] = useState<string>(AVATAR_IDS[0]);
+  const [species, setSpecies] = useState<Species>('axolotl');
+  const [colour, setColour] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -62,12 +66,13 @@ export default function OnboardingProfile() {
     const input: ProfileInput = {
       username: username.trim(),
       bio: '',
-      role,
+      role: roles[0] ?? null,
       level,
       occupation,
-      skills,
+      // Extra roles ride along as skills, so they show on your card.
+      skills: [...roles.slice(1), ...skills].filter((s, n, all) => all.findIndex((x) => x.toLowerCase() === s.toLowerCase()) === n),
       prompts: promptQ && promptA.trim() ? [{ q: promptQ, a: promptA.trim() }] : [],
-      avatarUrl: avatarUrlFor(avatar),
+      avatarUrl: critterAvatarUrl(species, colour),
     };
     try {
       await saveProfile(input);
@@ -86,6 +91,13 @@ export default function OnboardingProfile() {
   }
 
   function next() {
+    // A typed skill that was never added gets added now, and you stay to see it.
+    if (step === 'skills' && skillDraft.trim()) {
+      const sk = skillDraft.trim().replace(/\s+/g, ' ').slice(0, 24);
+      if (!skills.some((x) => x.toLowerCase() === sk.toLowerCase()) && skills.length < 15) setSkills([...skills, sk]);
+      setSkillDraft('');
+      return;
+    }
     if (step === 'username' && !usernameValid) {
       setUsernameError('3 to 20 letters, numbers or underscores.');
       return;
@@ -150,7 +162,12 @@ export default function OnboardingProfile() {
               <Text style={[styles.label, { color: t.text, fontFamily: t.fontBold }]}>Role</Text>
               <View style={styles.chips}>
                 {ROLES.map((r) => (
-                  <Chip key={r} label={r} selected={role === r} onPress={() => setRole(role === r ? null : r)} />
+                  <Chip
+                    key={r}
+                    label={roles[0] === r ? `${r} (main)` : r}
+                    selected={roles.includes(r)}
+                    onPress={() => setRoles(roles.includes(r) ? roles.filter((x) => x !== r) : [...roles, r])}
+                  />
                 ))}
               </View>
               <Text style={[styles.label, { color: t.text, fontFamily: t.fontBold }]}>Level</Text>
@@ -167,12 +184,13 @@ export default function OnboardingProfile() {
             </View>
           )}
 
-          {step === 'skills' && <SkillsEditor value={skills} onChange={setSkills} />}
+          {step === 'skills' && <SkillsEditor value={skills} onChange={setSkills} draft={skillDraft} onDraftChange={setSkillDraft} />}
 
           {step === 'occupation' && (
             <View style={styles.section}>
               <Chip label="Student" selected={occupation === 'student'} onPress={() => setOccupation('student')} />
               <Chip label="Working" selected={occupation === 'working'} onPress={() => setOccupation('working')} />
+              <Chip label="Both, studying and working" selected={occupation === 'both'} onPress={() => setOccupation('both')} />
             </View>
           )}
 
@@ -200,26 +218,34 @@ export default function OnboardingProfile() {
           {step === 'avatar' && (
             <View style={styles.section}>
               <View style={styles.avatarPreview}>
-                <Avatar id={avatar} size={112} />
+                <Critter seed={species} species={species} colour={COLOURS[colour].hex} size={124} animated />
+                <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 17 }}>
+                  {COLOURS[colour].name} {species[0].toUpperCase() + species.slice(1)}
+                </Text>
               </View>
               <View style={styles.avatarGrid}>
-                {AVATAR_IDS.map((id, n) => (
+                {SPECIES.map((sp) => (
                   <Pressable
-                    key={id}
+                    key={sp}
                     accessibilityRole="button"
-                    accessibilityLabel={`Avatar ${n + 1}`}
-                    accessibilityState={{ selected: avatar === id }}
-                    onPress={() => setAvatar(id)}
-                    style={[
-                      styles.avatarCell,
-                      {
-                        backgroundColor: t.surface,
-                        borderColor: avatar === id ? t.primary : t.line,
-                        borderWidth: avatar === id ? 3 : 1.5,
-                      },
-                    ]}>
-                    <Avatar id={id} size={44} />
+                    accessibilityLabel={sp}
+                    accessibilityState={{ selected: species === sp }}
+                    onPress={() => setSpecies(sp)}
+                    style={[styles.avatarCell, { backgroundColor: species === sp ? t.primary : t.surface }]}>
+                    <Critter seed={sp} species={sp} colour={COLOURS[colour].hex} size={48} />
                   </Pressable>
+                ))}
+              </View>
+              <View style={styles.swatches}>
+                {COLOURS.map((c, n) => (
+                  <Pressable
+                    key={c.name}
+                    accessibilityRole="button"
+                    accessibilityLabel={c.name}
+                    accessibilityState={{ selected: colour === n }}
+                    onPress={() => setColour(n)}
+                    style={[styles.swatch, { backgroundColor: c.hex, transform: [{ scale: colour === n ? 1.15 : 1 }], opacity: colour === n ? 1 : 0.75 }]}
+                  />
                 ))}
               </View>
             </View>
@@ -252,9 +278,11 @@ const styles = StyleSheet.create({
   section: { gap: 12 },
   label: { fontSize: 15, marginTop: 4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  avatarPreview: { alignItems: 'center', paddingVertical: 8 },
+  avatarPreview: { alignItems: 'center', paddingVertical: 8, gap: 8 },
   avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
-  avatarCell: { width: 68, height: 68, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  avatarCell: { width: 64, height: 64, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center', paddingTop: 4 },
+  swatch: { width: 36, height: 36, borderRadius: 18 },
   error: { fontSize: 15, textAlign: 'center' },
   footer: { padding: 24, paddingTop: 8 },
 });

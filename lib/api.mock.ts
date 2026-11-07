@@ -702,3 +702,33 @@ export async function leaveTeam(projectId: string): Promise<void> {
   mockAdjust('Left a team with notice', -3);
   return wait(undefined);
 }
+
+// ---------- find people by username (sample data) ----------
+
+import type { FoundPerson, SmallProject } from './api.real';
+
+export async function searchPeople(query: string): Promise<FoundPerson[]> {
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) return [];
+  const { demoPeople } = await import('./demoData');
+  return Object.entries(demoPeople)
+    .filter(([u]) => u.toLowerCase().includes(q))
+    .slice(0, 20)
+    .map(([u, p]) => ({ id: u, username: u, role: p.role, level: p.level, avatarUrl: null, score: p.score }));
+}
+
+export async function getProjectsOf(userId: string): Promise<SmallProject[]> {
+  return [{ id: `sample-${userId}`, title: `${userId}'s idea`, pitch: 'Sample project' }];
+}
+
+export async function getMyOwnProjects(): Promise<SmallProject[]> {
+  return [{ id: 'sample-mine', title: 'AI study buddy', pitch: 'Sample project' }];
+}
+
+export async function askToJoin(_projectId: string, _role?: string | null): Promise<{ matched: boolean; matchId?: string }> {
+  return { matched: false };
+}
+
+export async function inviteToProject(_personId: string, _projectId: string): Promise<{ matched: boolean; matchId?: string }> {
+  return { matched: false };
+}
