@@ -54,3 +54,9 @@ export const subscribeCopyAlerts: typeof real.subscribeCopyAlerts = (...a) => im
 // proof screens
 export const getEvalResults: typeof real.getEvalResults = (...a) => impl.getEvalResults(...a);
 export const subscribeRedteamRuns: typeof real.subscribeRedteamRuns = (...a) => impl.subscribeRedteamRuns(...a);
+
+// who wants you, hack needs, activity, score
+export const respondToInterested: typeof real.respondToInterested = (...a) => impl.respondToInterested(...a);
+export const setHackRoles: typeof real.setHackRoles = (...a) => impl.setHackRoles(...a);
+export const getActivity: typeof real.getActivity = (...a) => impl.getActivity(...a);
+export const getScoreEvents: typeof real.getScoreEvents = (...a) => impl.getScoreEvents(...a);
