@@ -1,4 +1,4 @@
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -36,8 +36,11 @@ export default function OnboardingProfile() {
   const { t } = useMode();
   const router = useRouter();
 
-  const [i, setI] = useState(0);
-  const [username, setUsername] = useState('');
+  // Create account already asked for a username, so start past that step when it arrives valid.
+  const params = useLocalSearchParams<{ username?: string }>();
+  const picked = typeof params.username === 'string' && USERNAME_RE.test(params.username) ? params.username : '';
+  const [i, setI] = useState(picked ? 1 : 0);
+  const [username, setUsername] = useState(picked);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [level, setLevel] = useState<Level | null>(null);
