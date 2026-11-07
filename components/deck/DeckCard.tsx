@@ -5,6 +5,7 @@ import Animated, {
   Extrapolation,
   interpolate,
   useAnimatedStyle,
+  FadeInDown,
   useReducedMotion,
   useSharedValue,
   withSpring,
@@ -33,10 +34,12 @@ type Props = {
   onCommit: (dir: Direction) => void;
   onZone: (zone: Zone) => void;
   onBlockedSuper: () => void;
+  /** Set on the deck's first render, so the cards deal in one after another. */
+  dealDelay?: number;
 };
 
 export const DeckCard = forwardRef<DeckCardHandle, Props>(function DeckCard(
-  { card, active, enterFrom, progress, canSuper, onCommit, onZone, onBlockedSuper },
+  { card, active, enterFrom, progress, canSuper, onCommit, onZone, onBlockedSuper, dealDelay },
   ref,
 ) {
   const { width: W, height: H } = useWindowDimensions();
@@ -148,6 +151,9 @@ export const DeckCard = forwardRef<DeckCardHandle, Props>(function DeckCard(
   const stampText = { fontFamily: t.fontDisplay, fontSize: 26 };
 
   return (
+    <Animated.View
+      style={StyleSheet.absoluteFill}
+      entering={dealDelay === undefined ? undefined : FadeInDown.delay(dealDelay).springify().damping(15).stiffness(150)}>
     <GestureDetector gesture={pan}>
       <Animated.View style={[StyleSheet.absoluteFill, cardStyle]}>
         <SwipeCard card={card} />
@@ -164,6 +170,7 @@ export const DeckCard = forwardRef<DeckCardHandle, Props>(function DeckCard(
         </View>
       </Animated.View>
     </GestureDetector>
+    </Animated.View>
   );
 });
 

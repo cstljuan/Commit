@@ -7,6 +7,9 @@ import type { Card, Direction, Role } from '@/components/deck/cardTypes';
 import { sampleDecks, sampleInterested, sampleMatches } from '@/components/deck/sampleCards';
 import { SwipeDeck } from '@/components/deck/SwipeDeck';
 import { MatchMoment, type MatchInfo } from '@/components/match/MatchMoment';
+import { ModeBackdrop } from '@/components/motion/ModeBackdrop';
+import { useModeFlip } from '@/components/motion/ModeWipe';
+import { PressScale } from '@/components/motion/PressScale';
 import { Tako, type TakoState } from '@/components/Tako/Tako';
 import { copy } from '@/lib/copy';
 import { useMode, type Mode } from '@/lib/theme';
@@ -14,7 +17,8 @@ import { useMode, type Mode } from '@/lib/theme';
 const MODES: Mode[] = ['normal', 'women', 'hack'];
 
 export default function SwipeScreen() {
-  const { mode, setMode, t } = useMode();
+  const { mode, t } = useMode();
+  const flip = useModeFlip();
   const { top } = useSafeAreaInsets();
   const [mood, setMood] = useState<TakoState>('idle');
   const [match, setMatch] = useState<MatchInfo | null>(null);
@@ -31,6 +35,7 @@ export default function SwipeScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.bg, paddingTop: top + 8 }]}>
+      <ModeBackdrop />
       <View style={styles.header}>
         <View style={[styles.switcher, { backgroundColor: t.surface }]}>
           {MODES.map((m) => {
@@ -40,7 +45,7 @@ export default function SwipeScreen() {
                 key={m}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
-                onPress={() => setMode(m)}
+                onPress={(e) => flip(m, e.nativeEvent.pageX, e.nativeEvent.pageY)}
                 style={[styles.chip, on && { backgroundColor: t.primary }]}>
                 <Text style={{ color: on ? t.onPrimary : t.muted, fontFamily: t.fontBold, fontSize: 15 }}>
                   {copy[m].label}
@@ -51,14 +56,13 @@ export default function SwipeScreen() {
         </View>
         <Tako size={38} state={mood} animated />
       </View>
-      <Pressable
-        accessibilityRole="button"
+      <PressScale
         onPress={() => router.push('/likes')}
         style={[styles.interested, { backgroundColor: t.primary + '1F' }]}>
         <Text style={{ color: t.primary, fontFamily: t.fontBold, fontSize: 14 }}>
           {sampleInterested.length} builders want in
         </Text>
-      </Pressable>
+      </PressScale>
       {/* A new mode is a new deck, so the key resets its position. */}
       <SwipeDeck key={mode} cards={sampleDecks[mode]} onMood={setMood} onSwipe={onSwipe} />
       {match ? (

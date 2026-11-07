@@ -11,6 +11,8 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { IntroSplash } from '@/components/motion/IntroSplash';
+import { ModeWipeProvider } from '@/components/motion/ModeWipe';
 import { ModeProvider, useMode } from '@/lib/theme';
 
 function AppStack() {
@@ -47,7 +49,10 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ModeProvider>
-        <AppStack />
+        <ModeWipeProvider>
+          <AppStack />
+          <IntroSplash />
+        </ModeWipeProvider>
       </ModeProvider>
     </GestureHandlerRootView>
   );

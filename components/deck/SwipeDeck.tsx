@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
+import { Burst } from '@/components/motion/Particles';
 import { Tako, type TakoState } from '@/components/Tako/Tako';
 import { useMode } from '@/lib/theme';
 
@@ -30,6 +31,11 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
   const [enterFrom, setEnterFrom] = useState<Direction | null>(null);
   const [picking, setPicking] = useState<ProjectCard | null>(null);
   const [busy, setBusy] = useState(false);
+  const [fire, setFire] = useState(0);
+  const firstRender = useRef(true);
+  useEffect(() => {
+    firstRender.current = false;
+  }, []);
   const progress = useSharedValue(0);
   const top = useRef<DeckCardHandle>(null);
 
@@ -68,6 +74,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
   const onCommit = useCallback(
     (dir: Direction) => {
       const card = cards[index];
+      if (dir !== 'left') setFire((n) => n + 1);
       if (dir === 'super') setSuperLeft((s) => Math.max(0, s - 1));
       const open = card.kind === 'project' ? card.roles.filter((r) => r.open > 0) : [];
       if (dir !== 'left' && card.kind === 'project' && open.length > 1) {
@@ -114,7 +121,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
             </Text>
           </View>
         ) : (
-          [...visible].reverse().map((card) => {
+          [...visible].reverse().map((card, i, list) => {
             const isTop = card.id === visible[0].id;
             return (
               <DeckCard
@@ -128,10 +135,12 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
                 onCommit={onCommit}
                 onZone={onZone}
                 onBlockedSuper={onBlockedSuper}
+                dealDelay={firstRender.current ? (list.length - 1 - i) * 90 : undefined}
               />
             );
           })
         )}
+        <Burst fire={fire} color={t.like} />
       </View>
       <DeckButtons
         canUndo={history.length > 0}

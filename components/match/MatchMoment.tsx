@@ -12,11 +12,11 @@ import Animated, {
   withDelay,
   withSpring,
   withTiming,
-  type SharedValue,
 } from 'react-native-reanimated';
 
+import { ParticleField } from '@/components/motion/Particles';
 import { Tako } from '@/components/Tako/Tako';
-import { useMode, type Mode } from '@/lib/theme';
+import { useMode } from '@/lib/theme';
 
 export type MatchInfo = {
   id: string;
@@ -31,35 +31,9 @@ type Props = {
   onDismiss: () => void;
 };
 
-const PARTICLE: Record<Mode, string[]> = {
-  normal: ['★︎', '●', '▲'],
-  women: ['♥︎', '✦', '♡︎'],
-  hack: ['+', '{ }', '</>'],
-};
-const COUNT = 18;
 const AVATAR = 96;
 /** Everything has landed by this point, so the whole moment stays under 1.5 s. */
 const TOTAL_MS = 1300;
-
-function Particle({ i, burst, glyph, color }: { i: number; burst: SharedValue<number>; glyph: string; color: string }) {
-  const angle = (i / COUNT) * Math.PI * 2 + (i % 2) * 0.22;
-  const reach = 130 + ((i * 37) % 110);
-  const style = useAnimatedStyle(() => ({
-    opacity: interpolate(burst.value, [0, 0.12, 0.7, 1], [0, 1, 1, 0]),
-    transform: [
-      { translateX: Math.cos(angle) * reach * burst.value },
-      // Ink falls a little as it spreads.
-      { translateY: Math.sin(angle) * reach * burst.value + 50 * burst.value * burst.value },
-      { rotate: `${i * 40 * burst.value}deg` },
-      { scale: interpolate(burst.value, [0, 0.2, 1], [0.3, 1.15, 0.7]) },
-    ],
-  }));
-  return (
-    <Animated.View style={[styles.particle, style]}>
-      <Text style={{ color, fontSize: 20 + (i % 3) * 6, fontWeight: '700' }}>{glyph}</Text>
-    </Animated.View>
-  );
-}
 
 function Avatar({ letter, bg, fg, font }: { letter: string; bg: string; fg: string; font: string }) {
   return (
@@ -145,9 +119,7 @@ export function MatchMoment({ match, onSayHi, onCommit, onDismiss }: Props) {
         </Animated.View>
 
         <View style={styles.pair}>
-          {Array.from({ length: COUNT }).map((_, i) => (
-            <Particle key={i} i={i} burst={burst} glyph={PARTICLE[mode][i % 3]} color={ink} />
-          ))}
+          <ParticleField burst={burst} color={ink} reach={240} />
           <Animated.View style={[styles.avatarSlot, left]}>
             <Avatar letter="Y" bg={t.surface} fg={t.primary} font={t.fontDisplay} />
           </Animated.View>
@@ -198,7 +170,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  particle: { position: 'absolute' },
   words: { gap: 8, paddingHorizontal: 24 },
   buttons: { width: '100%', paddingHorizontal: 24, gap: 12, alignItems: 'center' },
   primary: { width: '100%', height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
