@@ -42,7 +42,7 @@ function Row({ title, note, right }: { title: string; note?: string; right?: Rea
 
 function SignOutRow() {
   return (
-    <PressScale accessibilityLabel="Sign out" onPress={() => signOut().catch(() => {})}>
+    <PressScale accessibilityLabel="Sign out" onPress={() => signOut().catch(() => {}).finally(() => router.replace('/login'))}>
       <Row title="Sign out" />
     </PressScale>
   );
