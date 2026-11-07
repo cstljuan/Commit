@@ -652,7 +652,8 @@ export async function getActivity(): Promise<ActivityEvent[]> {
   const [matches, alerts, { data: owned }, { data: vault }, interested] = await Promise.all([
     getMatches(),
     getCopyAlerts(),
-    supabase.from('projects').select('id, title').eq('owner_id', me).neq('type', 'hackathon'),
+    // NULL type counts as a normal project; neq alone would drop those rows.
+    supabase.from('projects').select('id, title').eq('owner_id', me).or('type.is.null,type.neq.hackathon'),
     supabase.from('vault_log').select('seq, project_id, ts').eq('author_id', me).order('seq', { ascending: false }).limit(10),
     getInterested(),
   ]);

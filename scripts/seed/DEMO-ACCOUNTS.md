@@ -26,6 +26,10 @@ What each shows after a reset:
 
 16 more accounts at `<name>@commit-demo.dev` (priya, kenji, sam, miguel, dana, ola, lee, nina, zara, aisha, mei, fatima, rio, tess, omar, lina). Defined in `scripts/seed/data.mts`. Women mode members: nina, zara, aisha, mei, fatima. Their projects **Courtside** and **Sublet Sync** are normal posts in the Women deck and never show in Normal.
 
+## Women mode on stage (decided Nov 7, R3)
+
+Alice and Bob stay out of Women mode. Making Alice a member would hide her person card from Bob's Normal deck (the deck never mixes the two spaces), which would break the match flow below. To show the Women deck, sign a phone in as **zara** (`zara@commit-demo.dev`, password `SEED_USER_PASSWORD`). Her Women deck shows **Courtside** and **Sublet Sync**, and the reset already checks that. On Alice or Bob, the Women tab shows the note that explains Women mode is set by the server.
+
 ## Live demo plan (two phones)
 
 1. Run the reset (below) shortly before the demo, and wait for "All YES".
