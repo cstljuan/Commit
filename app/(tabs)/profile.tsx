@@ -99,10 +99,6 @@ export default function ProfileScreen() {
           <Text style={{ color: '#9CA3AF', fontFamily: t.fontBody, fontSize: 14 }}>Watch us try to break our own security</Text>
         </PressScale>
       </Reveal>
-
-      <Link href="/dev-test" style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 13, alignSelf: 'center' }}>
-        Run first test
-      </Link>
     </ScrollView>
   );
 }

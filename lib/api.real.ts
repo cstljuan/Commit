@@ -3,7 +3,10 @@
 // Screens never import this file directly. They import '@/lib/api'.
 
 import * as WebBrowser from 'expo-web-browser';
-import { makeRedirectUri } from 'expo-auth-session';
+import { AuthRequest, exchangeCodeAsync, makeRedirectUri } from 'expo-auth-session';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+import * as Crypto from 'expo-crypto';
+import { Platform } from 'react-native';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 import { supabase } from './supabase';
@@ -146,7 +149,49 @@ export async function authProviders(): Promise<{ github: boolean; google: boolea
   return { github: !!json.external?.github, google: !!json.external?.google };
 }
 
+// Public OAuth client id (not a secret) for the Commit iOS app. Its reversed form is registered as
+// a URL scheme by the google-signin config plugin in app.json.
+const GOOGLE_IOS_CLIENT_ID =
+  process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '793748227483-64bcau26i86e8149h10dp9mkfvsepq1o.apps.googleusercontent.com';
+const GOOGLE_DISCOVERY = {
+  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+  tokenEndpoint: 'https://oauth2.googleapis.com/token',
+};
+
+/**
+ * Google sign-in straight with Google on a real iPhone build, so Google's page says "Sign in to
+ * Commit" instead of the Supabase project address. PKCE code flow with the iOS client, a hashed
+ * nonce in the ID token, then Supabase checks the token and the raw nonce. Returns false in Expo Go
+ * and off iOS (the URL scheme is not registered there), so the caller uses the browser flow.
+ */
+async function signInWithGoogleDirect(): Promise<boolean> {
+  if (Platform.OS !== 'ios' || Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return false;
+  const reversed = GOOGLE_IOS_CLIENT_ID.split('.').reverse().join('.');
+  const redirectUri = `${reversed}:/oauthredirect`;
+  const rawNonce = Crypto.randomUUID();
+  const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
+  const request = new AuthRequest({
+    clientId: GOOGLE_IOS_CLIENT_ID,
+    redirectUri,
+    scopes: ['openid', 'email', 'profile'],
+    usePKCE: true,
+    extraParams: { nonce: hashedNonce, prompt: 'select_account' },
+  });
+  const result = await request.promptAsync(GOOGLE_DISCOVERY, { preferEphemeralSession: true });
+  if (result.type !== 'success') throw new Error('Sign-in was cancelled');
+  if (!request.codeVerifier) throw new Error('Sign-in could not start');
+  const tokens = await exchangeCodeAsync(
+    { clientId: GOOGLE_IOS_CLIENT_ID, code: result.params.code, redirectUri, extraParams: { code_verifier: request.codeVerifier } },
+    GOOGLE_DISCOVERY,
+  );
+  if (!tokens.idToken) throw new Error('Google did not return a sign-in token');
+  const { error } = await supabase.auth.signInWithIdToken({ provider: 'google', token: tokens.idToken, nonce: rawNonce });
+  fail(error);
+  return true;
+}
+
 export async function signInWithProvider(provider: 'github' | 'google'): Promise<void> {
+  if (provider === 'google' && (await signInWithGoogleDirect())) return;
   const redirectTo = makeRedirectUri();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
