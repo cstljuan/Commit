@@ -1,8 +1,9 @@
 import * as Crypto from 'expo-crypto';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import nacl from 'tweetnacl';
+import { InkCommit } from '@/components/Tako/InkCommit';
 import { decodeBase64, decodeUTF8, encodeBase64, encodeUTF8 } from 'tweetnacl-util';
 
 type Row = { name: string; ok: boolean; note?: string };
@@ -60,6 +61,7 @@ async function runChecks(): Promise<Row[]> {
 /** Temporary. Delete after test 1 has passed on a real iPhone. */
 export default function DevTest() {
   const [rows, setRows] = useState<Row[] | null>(null);
+  const [ink, setInk] = useState(false);
   useEffect(() => {
     runChecks().then(setRows);
   }, []);
@@ -76,6 +78,16 @@ export default function DevTest() {
           {r.ok ? 'PASS' : 'FAIL'} {r.name} {r.note ?? ''}
         </Text>
       ))}
+      <Pressable onPress={() => setInk(true)}>
+        <Text style={{ fontSize: 18, fontWeight: '700', color: '#6C5CE7' }}>Preview ink animation</Text>
+      </Pressable>
+      {ink ? (
+        <InkCommit
+          text="An app that turns your class notes into quizzes and finds what you keep forgetting."
+          commitHash="a3f9c21d"
+          onDone={() => setInk(false)}
+        />
+      ) : null}
     </View>
   );
 }

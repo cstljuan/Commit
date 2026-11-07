@@ -1,3 +1,14 @@
+import { useEffect } from 'react';
+import Animated, {
+  cancelAnimation,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
 import { useMode } from '@/lib/theme';
@@ -31,17 +42,65 @@ const EYES: Record<TakoState, string> = {
     'M64 76L72 70L88 88L80 96ZM88 76L80 70L64 88L72 96ZM112 76L120 70L136 88L128 96ZM136 76L128 70L112 88L120 96Z',
 };
 
-/** One solid colour per mode, negative-space eyes, no mouth, no gradient. Animation comes next. */
-export function Tako({ state = 'idle', size = 96 }: { state?: TakoState; size?: number }) {
+const BROKEN_RED = '#E5484D';
+
+type Props = {
+  state?: TakoState;
+  size?: number;
+  /** Overrides the mode colour, for example on a coloured background. */
+  color?: string;
+  /** Breathes at rest and reacts when its state changes. Leave off for Tako on cards. */
+  animated?: boolean;
+};
+
+/** One solid colour per mode, negative-space eyes, no mouth, no gradient. */
+export function Tako({ state = 'idle', size = 96, color, animated = false }: Props) {
   const { t } = useMode();
-  const color = state === 'broken' ? '#E5484D' : t.primary;
+  const reduced = useReducedMotion();
+  const fill = state === 'broken' ? BROKEN_RED : (color ?? t.primary);
   const arms = state === 'happy' || state === 'alert' ? ARMS_UP : ARMS;
+
+  const scale = useSharedValue(1);
+  const shift = useSharedValue(0);
+
+  useEffect(() => {
+    if (!animated || reduced) return;
+    cancelAnimation(scale);
+    cancelAnimation(shift);
+    shift.value = 0;
+    if (state === 'idle') {
+      scale.value = withRepeat(
+        withSequence(withTiming(1.04, { duration: 1100 }), withTiming(1, { duration: 1100 })),
+        -1,
+      );
+    } else if (state === 'happy') {
+      scale.value = withSequence(withSpring(1.2, { damping: 8, stiffness: 300 }), withSpring(1));
+    } else if (state === 'ink') {
+      scale.value = withSequence(withTiming(0.86, { duration: 120 }), withSpring(1.1, { damping: 7 }), withSpring(1));
+    } else {
+      // Alert and broken both shake. Broken is the louder of the two.
+      const amount = state === 'broken' ? 7 : 3;
+      scale.value = withSpring(1);
+      shift.value = withSequence(
+        withTiming(-amount, { duration: 45 }),
+        withRepeat(withTiming(amount, { duration: 70 }), 5, true),
+        withTiming(0, { duration: 45 }),
+      );
+    }
+  }, [animated, reduced, scale, shift, state]);
+
+  const motion = useAnimatedStyle(() => ({
+    transform: [{ translateX: shift.value }, { scale: scale.value }],
+  }));
+
   return (
-    <Svg width={size} height={(size * 240) / 200} viewBox="0 0 200 240" fill="none">
-      {arms.map((d) => (
-        <Path key={d} d={d} stroke={color} strokeWidth={13} strokeLinecap="round" />
-      ))}
-      <Path fill={color} fillRule="evenodd" clipRule="evenodd" d={HEAD + EYES[state]} />
-    </Svg>
+    <Animated.View style={motion}>
+      <Svg width={size} height={(size * 240) / 200} viewBox="0 0 200 240" fill="none">
+        {arms.map((d) => (
+          <Path key={d} d={d} stroke={fill} strokeWidth={13} strokeLinecap="round" />
+        ))}
+        <Path fill={fill} fillRule="evenodd" clipRule="evenodd" d={HEAD + EYES[state]} />
+      </Svg>
+    </Animated.View>
   );
 }
