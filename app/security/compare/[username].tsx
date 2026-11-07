@@ -66,8 +66,8 @@ export default function CompareKeysScreen() {
 
       {changed ? (
         <Animated.View entering={FadeIn.duration(200)} style={[styles.warning, { backgroundColor: LAB.bad }]}>
-          <Text style={{ color: '#2A1408', fontFamily: LAB.monoBold, fontSize: 15 }}>@{username}&apos;s key changed</Text>
-          <Text style={{ color: '#2A1408', fontFamily: LAB.mono, fontSize: 13, lineHeight: 19 }}>
+          <Text style={{ color: '#FFFFFF', fontFamily: LAB.monoBold, fontSize: 15 }}>@{username}&apos;s key changed</Text>
+          <Text style={{ color: '#FFFFFF', fontFamily: LAB.mono, fontSize: 13, lineHeight: 19 }}>
             Maybe they got a new phone. Or someone is trying to read your chat. Messages are paused until you check with them in person.
           </Text>
         </Animated.View>
@@ -143,6 +143,6 @@ const styles = StyleSheet.create({
   group: { width: '31%', color: LAB.text, fontFamily: LAB.monoBold, fontSize: 22, textAlign: 'center' },
   note: { color: LAB.muted, fontFamily: LAB.mono, fontSize: 12, lineHeight: 18 },
   primary: { backgroundColor: LAB.accent, minHeight: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, paddingVertical: 10 },
-  primaryText: { color: '#2A1408', fontFamily: LAB.monoBold, fontSize: 15, textAlign: 'center' },
+  primaryText: { color: '#FFFFFF', fontFamily: LAB.monoBold, fontSize: 15, textAlign: 'center' },
   done: { backgroundColor: LAB.card, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
 });

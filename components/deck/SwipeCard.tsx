@@ -32,7 +32,7 @@ function Reason({ text }: { text: string }) {
   const { t } = useMode();
   return (
     <View style={[styles.pill, { backgroundColor: t.accent }]}>
-      <Text numberOfLines={1} style={{ color: '#2A1408', fontFamily: t.fontBold, fontSize: 13 }}>
+      <Text numberOfLines={1} style={{ color: t.accent === '#FF6B35' ? '#FFFFFF' : '#2A1408', fontFamily: t.fontBold, fontSize: 13 }}>
         {text}
       </Text>
     </View>
@@ -52,7 +52,8 @@ function Reliability({ score }: { score: number }) {
 function ProjectBody({ card }: { card: ProjectCard }) {
   const { t } = useMode();
   const art = critterFor(card.ownerBoxPublicKey ?? card.ownerUsername).color;
-  const ink = inkOn(art);
+  // Text sits on a colored field next to a white critter, so it is white too: never dark on orange.
+  const ink = '#FFFFFF';
   return (
     <>
       <View style={[styles.art, { backgroundColor: art }]}>
@@ -106,8 +107,8 @@ function PersonBody({ card }: { card: PersonCard }) {
       </Text>
       {prompt ? (
         <View style={[styles.prompt, { backgroundColor: art }]}>
-          <Text style={{ color: inkOn(art), fontFamily: t.fontBold, fontSize: 13 }}>{prompt.q}</Text>
-          <Text numberOfLines={3} style={{ color: inkOn(art), fontFamily: t.fontDisplay, fontSize: 26 }}>
+          <Text style={{ color: '#FFFFFF', fontFamily: t.fontBold, fontSize: 13 }}>{prompt.q}</Text>
+          <Text numberOfLines={3} style={{ color: '#FFFFFF', fontFamily: t.fontDisplay, fontSize: 26 }}>
             {prompt.a}
           </Text>
         </View>
@@ -133,7 +134,7 @@ export function SwipeCard({ card }: { card: Card }) {
       ]}>
       {card.isSuper ? (
         <View style={[styles.superBand, { backgroundColor: t.accent }]}>
-          <Text style={{ color: '#2A1408', fontFamily: t.fontBold, fontSize: 13 }}>{'\u2605\uFE0E'} {copy.stampUp}</Text>
+          <Text style={{ color: t.accent === '#FF6B35' ? '#FFFFFF' : '#2A1408', fontFamily: t.fontBold, fontSize: 13 }}>{'\u2605\uFE0E'} {copy.stampUp}</Text>
         </View>
       ) : null}
       {card.kind === 'project' ? <ProjectBody card={card} /> : <PersonBody card={card} />}

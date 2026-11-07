@@ -26,7 +26,7 @@ export const themes: Record<Mode, ThemeTokens> = {
     bg: '#FFEDE3',
     surface: '#FFFFFF',
     primary: '#FF6B35',
-    onPrimary: '#2A1408',
+    onPrimary: '#FFFFFF',
     text: '#2A1408',
     muted: '#86604C',
     like: '#4CAF50',

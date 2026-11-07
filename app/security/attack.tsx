@@ -154,7 +154,7 @@ export default function AttackScreen() {
           disabled={empty}
           onPress={() => record('deliver', attempt(() => open(body, CHAT, keys.me.pub, keys.me.pub, keys.them.secret)))}
           style={[styles.deliver, { opacity: empty ? 0.5 : 1 }]}>
-          <Text style={{ color: '#2A1408', fontFamily: LAB.monoBold, fontSize: 15 }}>Deliver it normally</Text>
+          <Text style={{ color: '#FFFFFF', fontFamily: LAB.monoBold, fontSize: 15 }}>Deliver it normally</Text>
         </PressScale>
         {delivered ? (
           <Animated.View entering={FadeInDown.duration(200)} style={styles.card}>

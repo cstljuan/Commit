@@ -119,7 +119,7 @@ export default function SecurityCenter() {
         </View>
         {keyState === 'new' || keyState === 'register' ? (
           <PressScale accessibilityLabel="Set up keys" onPress={() => router.push('/onboarding/keys')} style={styles.primary}>
-            <Text style={{ color: '#2A1408', fontFamily: LAB.monoBold, fontSize: 15 }}>Set up keys</Text>
+            <Text style={{ color: '#FFFFFF', fontFamily: LAB.monoBold, fontSize: 15 }}>Set up keys</Text>
           </PressScale>
         ) : null}
       </Reveal>

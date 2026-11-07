@@ -152,8 +152,8 @@ export default function MatchesScreen() {
                   style={[styles.alert, { backgroundColor: t.accent }]}>
                   <Hachi size={52} state="guard" color="#2A1408" animated interactive={false} />
                   <View style={styles.rowText}>
-                    <Text style={{ color: '#2A1408', fontFamily: t.fontBold, fontSize: 15 }}>Someone reworded your idea</Text>
-                    <Text style={{ color: '#2A1408', fontFamily: t.fontBody, fontSize: 13 }}>
+                    <Text style={{ color: t.accent === '#FF6B35' ? '#FFFFFF' : '#2A1408', fontFamily: t.fontBold, fontSize: 15 }}>Someone reworded your idea</Text>
+                    <Text style={{ color: t.accent === '#FF6B35' ? '#FFFFFF' : '#2A1408', fontFamily: t.fontBody, fontSize: 13 }}>
                       Only you can see this. Your commit hash proves you were first.
                     </Text>
                   </View>
