@@ -13,6 +13,7 @@ import { Reveal } from '@/components/motion/Reveal';
 import { Screen } from '@/components/nav/Screen';
 import { Hachi } from '@/components/Hachi/Hachi';
 import { usePrefs } from '@/lib/prefs';
+import { useMascotName } from '@/lib/mascot';
 import { useMode, type Mode } from '@/lib/theme';
 import { radius, space, type } from '@/lib/tokens';
 
@@ -72,6 +73,7 @@ const MODES: { value: Mode; label: string }[] = [
 
 export default function SettingsScreen() {
   const { t } = useMode();
+  const name = useMascotName();
   const { prefs, setPref } = usePrefs();
   const me = critterFor('you');
   return (
@@ -88,11 +90,11 @@ export default function SettingsScreen() {
       </Reveal>
 
       <Reveal index={1}>
-        <PressScale accessibilityLabel="Meet Hachi" onPress={() => router.push('/hachi')} style={[styles.me, { backgroundColor: t.surface }]}>
+        <PressScale accessibilityLabel={`Meet ${name}`} onPress={() => router.push('/hachi')} style={[styles.me, { backgroundColor: t.surface }]}>
           <Hachi size={72} animated sleepAfter={0} />
           <View style={styles.rowText}>
-            <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: type.title }}>Meet Hachi</Text>
-            <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: type.small }}>Play with Hachi and choose what to wear.</Text>
+            <Text style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: type.title }}>Meet {name}</Text>
+            <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: type.small }}>Play with {name} and choose what to wear.</Text>
           </View>
         </PressScale>
       </Reveal>

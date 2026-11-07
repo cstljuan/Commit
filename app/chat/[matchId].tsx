@@ -22,11 +22,12 @@ import { HoldToCommit } from '@/components/motion/HoldToCommit';
 import { PressScale } from '@/components/motion/PressScale';
 import { Hachi } from '@/components/Hachi/Hachi';
 import { API_IS_MOCK, commitToMatch, getMatches, getMessages, sendMessage, subscribeMessages } from '@/lib/api';
-import { getReply, getThread, HACHI_CHAT, peerOf, saveThread } from '@/lib/chatbot';
+import { getReply, getThread, HACHI_CHAT, peerOf, saveThread, setMascot } from '@/lib/chatbot';
 import { demoIcebreakers, demoMatches, demoThreads, HACHI_CHIPS, LAB, type DemoMatch, type DemoMessage } from '@/lib/demoData';
 import { chatSecurity, decodeMessage, sealMessage, type ChatSecurity } from '@/lib/e2ee';
 import { hachi } from '@/lib/hachi';
 import { llmAvailable } from '@/lib/llm';
+import { useMascotName } from '@/lib/mascot';
 import { useMode } from '@/lib/theme';
 
 /** `raw` is exactly what the database holds for this message, shown by the Server view switch. */
@@ -71,6 +72,7 @@ function Dot({ i, color }: { i: number; color: string }) {
 export default function ChatScreen() {
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
   const { t } = useMode();
+  const name = useMascotName();
   const { bottom } = useSafeAreaInsets();
   const isHachi = matchId === HACHI_CHAT;
   const sample = demoMatches.find((m) => m.id === matchId);
@@ -206,6 +208,7 @@ export default function ChatScreen() {
     const mine = ++turn.current;
     setTyping(true);
     const started = Date.now();
+    setMascot(name);
     const reply = await getReply(chatId, isHachi ? undefined : match.username, latest.current);
     if (!alive.current || mine !== turn.current) return;
     setSource(reply.source);
@@ -254,8 +257,8 @@ export default function ChatScreen() {
 
   const stateLine = isHachi
     ? source === 'local'
-      ? 'Hachi is running on a model on our own laptop'
-      : 'Hachi answers from what is built into the app'
+      ? `${name} is running on a model on our own laptop`
+      : `${name} answers from what is built into the app`
     : `Sample teammate, not a real person. ${source === 'local' ? 'Replies from a local model.' : 'Replies are built in.'}`;
 
   return (
@@ -265,7 +268,7 @@ export default function ChatScreen() {
       keyboardVerticalOffset={90}>
       <Stack.Screen
         options={{
-          title: isHachi ? 'Hachi' : match.username ? `@${match.username}` : 'Chat',
+          title: isHachi ? name : match.username ? `@${match.username}` : 'Chat',
           headerRight: () => isHachi ? null : (
             <PressScale accessibilityLabel={`Open @${match.username}`} onPress={() => router.push(`/person/${match.username}`)}>
               <Critter seed={match.username} size={34} />

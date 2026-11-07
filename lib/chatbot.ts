@@ -160,11 +160,22 @@ const firstMessageTip = () => {
   return `Ask @${m.username} something specific about ${m.project}. Like: "What would you build first if we only had tonight?"`;
 };
 
+// Hachi in Normal and Hack, Hana in Women mode. The chat screen sets it.
+let mascot = 'Hachi';
+export const setMascot = (name: string) => {
+  mascot = name;
+};
+
 const HACHI_TOPICS: { re: RegExp; texts: () => string[]; action?: ChatAction }[] = [
   {
-    re: /\b(are you (real|a bot|ai|human)|who are you|what are you|your name|hachi|octopus)\b/,
-    texts: () => ['I am Hachi, the octopus that lives in Commit. Hachi means eight, and yes, I can count.', 'There are 13 ways to play with me. Can you find them all?'],
-    action: { label: 'Meet Hachi', href: '/hachi' },
+    re: /\b(are you (real|a bot|ai|human)|who are you|what are you|your name|hachi|hana|octopus)\b/,
+    texts: () => [
+      mascot === 'Hana'
+        ? 'I am Hana, the octopus who runs Women mode. Hana means flower. Hachi is my brother.'
+        : 'I am Hachi, the octopus that lives in Commit. Hachi means eight, and yes, I can count.',
+      'There are 13 ways to play with me. Can you find them all?',
+    ],
+    action: { label: 'Play with me', href: '/hachi' },
   },
   {
     re: /\b(teammate|team|who should|need|designer|find|looking for|roles?|gap)\b/,
@@ -246,7 +257,7 @@ const hachiReply = (chatId: string, text: string) => {
 const systemPrompt = (chatId: string, username?: string): string => {
   if (chatId === HACHI_CHAT || !username) {
     return [
-      'You are Hachi, the small octopus mascot inside Commit, an app for finding hackathon and project teammates by swiping.',
+      `You are ${mascot}, the small octopus mascot inside Commit, an app for finding hackathon and project teammates by swiping.`,
       'Reply in one or two short, warm sentences. No emoji. No lists. Never invent app features or numbers.',
       'Facts: people swipe on projects and builders by role. Both saying yes is a match. Joining takes a held press called a commit.',
       'The shows up score starts at 70: finishing is +5, leaving with notice is -3, ghosting is -15.',
