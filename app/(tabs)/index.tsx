@@ -135,13 +135,15 @@ export default function SwipeScreen() {
         <Hachi size={46} state={mood} animated interactive listen />
       </View>
       <View style={styles.pills}>
-        <PressScale
-          onPress={() => router.push(mode === 'hack' ? '/hack/needs' : '/likes')}
-          style={[styles.interested, { backgroundColor: t.surface }]}>
-          <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 14 }}>
-            {mode === 'hack' ? needsLine : `${wanting} ${wanting === 1 ? 'builder wants' : 'builders want'} in`}
-          </Text>
-        </PressScale>
+        <View style={styles.pillSlot}>
+          <PressScale
+            onPress={() => router.push(mode === 'hack' ? '/hack/needs' : '/likes')}
+            style={[styles.interested, { backgroundColor: t.surface }]}>
+            <Text numberOfLines={1} style={{ flexShrink: 1, color: t.text, fontFamily: t.fontBold, fontSize: 14 }}>
+              {mode === 'hack' ? needsLine : `${wanting} ${wanting === 1 ? 'builder wants' : 'builders want'} in`}
+            </Text>
+          </PressScale>
+        </View>
         <PressScale
           accessibilityLabel="Filters"
           onPress={() => router.push('/filters')}
@@ -194,5 +196,6 @@ const styles = StyleSheet.create({
   pills: { flexDirection: 'row', alignSelf: 'center', alignItems: 'center', gap: 8 },
   state: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
   retry: { height: 48, paddingHorizontal: 24, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  pillSlot: { flexShrink: 1 },
   interested: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 14 },
 });

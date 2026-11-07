@@ -31,7 +31,7 @@ export default function ProfileScreen() {
   const seed = me?.username ?? 'you';
   const prompt = me?.prompts[0];
   return (
-    <ScrollView style={{ backgroundColor: t.bg }} contentContainerStyle={[styles.content, { paddingTop: top + 12, paddingBottom: inset }]}>
+    <ScrollView style={{ backgroundColor: t.bg }} contentContainerStyle={[styles.content, { paddingTop: top + 12, paddingBottom: inset + 24 }]}>
       <Reveal style={styles.head}>
         <PressScale accessibilityLabel="Your creature" onPress={() => router.push('/creatures')}>
           <Critter seed={seed} size={84} animated />
