@@ -81,13 +81,15 @@ export const SHAPES: Record<Species, Shape> = {
     eyeY: 74,
   },
   turtle: {
+    // The head comes first so the eyes cut through the head, not the shell.
     body: [
+      'M124 70A18 18 0 1 1 160 70A18 18 0 1 1 124 70Z',
       'M18 96C18 60 46 42 78 42C110 42 138 60 138 96C138 104 132 108 126 108H30C24 108 18 104 18 96Z',
-      'M122 72C126 50 158 50 158 74C158 92 138 100 126 92Z',
     ],
     limbs: ['M44 100C42 118 38 130 26 142', 'M112 100C114 118 118 130 130 142', { d: 'M22 98C14 100 8 104 4 110', w: 11 }],
-    eyes: [58, 98],
-    eyeY: 74,
+    eyes: [138, 152],
+    eyeY: 68,
+    eyeR: 5.5,
   },
   axolotl: {
     body: ['M30 88C30 62 52 48 80 48C108 48 130 62 130 88C130 112 108 124 80 124C52 124 30 112 30 88Z'],
