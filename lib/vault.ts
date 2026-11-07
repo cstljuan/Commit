@@ -9,7 +9,7 @@ export type VaultEntry = {
 export type VaultCheckpoint = { last_seq: number; last_entry_hash: string; server_sig: string };
 export type Verification = { seq: number; ok: boolean; reason?: string };
 // Set to the public key of the deployed checkpoint signer, never a value returned by the API.
-export const SERVER_SIGNING_PUBLIC_KEY = '';
+export const SERVER_SIGNING_PUBLIC_KEY = 'BeyaY0GUYeyJnFrVc2h7P87aKq/kFVWoOGKfC2uu8tI=';
 let client: SupabaseClient | undefined;
 export function configureCyberClient(value: SupabaseClient): void { client = value; }
 export function getCyberClient(): SupabaseClient {
