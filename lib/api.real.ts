@@ -36,8 +36,65 @@ WebBrowser.maybeCompleteAuthSession();
 
 // ---------- helpers ----------
 
-function fail(error: { message: string; code?: string } | null | undefined): void {
-  if (error) throw Object.assign(new Error(error.message), { code: error.code });
+type RawError = { message: string; code?: string; name?: string; status?: number; details?: string | null; hint?: string | null };
+
+// Messages raised by our own SQL functions (raise exception, code P0001), shown as plain sentences.
+const RAISED: Record<string, string> = {
+  'not signed in': 'Your session expired. Sign in again.',
+  'create a profile first': 'Finish your profile first.',
+  'not owner': 'Only the project owner can do that.',
+  'no super commits left today': "You have used today's Super Commit.",
+  'already matched, cannot undo': 'You already matched, so this swipe cannot be undone.',
+  'team is full (max 4)': 'That team is full (4 people max).',
+  'no open slot for this role': 'That role has no open slot left.',
+  'card not found': 'That card is no longer available.',
+  'not your card': 'That card is not yours to answer.',
+  'match not found': 'That match no longer exists.',
+  'not part of this match': 'You are not part of that match.',
+  'project not found': 'That project no longer exists.',
+  'cannot swipe on yourself': 'You cannot swipe on yourself.',
+  'cannot swipe on your own project': 'You cannot swipe on your own project.',
+  'register signing keys first': 'Set up this device first, then try again.',
+  'registered device keys cannot be replaced': 'This account already has device keys.',
+};
+
+/** Turns a Supabase or Postgres error into a sentence a person can read. */
+function readableMessage(e: RawError): string {
+  const msg = (e.message ?? '').trim();
+  const low = msg.toLowerCase();
+  const code = e.code ?? '';
+  if (RAISED[low]) return RAISED[low];
+  if (e.name === 'AuthRetryableFetchError' || e.status === 0 || /network request failed|failed to fetch|fetch failed|network error|load failed/.test(low)) {
+    return 'No connection. Try again.';
+  }
+  if (/jwt expired|invalid jwt|session.*(missing|expired|not found)|refresh token/.test(low) || code === 'PGRST301' || code === 'PGRST303' || code === 'session_expired' || code === 'bad_jwt') {
+    return 'Your session expired. Sign in again.';
+  }
+  if (code === '42501' || low.includes('permission denied') || low.includes('row-level security')) return 'You do not have access to that.';
+  // app/onboarding/profile.tsx looks for "unique" in the message to flag a taken username.
+  if (code === '23505') return low.includes('username') ? 'That username is taken. Pick a unique one.' : 'That already exists.';
+  if (code === '23503') return 'That item no longer exists.';
+  if (code === '22P02') return 'That link is not valid.';
+  if (code === '23514' || code === '23502') return 'Some details are missing or not allowed.';
+  const clean = msg
+    .replace(/^(error|typeerror|postgresterror|authapierror):\s*/i, '')
+    .replace(/\s*\(sqlstate [0-9a-z]+\)/gi, '')
+    .replace(/\s+(for|on) (table|relation|column) "[^"]*"/gi, '')
+    .replace(/"public\.([^"]+)"/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!clean) return 'Something went wrong. Try again.';
+  return clean[0].toUpperCase() + clean.slice(1);
+}
+
+/** Throws a readable Error. err.code keeps the original code; err.detail and err.cause keep the raw error. */
+function fail(error: RawError | null | undefined): void {
+  if (!error) return;
+  throw Object.assign(new Error(readableMessage(error)), {
+    code: error.code,
+    detail: error.message,
+    cause: error,
+  });
 }
 
 async function uid(): Promise<string> {
