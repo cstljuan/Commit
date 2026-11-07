@@ -6,6 +6,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
 import { Burst } from '@/components/motion/Particles';
+import { PressScale } from '@/components/motion/PressScale';
 import { TypedLine } from '@/components/motion/TypedLine';
 import { Hachi, type HachiState } from '@/components/Hachi/Hachi';
 import { useMode } from '@/lib/theme';
@@ -22,11 +23,13 @@ type Props = {
   onUndo?: () => void;
   /** Lets the screen react to the drag, for example Hachi's face. */
   onMood?: (mood: HachiState) => void;
+  /** When filters hid everything, the empty deck says so and offers to clear them. */
+  onClearFilters?: () => void;
 };
 
 type Swiped = { dir: Direction };
 
-export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: Props) {
+export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood, onClearFilters }: Props) {
   const { copy, mode, t } = useMode();
   const [index, setIndex] = useState(0);
   const [history, setHistory] = useState<Swiped[]>([]);
@@ -131,8 +134,13 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
           <View style={styles.empty}>
             <Hachi size={120} state="confused" animated interactive />
             <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 16, textAlign: 'center' }}>
-              {copy.emptyDeck}
+              {onClearFilters ? 'Your filters are hiding everyone.' : copy.emptyDeck}
             </Text>
+            {onClearFilters ? (
+              <PressScale accessibilityLabel="Clear filters" onPress={onClearFilters} style={[styles.clearFilters, { backgroundColor: t.primary }]}>
+                <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: 16 }}>Clear filters</Text>
+              </PressScale>
+            ) : null}
           </View>
         ) : (
           [...visible].reverse().map((card, i, list) => {
@@ -189,4 +197,5 @@ const styles = StyleSheet.create({
   root: { flex: 1, width: '100%', gap: 16 },
   stack: { flex: 1, marginHorizontal: 20 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 24 },
+  clearFilters: { height: 48, paddingHorizontal: 22, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
 });

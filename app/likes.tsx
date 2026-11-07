@@ -68,11 +68,11 @@ export default function LikesScreen() {
               { backgroundColor: t.surface },
               item.isSuper && { backgroundColor: t.accent },
             ]}>
-            <View style={[styles.mystery, { backgroundColor: t.primary + '2E' }]}>
-              <Text style={{ color: t.primary, fontFamily: t.fontDisplay, fontSize: 40 }}>?</Text>
+            <View style={[styles.mystery, { backgroundColor: item.isSuper ? '#2A14081F' : t.primary + '2E' }]}>
+              <Text style={{ color: item.isSuper ? '#2A1408' : t.primary, fontFamily: t.fontDisplay, fontSize: 40 }}>?</Text>
             </View>
-            <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 16 }}>{item.role}</Text>
-            <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 14 }}>{item.level}</Text>
+            <Text style={{ color: item.isSuper ? '#2A1408' : t.text, fontFamily: t.fontBold, fontSize: 16 }}>{item.role}</Text>
+            <Text style={{ color: item.isSuper ? '#2A1408' : t.muted, fontFamily: t.fontBody, fontSize: 14 }}>{item.level}</Text>
             <View style={styles.actions}>
               <Pressable
                 accessibilityRole="button"

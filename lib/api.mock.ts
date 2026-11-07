@@ -444,7 +444,13 @@ export async function getDeck(mode: Mode): Promise<Card[]> {
   const deck = decks[mode].filter((c) => !swiped.has(c.id));
   // Super cards float up, otherwise keep the seeded (deterministic) order.
   const sorted = [...deck.filter((c) => c.isSuper), ...deck.filter((c) => !c.isSuper)];
-  return wait(clone(sorted));
+  // Same rule as the real deck: a reason only claims a need the team really saved.
+  const needReason = (role: Role) => {
+    const need = hackRoles.find((r) => r.role === role && r.open > 0);
+    return need ? `Your team needs ${need.open} ${role}` : 'Strong reliability';
+  };
+  const reasoned = mode === 'hack' ? sorted.map((c) => (c.kind === 'person' ? { ...c, reason: needReason(c.role) } : c)) : sorted;
+  return wait(clone(reasoned));
 }
 
 export async function superCommitsLeft(): Promise<number> {

@@ -33,7 +33,7 @@ function Row({ event, index }: { event: DemoEvent; index: number }) {
           {event.kind === 'alert' ? <Hachi size={48} state="guard" animated interactive={false} /> : <Critter seed={event.seed} size={48} />}
           <View style={[styles.badge, { backgroundColor: tint }]}>
             <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
-              <Path d={BADGE[event.kind]} stroke={t.onPrimary} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+              <Path d={BADGE[event.kind]} stroke={event.kind === 'alert' ? t.bg : t.onPrimary} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
           </View>
         </View>

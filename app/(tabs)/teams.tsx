@@ -7,6 +7,7 @@ import Svg, { Path } from 'react-native-svg';
 import { Critter } from '@/components/critters/Critter';
 import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
+import { SampleBadge } from '@/components/motion/SampleBadge';
 import { useTabInset } from '@/components/nav/TabBar';
 import { Hachi } from '@/components/Hachi/Hachi';
 import { API_IS_MOCK, getCopyAlerts, getMatches, getMyProjects } from '@/lib/api';
@@ -124,6 +125,7 @@ export default function MatchesScreen() {
                 </Svg>
               </PressScale>
             </View>
+            {API_IS_MOCK ? <SampleBadge color={t.bg} background={t.muted} /> : null}
             {hasAlert ? <Reveal>
                 <PressScale
                   accessibilityLabel="Copy alert. Someone posted a reworded version of your idea. Tap to see your proof."

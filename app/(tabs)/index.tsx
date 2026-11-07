@@ -15,7 +15,7 @@ import { Hachi, type HachiState } from '@/components/Hachi/Hachi';
 import { commitToMatch, getDeck, getInterested, superCommitsLeft, swipe, undoLastSwipe, getHackRoles } from '@/lib/api';
 import { rememberMatch } from '@/lib/chatbot';
 import { copy } from '@/lib/copy';
-import { filterCount, matchesFilters, useDeckFilters } from '@/lib/filters';
+import { filterCount, matchesFilters, setDeckFilters, useDeckFilters } from '@/lib/filters';
 import { hachi } from '@/lib/hachi';
 import { sfx } from '@/lib/sound';
 import { useMode, type Mode } from '@/lib/theme';
@@ -146,7 +146,7 @@ export default function SwipeScreen() {
       </View>
       {/* A new mode is a new deck, so the key resets its position. */}
       {cards ? (
-        <SwipeDeck key={`${mode}${version}${active}`} cards={shown} superPerDay={superLeft} onMood={setMood} onSwipe={onSwipe} onUndo={onUndo} />
+        <SwipeDeck key={`${mode}${version}${active}`} cards={shown} superPerDay={superLeft} onMood={setMood} onSwipe={onSwipe} onUndo={onUndo} onClearFilters={active && !shown.length && cards?.length ? () => setDeckFilters({}) : undefined} />
       ) : (
         <View style={styles.state}>
           <Hachi size={110} state={failed ? 'error' : 'thinking'} animated />
