@@ -10,6 +10,7 @@ export type Prompt = { q: string; a: string };
 
 export type ProfileInput = {
   username: string;
+  bio: string; // the profile tagline, matches Profile.bio in lib/types.ts
   role: Role | null;
   level: Level | null;
   occupation: 'student' | 'working' | null;

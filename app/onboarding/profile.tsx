@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SkillsEditor } from '@/components/forms/SkillsEditor';
 import { saveProfile, type Level, type ProfileInput, type Role } from '@/components/forms/profileApi';
 import { AVATAR_IDS, Avatar, avatarUrlFor } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -16,10 +17,6 @@ const LEVELS: { value: Level; label: string }[] = [
   { value: 'intermediate', label: 'Intermediate' },
   { value: 'advanced', label: 'Advanced' },
 ];
-const SKILLS = [
-  'TypeScript', 'JavaScript', 'Python', 'Swift', 'Kotlin', 'Java', 'C++', 'Rust', 'Go',
-  'React', 'React Native', 'Node', 'SQL', 'Supabase', 'Firebase', 'AWS', 'PyTorch', 'Figma', 'Unity', 'Arduino',
-];
 const PROMPTS = ['Worst commit message', 'Tabs or spaces', 'My 3 AM snack', 'A bug I am proud of fixing'];
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 
@@ -29,7 +26,7 @@ const STEPS: StepId[] = ['username', 'role', 'skills', 'occupation', 'prompt', '
 const TITLES: Record<StepId, { title: string; sub: string }> = {
   username: { title: 'Pick a username', sub: 'This is how teams will see you.' },
   role: { title: 'What do you do?', sub: 'Your main role and how deep you are in it.' },
-  skills: { title: 'Skills and languages', sub: 'Tap all that apply.' },
+  skills: { title: 'Skills and languages', sub: 'Tap suggestions or add your own.' },
   occupation: { title: 'Student or working?', sub: 'Helps match you with similar schedules.' },
   prompt: { title: 'One fun one', sub: 'Pick a prompt. It shows on your card.' },
   avatar: { title: 'Choose your avatar', sub: 'You can change it later.' },
@@ -61,6 +58,7 @@ export default function OnboardingProfile() {
     setSaveError(null);
     const input: ProfileInput = {
       username: username.trim(),
+      bio: '',
       role,
       level,
       occupation,
@@ -166,18 +164,7 @@ export default function OnboardingProfile() {
             </View>
           )}
 
-          {step === 'skills' && (
-            <View style={styles.chips}>
-              {SKILLS.map((s) => (
-                <Chip
-                  key={s}
-                  label={s}
-                  selected={skills.includes(s)}
-                  onPress={() => setSkills(skills.includes(s) ? skills.filter((x) => x !== s) : [...skills, s])}
-                />
-              ))}
-            </View>
-          )}
+          {step === 'skills' && <SkillsEditor value={skills} onChange={setSkills} />}
 
           {step === 'occupation' && (
             <View style={styles.section}>
