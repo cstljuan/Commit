@@ -82,7 +82,9 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
         setTyped(dir === 'left' ? `$ echo @${card.username} >> .gitignore` : `$ git add @${card.username}`);
       }
       if (dir === 'super') setSuperLeft((s) => Math.max(0, s - 1));
-      if (index + 1 >= cards.length) hachi.play('confused');
+      // After advance() settles the mood, so the reaction is not cut off.
+      const reaction = index + 1 >= cards.length ? 'confused' : dir === 'left' ? 'wink' : dir === 'super' ? 'jump' : 'happy';
+      setTimeout(() => hachi.play(reaction), 40);
       const open = card.kind === 'project' ? card.roles.filter((r) => r.open > 0) : [];
       if (dir !== 'left' && card.kind === 'project' && open.length > 1) {
         // The card has flown off, so ask for the role before the swipe counts.

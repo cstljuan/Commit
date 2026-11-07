@@ -21,7 +21,7 @@ export type EyeMode =
 
 export type ArmPose = 'rest' | 'up' | 'wide' | 'droop' | 'open' | 'think' | 'wave' | 'hug' | 'block' | 'point';
 export type KnotPose = 'rest' | 'perk' | 'flick' | 'droop';
-export type Sym = 'none' | 'dots' | 'zz' | 'check' | 'bang' | 'q' | 'stop';
+export type Sym = 'none' | 'dots' | 'zz' | 'check' | 'bang' | 'q' | 'stop' | 'heart' | 'ink';
 
 export type Cfg = {
   sx: number;
@@ -40,6 +40,7 @@ export type Cfg = {
   pulse: number;
   scan: number;
   spin: number;
+  wiggle: number;
   look: [number, number] | null;
   red: number;
   loop: boolean;
@@ -63,6 +64,7 @@ const BASE: Cfg = {
   pulse: 0,
   scan: 0,
   spin: 0,
+  wiggle: 0,
   look: null,
   red: 0,
   loop: false,
@@ -96,7 +98,13 @@ export const STATES = {
   wink: state({ rot: 4, eyes: 'wink', arms: 'wave', knot: 'perk', dur: 1100 }),
   wave: state({ eyes: 'happy', arms: 'wave', knot: 'perk', dur: 1600 }),
   confused: state({ rot: -11, bob: 0.6, eyes: 'confused', arms: 'think', sym: 'q', dur: 1800 }),
-  ink: state({ sx: 1.08, sy: 0.92, eyes: 'squint', arms: 'open', knot: 'flick', dur: 1100 }),
+  ink: state({ sx: 1.08, sy: 0.92, eyes: 'squint', arms: 'open', knot: 'flick', sym: 'ink', dur: 1100 }),
+  poke: state({ sx: 0.97, sy: 1.03, rot: -3, eyes: 'squint', knot: 'flick', dur: 520 }),
+  bonk: state({ sx: 1.12, sy: 0.84, bob: 0, eyes: 'closed', arms: 'wide', knot: 'perk', dur: 620 }),
+  purr: state({ sx: 1.03, sy: 0.98, rot: 3, bob: 0.6, eyes: 'happy', knot: 'droop', sym: 'heart', wiggle: 0.4, dur: 1700 }),
+  giggle: state({ sx: 1.04, sy: 0.97, bob: 3, eyes: 'happy', arms: 'open', knot: 'flick', jitter: 1.2, wiggle: 1, dur: 1100 }),
+  flip: state({ eyes: 'happy', arms: 'up', knot: 'perk', hop: 1.3, spin: 0.5, dur: 1000 }),
+  jump: state({ sx: 0.95, sy: 1.08, eyes: 'wide', arms: 'up', knot: 'perk', hop: 1.9, dur: 1100 }),
   dizzy: state({ eyes: 'x', spin: 1, arms: 'wide', knot: 'flick', dur: 1500 }),
 } satisfies Record<string, Cfg>;
 
@@ -177,38 +185,60 @@ const barEye = (x: number, y: number, w: number, h: number) => {
   return `M${(x - w).toFixed(2)} ${(y - h).toFixed(2)}H${(x + w).toFixed(2)}V${(y + h).toFixed(2)}H${(x - w).toFixed(2)}Z`;
 };
 
-/** Three lash wedges fanning off the outer top of an eye. */
-const lashes = (x: number, y: number, r: number, side: number) => {
+const LASH_LEN = 8;
+const LASH_HALF = 0.16;
+
+const pt = (x: number, y: number) => {
   'worklet';
-  let d = '';
-  for (const deg of [20, 44, 68]) {
-    const a = (deg * Math.PI) / 180;
-    const nx = Math.cos(a) * side;
-    const ny = -Math.sin(a);
-    const px = -ny;
-    const py = nx;
-    const inner = r - 1;
-    const outer = r + 7.5;
-    const w = 2.3;
-    d += `M${(x + nx * inner + px * w).toFixed(2)} ${(y + ny * inner + py * w).toFixed(2)}L${(x + nx * outer).toFixed(2)} ${(y + ny * outer).toFixed(2)}L${(x + nx * inner - px * w).toFixed(2)} ${(y + ny * inner - py * w).toFixed(2)}Z`;
-  }
-  return d;
+  return `${x.toFixed(2)} ${y.toFixed(2)}`;
 };
 
-/** The bright highlights on her dark eyes. */
-export const sparklePath = ({ mode, lx, ly, ew, eh, blink }: EyeInput) => {
+/**
+ * A round eye with three lashes, all one outline. The head uses even-odd cut-outs, so a lash
+ * drawn over the eye would flip back to solid. Going round the edge and out to each tip keeps
+ * the whole eye one clean hole, the same see-through eye the band version has.
+ */
+const lashedEye = (x: number, y: number, rx: number, ry: number, side: number) => {
   'worklet';
-  if (blink > 0.4 || !(mode === 'round' || mode === 'wide' || mode === 'wink' || mode === 'sad')) return '';
-  const nx = Math.max(-1, Math.min(1, lx / 14));
-  let d = '';
-  [60, 100].forEach((x0, i) => {
-    if (mode === 'wink' && i === 0) return;
-    const x = 80 + (x0 - 80) * (1 - 0.2 * Math.abs(nx)) + lx;
-    const y = 72 + ly;
-    const k = (mode === 'wide' ? 1.3 : 1) * ew;
-    d += circle(x + 4 * k, y - 4.6 * eh, 3.6 * k, 3.6 * k) + circle(x - 3.6 * k, y + 4 * eh, 1.7 * k, 1.7 * k);
+  const at = (th: number) => pt(x + side * rx * Math.cos(th), y - ry * Math.sin(th));
+  const tip = (th: number) => pt(x + side * (rx + LASH_LEN) * Math.cos(th), y - (ry + LASH_LEN) * Math.sin(th));
+  const sweep = side > 0 ? 0 : 1;
+  const angles = [20, 44, 68].map((deg) => (deg * Math.PI) / 180);
+  const start = angles[0] - LASH_HALF;
+  let d = `M${at(start)}`;
+  angles.forEach((th, i) => {
+    d += `L${tip(th)}L${at(th + LASH_HALF)}`;
+    if (i < 2) d += `A${rx.toFixed(2)} ${ry.toFixed(2)} 0 0 ${sweep} ${at(angles[i + 1] - LASH_HALF)}`;
   });
-  return d;
+  return `${d}A${rx.toFixed(2)} ${ry.toFixed(2)} 0 1 ${sweep} ${at(start)}Z`;
+};
+
+/** The happy arc with the same three lashes off its outer edge. */
+const lashedArc = (x: number, y: number, side: number) => {
+  'worklet';
+  const r = 12;
+  const cy = y + 8;
+  const at = (th: number, k = r) => pt(x + side * k * Math.cos(th), cy - k * Math.sin(th));
+  const order = (side > 0 ? [68, 44, 20] : [20, 44, 68]).map((deg) => (deg * Math.PI) / 180);
+  let d = `M${x - r} ${cy}`;
+  order.forEach((th) => {
+    const enter = th + (side > 0 ? LASH_HALF : -LASH_HALF);
+    const exit = th + (side > 0 ? -LASH_HALF : LASH_HALF);
+    d += `A${r} ${r} 0 0 1 ${at(enter)}L${at(th, r + LASH_LEN)}L${at(exit)}`;
+  });
+  return `${d}A${r} ${r} 0 0 1 ${x + r} ${cy}H${x + 5}A5 5 0 0 0 ${x - 5} ${cy}Z`;
+};
+
+/** A flat top edge, left to right, with lashes along its outer end. */
+const lashedTop = (x: number, y: number, w: number, side: number) => {
+  'worklet';
+  const spots = side > 0 ? [0.1, 0.45, 0.8] : [-0.8, -0.45, -0.1];
+  let d = '';
+  spots.forEach((f) => {
+    const b = x + w * f;
+    d += `L${pt(b - 1.8, y)}L${pt(b + side * 3, y - 6.5)}L${pt(b + 1.8, y)}`;
+  });
+  return `${d}L${pt(x + w, y)}`;
 };
 
 export type EyeInput = {
@@ -222,13 +252,14 @@ export type EyeInput = {
   micro: boolean;
 };
 
-/** The eye holes, as sub-paths cut out of the head. */
+/** The eye holes, as sub-paths cut out of the head. The bow adds lashes and changes nothing else. */
 export const eyesPath = ({ mode, lx, ly, ew, eh, blink, bow, micro }: EyeInput) => {
   'worklet';
   const nx = Math.max(-1, Math.min(1, lx / 14));
   const cx = 80;
-  const y0 = (bow ? 72 : 78) + ly;
-  const base = (bow ? 13 : 10.5) * (micro ? 1.25 : 1);
+  const y0 = 78 + ly;
+  const base = 10.5 * (micro ? 1.25 : 1);
+  const lash = bow && !micro;
   let d = '';
   [60, 100].forEach((x0, i) => {
     const off = x0 - cx;
@@ -236,22 +267,23 @@ export const eyesPath = ({ mode, lx, ly, ew, eh, blink, bow, micro }: EyeInput) 
     const x = cx + off * (1 - 0.2 * Math.abs(nx)) + lx;
     const squash = 1 - 0.32 * Math.max(0, nx * sd) - 0.06 * Math.abs(nx);
     const rx = base * ew * squash;
-    const ry = base * eh * (1 - blink * 0.92);
-    if (mode === 'happy') d += arcEye(x, y0);
-    else if (mode === 'closed') d += barEye(x, y0 + 2, 12, 2.6);
+    const ry = Math.max(1.2, base * eh * (1 - blink * 0.92));
+    const round = (ex: number, ey: number, erx: number, ery: number) => (lash ? lashedEye(ex, ey, erx, ery, sd) : circle(ex, ey, erx, ery));
+    const arc = () => (lash ? lashedArc(x, y0, sd) : arcEye(x, y0));
+    const bar = (w: number, h: number, y: number) =>
+      lash ? `M${pt(x - w, y - h)}${lashedTop(x, y - h, w, sd)}V${(y + h).toFixed(2)}H${(x - w).toFixed(2)}Z` : barEye(x, y, w, h);
+    if (mode === 'happy') d += arc();
+    else if (mode === 'closed') d += bar(12, 2.6, y0 + 2);
     else if (mode === 'x') d += crossEye(x, y0);
-    else if (mode === 'squint') d += barEye(x, y0, 12, 3.4);
-    else if (mode === 'wink' && i === 0) d += arcEye(x, y0);
-    else if (mode === 'lid') d += `M${(x - rx).toFixed(2)} ${(y0 + 1).toFixed(2)}H${(x + rx).toFixed(2)}A${rx.toFixed(2)} ${(ry * 0.8).toFixed(2)} 0 0 1 ${(x - rx).toFixed(2)} ${(y0 + 1).toFixed(2)}Z`;
-    else if (mode === 'sad') d += circle(x, y0 + 3, rx * 0.9, ry * 0.85);
-    else if (mode === 'confused') d += circle(x, y0 + (i ? -2 : 3), rx * (i ? 1.15 : 0.7), ry * (i ? 1.1 : 0.6));
-    else if (mode === 'wide') d += bow ? circle(x, y0, rx * 1.25, ry * 1.25) : circle(x, y0, rx * 1.4, ry * 1.4) + circle(x, y0, rx * 0.48, Math.max(1, ry * 0.48));
-    else {
-      d += circle(x, y0, rx, Math.max(1.2, ry));
-    }
-    if (bow && !micro && (mode === 'round' || mode === 'wide' || (mode === 'wink' && i === 1)) && blink < 0.4) {
-      d += lashes(x, y0, mode === 'wide' ? rx * 1.25 : rx, sd);
-    }
+    else if (mode === 'squint') d += bar(12, 3.4, y0);
+    else if (mode === 'wink' && i === 0) d += arc();
+    else if (mode === 'lid') {
+      const top = y0 + 1;
+      d += `M${pt(x - rx, top)}${lash ? lashedTop(x, top, rx, sd) : `H${(x + rx).toFixed(2)}`}A${rx.toFixed(2)} ${(ry * 0.8).toFixed(2)} 0 0 1 ${pt(x - rx, top)}Z`;
+    } else if (mode === 'sad') d += round(x, y0 + 3, rx * 0.9, ry * 0.85);
+    else if (mode === 'confused') d += round(x, y0 + (i ? -2 : 3), rx * (i ? 1.15 : 0.7), ry * (i ? 1.1 : 0.6));
+    else if (mode === 'wide') d += round(x, y0, rx * 1.4, ry * 1.4) + circle(x, y0, rx * 0.48, Math.max(1, ry * 0.48));
+    else d += round(x, y0, rx, ry);
   });
   return d;
 };
@@ -285,6 +317,24 @@ export const symPath = (sym: Sym, t: number, stateT: number) => {
     const y1 = 18 + 10 * Math.min(1, k * 2);
     const k2 = Math.max(0, k * 2 - 1);
     return `M2 18L${x1.toFixed(2)} ${y1.toFixed(2)}L${(12 + 16 * k2).toFixed(2)} ${(28 - 22 * k2).toFixed(2)}`;
+  }
+  if (sym === 'heart') {
+    const k = (t * 0.6) % 1;
+    const x = 14 - k * 8;
+    const y = 22 - k * 22;
+    const h = 7 + k * 3;
+    return `M${(x - h * 0.55).toFixed(2)} ${(y - h * 0.3).toFixed(2)}L${x.toFixed(2)} ${(y + h * 0.55).toFixed(2)}L${(x + h * 0.55).toFixed(2)} ${(y - h * 0.3).toFixed(2)}`;
+  }
+  if (sym === 'ink') {
+    const k = Math.min(1, stateT * 1.5);
+    if (k >= 1) return '';
+    let d = '';
+    for (let i = 0; i < 9; i++) {
+      const a = (i / 9) * Math.PI * 2 + 0.3;
+      const r = 52 + k * 56;
+      d += `M${(80 + Math.cos(a) * r).toFixed(2)} ${(78 + Math.sin(a) * r).toFixed(2)}h0.1`;
+    }
+    return d;
   }
   if (sym === 'bang') return 'M14 -2V18M14 30h0.1';
   if (sym === 'q') return 'M2 6C2 -6 22 -6 22 6C22 14 12 14 12 22M12 34h0.1';

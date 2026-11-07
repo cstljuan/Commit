@@ -71,7 +71,7 @@ export default function MatchesScreen() {
                   accessibilityLabel="Copy alert. Someone posted a reworded version of your idea. Tap to see your proof."
                   onPress={() => router.push('/alert')}
                   style={[styles.alert, { backgroundColor: t.pass + '1F', borderColor: t.pass }]}>
-                  <Hachi size={52} state="guard" animated />
+                  <Hachi size={52} state="guard" animated interactive={false} />
                   <View style={styles.rowText}>
                     <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 15 }}>Someone reworded your idea</Text>
                     <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 13 }}>

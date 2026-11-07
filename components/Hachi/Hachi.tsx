@@ -25,7 +25,6 @@ import {
   eyesPath,
   hashPath,
   resolveState,
-  sparklePath,
   symPath,
   type Cfg,
   type HachiState,
@@ -36,7 +35,7 @@ const AnimatedG = Animated.createAnimatedComponent(G);
 
 export type { HachiState };
 export type Accessory = 'band' | 'bow' | 'party' | 'none';
-export type HachiGesture = 'tap' | 'hold' | 'drag' | 'arm';
+export type HachiGesture = 'tap' | 'double' | 'hold' | 'overhold' | 'drag' | 'arm' | 'tug' | 'pet' | 'tickle' | 'fling' | 'poke' | 'bonk' | 'dizzy';
 
 export type HachiHandle = {
   /** One-shot reaction, resolved when it ends. Returns to the held state, like Arc. */
@@ -59,7 +58,7 @@ type Props = {
   color?: string;
   /** Runs the live engine. Off draws one still frame, for long lists. */
   animated?: boolean;
-  /** Tap, hold, drag the body, or grab an arm. */
+  /** Every gesture: tap, hold, drag, grab an arm, tug the bow or knot, pet, tickle, fling. On by default. */
   interactive?: boolean;
   /** Reacts to `hachi.play()` from anywhere in the app. */
   listen?: boolean;
@@ -77,7 +76,9 @@ const ARM_K = 150;
 const ARM_C = 15;
 const MICRO_BELOW = 48;
 const BOW_CENTER = { x: 106, y: 20 };
-const EYE_INK = '#3A0A24';
+const ACCESSORY = 4;
+const ZONE = { body: 0, eye: 1, top: 2, arm: 3, accessory: 4 };
+const NO_PRESS = { active: false, moved: false, arm: -1, zone: 0, dx: 0, dy: 0, tx: 0, ty: 0, vx: 0, vy: 0, sign: 0, travel: 0, revs: 0, revAt: 0, speed: 0, lastX: 0, lastY: 0 };
 
 const stepSpring = (x: number, v: number, target: number, k: number, c: number, dt: number) => {
   'worklet';
@@ -96,9 +97,10 @@ const armPath = (p: number[], i: number) => {
   return `M${p[o].toFixed(2)} ${p[o + 1].toFixed(2)}C${p[o + 2].toFixed(2)} ${p[o + 3].toFixed(2)} ${p[o + 4].toFixed(2)} ${p[o + 5].toFixed(2)} ${p[o + 6].toFixed(2)} ${p[o + 7].toFixed(2)}`;
 };
 
-const bowPath = (flap: number) => {
+const bowPath = (flap: number, ox: number, oy: number) => {
   'worklet';
-  const { x, y } = BOW_CENTER;
+  const x = BOW_CENTER.x + ox;
+  const y = BOW_CENTER.y + oy;
   const f = flap * 6;
   return (
     `M${x} ${y}C${x - 12} ${y - 19 - f} ${x - 34} ${y - 16 - f} ${x - 32} ${y + 2}C${x - 34} ${y + 19 + f * 0.5} ${x - 12} ${y + 19 + f * 0.5} ${x} ${y}Z` +
@@ -117,7 +119,7 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
     size = 96,
     color,
     animated = false,
-    interactive = false,
+    interactive = true,
     listen = false,
     follow = true,
     sleepAfter = 60000,
@@ -138,7 +140,6 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
   const fill = color ?? t.primary;
   const live = animated && !motionOff;
   const bowFill = mode === 'women' && !color ? '#B45CFF' : '#FF2E93';
-  const darkEyes = hasBow;
 
   const cfg = useSharedValue<Cfg>(STATES[resolveState(state ?? 'idle')]);
   const stateClock = useSharedValue(0);
@@ -146,7 +147,7 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
   const facing = useSharedValue(1);
   const center = useSharedValue({ x: -1, y: -1 });
   const reduce = useSharedValue(motionOff ? 1 : 0);
-  const press = useSharedValue({ active: false, moved: false, arm: -1, dx: 0, dy: 0, tx: 0, ty: 0 });
+  const press = useSharedValue(NO_PRESS);
 
   const initial = STATES[resolveState(state ?? 'idle')];
   const sim = useSharedValue({
@@ -157,6 +158,12 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
     armsV: new Array(32).fill(0) as number[],
     knot: [...KNOT_POSES[initial.knot]],
     knotV: [0, 0, 0, 0],
+    bx: 0,
+    bxV: 0,
+    by: 0,
+    byV: 0,
+    flap: 0,
+    flapV: 0,
     sx: initial.sx,
     sxV: 0,
     sy: initial.sy,
@@ -199,8 +206,7 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
         arm3: armPath(arms, 3),
         knot: `M126 47L${k[0]} ${k[1]}M126 47L${k[2]} ${k[3]}`,
         eyes: eyesPath({ mode: c.eyes, lx: 0, ly: 0, ew: c.ew, eh: c.eh, blink: 0, bow: hasBow, micro }),
-        spark: sparklePath({ mode: c.eyes, lx: 0, ly: 0, ew: c.ew, eh: c.eh, blink: 0, bow: hasBow, micro }),
-        bow: bowPath(0),
+        bow: bowPath(0, 0, 0),
         sym: symPath(c.sym, 0, 1),
         tx: 0,
         ty: 0,
@@ -309,7 +315,7 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
     // Arms: every coordinate springs to its pose. Roots stay inside the head, tips swing free,
     // so the limb stays one unbroken stroke in every frame.
     const target = ARM_POSES[c.arms];
-    const sway = c.arms === 'rest' ? 1 : 0.4;
+    const sway = c.wiggle ? 3.4 * c.wiggle : c.arms === 'rest' ? 1 : 0.4;
     for (let i = 0; i < 32; i++) {
       let tt = target[i];
       const arm = Math.floor(i / 8);
@@ -317,7 +323,7 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
       if (part >= 2) {
         // Idle life: tips sway in a wave along the arm, and they trail the body when dragged.
         const reach = part / 7;
-        const phase = s.time * 1.8 + arm * 1.2;
+        const phase = s.time * (c.wiggle ? 14 : 1.8) + arm * 1.2;
         if (part % 2 === 0) {
           tt += Math.sin(phase) * 2.6 * reach * sway * m;
           tt -= s.dx * 0.32 * reach;
@@ -342,10 +348,23 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
     const knotT = KNOT_POSES[c.knot];
     for (let i = 0; i < 4; i++) {
       const flutter = Math.sin(s.time * 3 + i) * 1.4 * m;
-      r = stepSpring(s.knot[i], s.knotV[i], knotT[i] + flutter - (i % 2 === 0 ? s.dx * 0.5 : s.dy * 0.4), 170, 11, dt);
+      const tug = p.active && p.arm === ACCESSORY ? (i % 2 === 0 ? p.tx : p.ty) : 0;
+      r = stepSpring(s.knot[i], s.knotV[i], knotT[i] + flutter + tug - (i % 2 === 0 ? s.dx * 0.5 : s.dy * 0.4), 170, 11, dt);
       s.knot[i] = r[0];
       s.knotV[i] = r[1];
     }
+
+    // The bow can be tugged off its spot and wobbles back. Tapping it makes the wings flap.
+    const tugging = p.active && p.arm === ACCESSORY;
+    r = stepSpring(s.bx, s.bxV, tugging ? soft(p.tx * 0.45, 16) : -s.dx * 0.12, 190, 9, dt);
+    s.bx = r[0];
+    s.bxV = r[1];
+    r = stepSpring(s.by, s.byV, tugging ? soft(p.ty * 0.45, 12) : -s.dy * 0.12, 190, 9, dt);
+    s.by = r[0];
+    s.byV = r[1];
+    r = stepSpring(s.flap, s.flapV, 0, 240, 8, dt);
+    s.flap = r[0];
+    s.flapV = r[1];
 
     // Blink.
     if (s.time > s.blinkAt) {
@@ -364,13 +383,15 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
     }
     if (c.shake) tx += Math.sin(sT * 40) * 6 * c.shake * Math.max(0, 1 - sT * 1.2);
     if (c.spin) s.spin = Math.min(1, s.spin + dt / 0.9);
-    const spinEase = c.spin ? (1 - Math.pow(1 - s.spin, 3)) * 720 : 0;
+    const spinEase = c.spin ? (1 - Math.pow(1 - s.spin, 3)) * 720 * c.spin : 0;
     const level = levelSV.value;
     const amp = c.pulse ? (level >= 0 ? level : (Math.sin(s.time * 10) + 1) / 2) : 0;
     const pulse = reduce.value ? 1 : 1 + amp * 0.1;
     const drag = Math.hypot(s.dx, s.dy);
-    const sx = s.sx * pulse * (1 + Math.abs(s.dx) / 260);
-    const sy = s.sy * pulse * (1 + Math.abs(s.dy) / 260 - drag / 900);
+    // The longer the squeeze, the flatter Hachi gets.
+    const squish = c.arms === 'hug' ? Math.min(0.14, sT * 0.07) : 0;
+    const sx = s.sx * pulse * (1 + Math.abs(s.dx) / 260) * (1 + squish);
+    const sy = s.sy * pulse * (1 + Math.abs(s.dy) / 260 - drag / 900) * (1 - squish);
 
     out.value = {
       arm0: armPath(s.arms, 0),
@@ -379,8 +400,7 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
       arm3: armPath(s.arms, 3),
       knot: `M126 47L${s.knot[0].toFixed(2)} ${s.knot[1].toFixed(2)}M126 47L${s.knot[2].toFixed(2)} ${s.knot[3].toFixed(2)}`,
       eyes: eyesPath({ mode: c.eyes, lx: s.lx, ly: s.ly, ew: s.ew, eh: s.eh, blink, bow: hasBow, micro }),
-      spark: sparklePath({ mode: c.eyes, lx: s.lx, ly: s.ly, ew: s.ew, eh: s.eh, blink, bow: hasBow, micro }),
-      bow: bowPath(Math.max(0, Math.sin(s.time * 2.4)) * 0.5 + Math.abs(s.hopV) / 200),
+      bow: bowPath(Math.max(0, Math.sin(s.time * 2.4)) * 0.5 + Math.abs(s.hopV) / 200 + s.flap, s.bx, s.by),
       sym: symPath(c.sym, s.time, sT),
       tx: (tx * size) / 160,
       ty: (ty * size) / 160,
@@ -505,75 +525,138 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
     };
   }, [live, play, set, sleepAfter, state]);
 
-  // Gestures, all from Arc: tap, press and hold to squeeze, drag the body, grab an arm.
+  // Gestures. Arc's tap, hold, drag and arm grab, plus where you touch and how you move:
+  // poke an eye, bonk the head, tug the bow or knot, pet, tickle, fling, or squeeze too long.
   const holdTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const inkTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const holding = useRef(false);
+  const heldAt = useRef(0);
+  const rubbed = useRef(false);
   const tapsAt = useRef<number[]>([]);
   const prevBase = useRef<HachiState>('idle');
 
+  const clearHold = useCallback(() => {
+    clearTimeout(holdTimer.current);
+    clearTimeout(inkTimer.current);
+  }, []);
+
   const pressStart = useCallback(() => {
     holding.current = false;
-    clearTimeout(holdTimer.current);
+    rubbed.current = false;
+    clearHold();
     holdTimer.current = setTimeout(() => {
       holding.current = true;
+      heldAt.current = Date.now();
       prevBase.current = base.current;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       set('squeeze');
       onGesture?.('hold');
+      // Octopuses ink when squeezed for too long.
+      inkTimer.current = setTimeout(() => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        play('ink');
+        onGesture?.('overhold');
+      }, 2200);
     }, 380);
-  }, [onGesture, set]);
+  }, [clearHold, onGesture, play, set]);
 
   const pressMoved = useCallback(
-    (armGrabbed: boolean) => {
-      clearTimeout(holdTimer.current);
+    (grabbed: number) => {
+      clearHold();
       Haptics.selectionAsync();
-      onGesture?.(armGrabbed ? 'arm' : 'drag');
+      onGesture?.(grabbed === ACCESSORY ? 'tug' : grabbed >= 0 ? 'arm' : 'drag');
     },
-    [onGesture],
+    [clearHold, onGesture],
+  );
+
+  const rub = useCallback(
+    (fast: boolean) => {
+      rubbed.current = true;
+      if (fast) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      else Haptics.selectionAsync();
+      play(fast ? 'giggle' : 'purr');
+      onGesture?.(fast ? 'tickle' : 'pet');
+    },
+    [onGesture, play],
   );
 
   const pressEnd = useCallback(
-    (moved: boolean, big: boolean) => {
-      clearTimeout(holdTimer.current);
+    (moved: boolean, big: boolean, zone: number, flingX: number, flingY: number) => {
+      clearHold();
       if (holding.current) {
         holding.current = false;
         base.current = prevBase.current;
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        play('happy');
+        play(Date.now() - heldAt.current > 1200 ? 'jump' : 'happy');
         return;
       }
+      if (rubbed.current) return;
       if (moved) {
-        if (big) {
+        const speed = Math.hypot(flingX, flingY);
+        if (speed > 900) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          play(flingY < -600 ? 'jump' : speed > 2400 ? 'dizzy' : 'surprise');
+          onGesture?.('fling');
+        } else if (zone === ZONE.accessory) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          play('wink');
+        } else if (big) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           play('surprise');
         }
         return;
       }
       const now = Date.now();
-      tapsAt.current = [...tapsAt.current.filter((x) => now - x < 1600), now];
+      const quick = now - (tapsAt.current[tapsAt.current.length - 1] ?? 0) < 300;
+      tapsAt.current = [...tapsAt.current.filter((x) => now - x < 2000), now];
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      onGesture?.('tap');
       if (tapsAt.current.length >= 5) {
         tapsAt.current = [];
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         play('dizzy');
+        onGesture?.('dizzy');
+      } else if (quick) {
+        play('flip');
+        onGesture?.('double');
+      } else if (zone === ZONE.eye) {
+        play('poke');
+        onGesture?.('poke');
+      } else if (zone === ZONE.top) {
+        play('bonk');
+        onGesture?.('bonk');
+      } else if (zone === ZONE.accessory) {
+        play('wink');
+        onGesture?.('tug');
       } else {
         play(tapsAt.current.length % 2 ? 'happy' : 'wink');
+        onGesture?.('tap');
       }
     },
-    [onGesture, play],
+    [clearHold, onGesture, play],
   );
+
+  useEffect(() => clearHold, [clearHold]);
+
+  // Hachi hops when you switch modes.
+  const lastMode = useRef(mode);
+  useEffect(() => {
+    if (lastMode.current === mode) return;
+    lastMode.current = mode;
+    if (live) play('happy');
+  }, [live, mode, play]);
 
   const toUnits = 160 / size;
   const pan = usePanGesture({
     enabled: interactive && live,
     minDistance: 0,
+    hitSlop: size < 60 ? 12 : 0,
     onBegin: (e) => {
       'worklet';
       const ux = e.x * toUnits;
       const uy = e.y * toUnits;
       const s = sim.value;
       let arm = -1;
-      let best = 34;
+      let best = 30;
       for (let i = 0; i < 4; i++) {
         const dist = Math.hypot(s.arms[i * 8 + 6] - ux, s.arms[i * 8 + 7] - uy);
         if (dist < best) {
@@ -581,7 +664,20 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
           arm = i;
         }
       }
-      press.value = { active: true, moved: false, arm, dx: 0, dy: 0, tx: 0, ty: 0 };
+      let zone = arm >= 0 ? ZONE.arm : ZONE.body;
+      if (arm < 0) {
+        const onBow = hasBow && Math.abs(ux - BOW_CENTER.x) < 38 && Math.abs(uy - BOW_CENTER.y) < 24;
+        const onKnot = hasBand && ux > 122 && uy > 18 && uy < 80;
+        if (onBow || onKnot) {
+          arm = ACCESSORY;
+          zone = ZONE.accessory;
+        } else if (Math.abs(uy - 78) < 17 && (Math.abs(ux - 60) < 17 || Math.abs(ux - 100) < 17)) {
+          zone = ZONE.eye;
+        } else if (uy < 42) {
+          zone = ZONE.top;
+        }
+      }
+      press.value = { ...NO_PRESS, active: true, arm, zone };
       scheduleOnRN(pressStart);
     },
     onUpdate: (e) => {
@@ -590,10 +686,40 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
       const ux = e.translationX * toUnits;
       const uy = e.translationY * toUnits;
       const moved = p.moved || Math.hypot(e.translationX, e.translationY) > 6;
-      if (moved && !p.moved) scheduleOnRN(pressMoved, p.arm >= 0);
+      if (moved && !p.moved) scheduleOnRN(pressMoved, p.arm);
+
+      // Back and forth is a rub: fast is a tickle, slow is petting.
+      const v = Math.abs(e.velocityX) > Math.abs(e.velocityY) ? e.velocityX : e.velocityY;
+      const sign = Math.abs(v) > 40 ? Math.sign(v) : p.sign;
+      let revs = p.revs;
+      let revAt = p.revAt;
+      let speed = p.speed;
+      let travel = p.travel + Math.hypot(e.translationX - p.lastX, e.translationY - p.lastY);
+      const now = Date.now();
+      if (p.sign !== 0 && sign !== p.sign && travel > 10) {
+        revs = now - revAt < 1100 ? revs + 1 : 1;
+        revAt = now;
+        travel = 0;
+      }
+      speed += (Math.abs(v) - speed) * 0.2;
+      const fast = speed > 420;
+      if ((revs >= 3 || (revs >= 2 && !fast)) && p.arm !== ACCESSORY && p.zone !== ZONE.arm) {
+        scheduleOnRN(rub, fast);
+        revs = 0;
+      }
+
       press.value = {
         ...p,
         moved,
+        sign,
+        revs,
+        revAt,
+        speed,
+        travel,
+        lastX: e.translationX,
+        lastY: e.translationY,
+        vx: e.velocityX,
+        vy: e.velocityY,
         dx: moved && p.arm < 0 ? soft(ux * 0.55, 46) : 0,
         dy: moved && p.arm < 0 ? soft(uy * 0.55, 46) : 0,
         tx: moved && p.arm >= 0 ? soft(ux, 42) : 0,
@@ -603,9 +729,27 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
     onFinalize: () => {
       'worklet';
       const p = press.value;
+      const s = sim.value;
       const big = Math.hypot(p.dx, p.dy) > 22 || Math.hypot(p.tx, p.ty) > 18;
-      press.value = { active: false, moved: false, arm: -1, dx: 0, dy: 0, tx: 0, ty: 0 };
-      scheduleOnRN(pressEnd, p.moved, big);
+      if (p.moved) {
+        // Whatever was thrown keeps its speed, so it overshoots and wobbles home.
+        s.dxV += p.arm < 0 ? p.vx * toUnits * 0.3 : 0;
+        s.dyV += p.arm < 0 ? p.vy * toUnits * 0.3 : 0;
+      } else if (p.arm >= 0 && p.arm < ACCESSORY) {
+        // A tapped arm flicks.
+        const dir = p.arm < 2 ? -1 : 1;
+        s.armsV[p.arm * 8 + 6] += 320 * dir;
+        s.armsV[p.arm * 8 + 7] -= 300;
+        s.armsV[p.arm * 8 + 4] += 150 * dir;
+      } else if (p.arm === ACCESSORY) {
+        s.flapV += 26;
+        s.knotV[0] += 260;
+        s.knotV[1] -= 200;
+        s.knotV[2] += 260;
+        s.knotV[3] += 200;
+      }
+      press.value = NO_PRESS;
+      scheduleOnRN(pressEnd, p.moved, big, p.zone, p.vx, p.vy);
     },
   });
 
@@ -629,9 +773,7 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
   const arm2 = useAnimatedProps(() => ({ d: out.value.arm2 }));
   const arm3 = useAnimatedProps(() => ({ d: out.value.arm3 }));
   const knot = useAnimatedProps(() => ({ d: out.value.knot }));
-  const face = useAnimatedProps(() => ({ d: darkEyes ? head : head + out.value.eyes }));
-  const eyeInk = useAnimatedProps(() => ({ d: out.value.eyes }));
-  const spark = useAnimatedProps(() => ({ d: out.value.spark }));
+  const face = useAnimatedProps(() => ({ d: head + out.value.eyes }));
   const bow = useAnimatedProps(() => ({ d: out.value.bow }));
   const sym = useAnimatedProps(() => ({ d: out.value.sym }));
   const redLayer = useAnimatedProps(() => ({ opacity: out.value.red }));
@@ -654,8 +796,6 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
       <Svg width={canvas} height={canvas} viewBox="-40 -40 240 240" fill="none">
         {figure(fill, normalLayer)}
         {figure(redFill, redLayer)}
-        {darkEyes ? <AnimatedPath animatedProps={eyeInk} fill={EYE_INK} /> : null}
-        {darkEyes && !micro ? <AnimatedPath animatedProps={spark} fill="#FFFFFF" /> : null}
         {hasBow ? <AnimatedPath animatedProps={bow} fill={bowFill} /> : null}
         {worn === 'party' ? <Path d={PARTY_HAT} fill={fill} /> : null}
         <AnimatedPath animatedProps={sym} stroke={fill} strokeWidth={7} strokeLinecap="round" strokeLinejoin="round" fill="none" />
