@@ -25,11 +25,13 @@ type Props = {
   onMood?: (mood: HachiState) => void;
   /** When filters hid everything, the empty deck says so and offers to clear them. */
   onClearFilters?: () => void;
+  /** Replaces the empty deck line, for example when Women mode is not on for this account. */
+  emptyNote?: string;
 };
 
 type Swiped = { dir: Direction };
 
-export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood, onClearFilters }: Props) {
+export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood, onClearFilters, emptyNote }: Props) {
   const { copy, mode, t } = useMode();
   const [index, setIndex] = useState(0);
   const [history, setHistory] = useState<Swiped[]>([]);
@@ -134,7 +136,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood, onC
           <View style={styles.empty}>
             <Hachi size={120} state="confused" animated interactive />
             <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: 16, textAlign: 'center' }}>
-              {onClearFilters ? 'Your filters are hiding everyone.' : copy.emptyDeck}
+              {onClearFilters ? 'Your filters are hiding everyone.' : emptyNote ?? copy.emptyDeck}
             </Text>
             {onClearFilters ? (
               <PressScale accessibilityLabel="Clear filters" onPress={onClearFilters} style={[styles.clearFilters, { backgroundColor: t.primary }]}>

@@ -12,7 +12,7 @@ import { useModeFlip } from '@/components/motion/ModeWipe';
 import { PressScale } from '@/components/motion/PressScale';
 import { useTabInset } from '@/components/nav/TabBar';
 import { Hachi, type HachiState } from '@/components/Hachi/Hachi';
-import { commitToMatch, getDeck, getInterested, superCommitsLeft, swipe, undoLastSwipe, getHackRoles } from '@/lib/api';
+import { API_IS_MOCK, commitToMatch, getDeck, getHackRoles, getInterested, getMyProfile, superCommitsLeft, swipe, undoLastSwipe } from '@/lib/api';
 import { rememberMatch } from '@/lib/chatbot';
 import { copy } from '@/lib/copy';
 import { filterCount, matchesFilters, setDeckFilters, useDeckFilters } from '@/lib/filters';
@@ -44,6 +44,14 @@ export default function SwipeScreen() {
   const [cards, setCards] = useState<Card[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [wanting, setWanting] = useState(0);
+  // Women mode is turned on by the team for each account (the server ignores self-serve), so say why it is empty.
+  const [womenMember, setWomenMember] = useState(true);
+  useEffect(() => {
+    if (API_IS_MOCK) return;
+    getMyProfile()
+      .then((me) => setWomenMember(!!me?.womenOnly))
+      .catch(() => {});
+  }, []);
   const [superLeft, setSuperLeft] = useState(1);
   const [version, setVersion] = useState(0);
 
@@ -146,7 +154,7 @@ export default function SwipeScreen() {
       </View>
       {/* A new mode is a new deck, so the key resets its position. */}
       {cards ? (
-        <SwipeDeck key={`${mode}${version}${active}`} cards={shown} superPerDay={superLeft} onMood={setMood} onSwipe={onSwipe} onUndo={onUndo} onClearFilters={active && !shown.length && cards?.length ? () => setDeckFilters({}) : undefined} />
+        <SwipeDeck key={`${mode}${version}${active}`} cards={shown} superPerDay={superLeft} onMood={setMood} onSwipe={onSwipe} onUndo={onUndo} onClearFilters={active && !shown.length && cards?.length ? () => setDeckFilters({}) : undefined} emptyNote={mode === 'women' && !womenMember ? 'Women mode is a separate space. For the demo, the team turns it on for each account, because self-identification is not verified.' : undefined} />
       ) : (
         <View style={styles.state}>
           <Hachi size={110} state={failed ? 'error' : 'thinking'} animated />
