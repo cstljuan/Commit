@@ -1,3 +1,4 @@
+import { sfx } from '@/lib/sound';
 import * as Haptics from '@/lib/haptics';
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
@@ -46,6 +47,9 @@ function Avatar({ seed, bg, fg }: { seed: string; bg: string; fg: string }) {
 
 /** Tap anywhere during the animation to skip to the buttons. It never blocks them. */
 export function MatchMoment({ match, onSayHi, onCommit, onDismiss }: Props) {
+  useEffect(() => {
+    sfx('match');
+  }, []);
   const { t, mode, copy } = useMode();
   const { width } = useWindowDimensions();
   const reduced = useMotionOff();

@@ -15,6 +15,7 @@ import { Tako } from '@/components/Tako/Tako';
 import { sendEmailCode, signInWithPassword, signInWithProvider, verifyEmailCode } from '@/components/forms/authApi';
 import { authProviders, getMyProfile, signUpWithPassword } from '@/lib/api';
 import { getDeviceKeyState } from '@/lib/vault';
+import { Wordmark } from '@/components/brand/Wordmark';
 import { Button } from '@/components/ui/Button';
 import { CodeInput } from '@/components/ui/CodeInput';
 import { TextField } from '@/components/ui/TextField';
@@ -184,7 +185,7 @@ export default function LoginScreen() {
             <View style={styles.stack}>
               <View style={styles.hero}>
                 <Tako state="idle" size={88} />
-                <Text style={[styles.title, { color: t.text, fontFamily: t.fontDisplay }]}>Commit</Text>
+                <Wordmark height={64} />
                 <Text style={[styles.sub, { color: t.muted, fontFamily: t.fontBody }]}>
                   Swipe to find your team.
                 </Text>

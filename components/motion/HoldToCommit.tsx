@@ -1,3 +1,4 @@
+import { sfx, stopSfx } from '@/lib/sound';
 import * as Haptics from '@/lib/haptics';
 import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -47,6 +48,8 @@ export function HoldToCommit({ label = 'Hold to commit', doneLabel = 'Committed'
 
   const complete = () => {
     stopTicks();
+    stopSfx('hold');
+    sfx('commit');
     setDone(true);
     setFire((n) => n + 1);
     hachi.play('success');
@@ -56,6 +59,7 @@ export function HoldToCommit({ label = 'Hold to commit', doneLabel = 'Committed'
 
   const begin = () => {
     if (done) return;
+    sfx('hold');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     ticks.current = [
       setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), HOLD_MS * 0.3),
@@ -74,6 +78,7 @@ export function HoldToCommit({ label = 'Hold to commit', doneLabel = 'Committed'
 
   const cancel = () => {
     if (done) return;
+    stopSfx('hold');
     stopTicks();
     cancelAnimation(fill);
     fill.value = withTiming(0, { duration: 220 });

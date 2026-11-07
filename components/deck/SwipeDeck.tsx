@@ -1,3 +1,4 @@
+import { sfx } from '@/lib/sound';
 import { hachi } from '@/lib/hachi';
 import * as Haptics from '@/lib/haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -50,6 +51,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
 
   const onZone = useCallback(
     (zone: Zone) => {
+      sfx('tick');
       onMood?.(zone === 'none' ? 'idle' : zone === 'left' ? 'guard' : 'happy');
       if (zone === 'none') {
         Haptics.selectionAsync();
@@ -64,6 +66,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
 
   const onBlockedSuper = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    sfx('error');
     onMood?.('blocked');
   }, [onMood]);
 
@@ -77,6 +80,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
   const onCommit = useCallback(
     (dir: Direction) => {
       const card = cards[index];
+      sfx(dir === 'left' ? 'pass' : dir === 'super' ? 'super' : 'like');
       if (dir !== 'left') setFire((n) => n + 1);
       if (mode === 'hack' && card.kind === 'person') {
         setTyped(dir === 'left' ? `$ echo @${card.username} >> .gitignore` : `$ git add @${card.username}`);
@@ -102,6 +106,7 @@ export function SwipeDeck({ cards, superPerDay = 1, onSwipe, onUndo, onMood }: P
     const last = history[history.length - 1];
     if (!last) return;
     Haptics.selectionAsync();
+    sfx('undo');
     if (last.dir === 'super') setSuperLeft((s) => s + 1);
     setHistory((h) => h.slice(0, -1));
     setEnterFrom(last.dir);

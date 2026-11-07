@@ -1,3 +1,4 @@
+import { sfx } from '@/lib/sound';
 import { router, Stack, useLocalSearchParams, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -106,6 +107,7 @@ export default function ChatScreen() {
     if (!live) return;
     return subscribeMessages(matchId, (m) => {
       if (latest.current.some((x) => x.id === m.id)) return;
+      sfx(m.mine ? 'msg_out' : 'msg_in');
       latest.current = [...latest.current, { id: m.id, mine: m.mine, body: m.body }];
       setMessages(latest.current);
     });
@@ -133,6 +135,7 @@ export default function ChatScreen() {
       if (pause > 0) await wait(pause);
       if (!alive.current || mine !== turn.current) return;
       const isLast = i === reply.texts.length - 1;
+      sfx('msg_in');
       push({ mine: false, body: text, action: isLast ? reply.action : undefined });
       if (isLast) setTyping(false);
       else await wait(250);
@@ -151,6 +154,7 @@ export default function ChatScreen() {
       });
       return;
     }
+    sfx('msg_out');
     push({ mine: true, body: text });
     respond();
   };

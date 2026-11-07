@@ -11,6 +11,7 @@ import Svg, { G, Path } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { hachi, onAnyTouch, pointer } from '@/lib/hachi';
+import { sfx } from '@/lib/sound';
 import * as Haptics from '@/lib/haptics';
 import { useMotionOff, usePrefs } from '@/lib/prefs';
 import { useMode } from '@/lib/theme';
@@ -549,11 +550,13 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
       heldAt.current = Date.now();
       prevBase.current = base.current;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      sfx('h_squeeze');
       set('squeeze');
       onGesture?.('hold');
       // Octopuses ink when squeezed for too long.
       inkTimer.current = setTimeout(() => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        sfx('ink');
         play('ink');
         onGesture?.('overhold');
       }, 2200);
@@ -574,6 +577,7 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
       rubbed.current = true;
       if (fast) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       else Haptics.selectionAsync();
+      sfx(fast ? 'h_giggle' : 'h_purr');
       play(fast ? 'giggle' : 'purr');
       onGesture?.(fast ? 'tickle' : 'pet');
     },
@@ -587,7 +591,9 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
         holding.current = false;
         base.current = prevBase.current;
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        play(Date.now() - heldAt.current > 1200 ? 'jump' : 'happy');
+        const long = Date.now() - heldAt.current > 1200;
+        sfx(long ? 'h_jump' : 'h_happy');
+        play(long ? 'jump' : 'happy');
         return;
       }
       if (rubbed.current) return;
@@ -595,13 +601,16 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
         const speed = Math.hypot(flingX, flingY);
         if (speed > 900) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          sfx(flingY < -600 ? 'h_jump' : speed > 2400 ? 'h_dizzy' : 'h_poke');
           play(flingY < -600 ? 'jump' : speed > 2400 ? 'dizzy' : 'surprise');
           onGesture?.('fling');
         } else if (zone === ZONE.accessory) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          sfx('h_wink');
           play('wink');
         } else if (big) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          sfx('h_poke');
           play('surprise');
         }
         return;
@@ -613,21 +622,27 @@ export const Hachi = forwardRef<HachiHandle, Props>(function Hachi(
       if (tapsAt.current.length >= 5) {
         tapsAt.current = [];
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        sfx('h_dizzy');
         play('dizzy');
         onGesture?.('dizzy');
       } else if (quick) {
+        sfx('h_flip');
         play('flip');
         onGesture?.('double');
       } else if (zone === ZONE.eye) {
+        sfx('h_poke');
         play('poke');
         onGesture?.('poke');
       } else if (zone === ZONE.top) {
+        sfx('h_bonk');
         play('bonk');
         onGesture?.('bonk');
       } else if (zone === ZONE.accessory) {
+        sfx('h_wink');
         play('wink');
         onGesture?.('tug');
       } else {
+        sfx(tapsAt.current.length % 2 ? 'h_happy' : 'h_wink');
         play(tapsAt.current.length % 2 ? 'happy' : 'wink');
         onGesture?.('tap');
       }

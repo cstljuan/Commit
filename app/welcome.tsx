@@ -5,7 +5,7 @@ import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnim
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Hachi, type HachiHandle, type HachiState } from '@/components/Hachi/Hachi';
-import { DecodeText } from '@/components/motion/DecodeText';
+import { Wordmark } from '@/components/brand/Wordmark';
 import { PressScale } from '@/components/motion/PressScale';
 import { useMode } from '@/lib/theme';
 import { radius, space, type } from '@/lib/tokens';
@@ -54,7 +54,7 @@ export default function WelcomeScreen() {
     <View style={[styles.root, { backgroundColor: t.bg, paddingTop: top + space.l, paddingBottom: bottom + space.l }]}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.top}>
-        <DecodeText text="commit" durationMs={500} style={{ color: t.text, fontFamily: t.fontDisplay, fontSize: type.title }} />
+        <Wordmark height={38} />
         <PressScale accessibilityLabel="Skip" onPress={() => router.replace('/')}>
           <Text style={{ color: t.muted, fontFamily: t.fontBold, fontSize: type.body }}>Skip</Text>
         </PressScale>

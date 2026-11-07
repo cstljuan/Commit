@@ -1,3 +1,4 @@
+import { sfx } from '@/lib/sound';
 import { Tabs } from 'expo-router';
 import { useEffect, useState, type ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -60,6 +61,7 @@ export function TabBar({ state, descriptors, navigateToTab }: BottomTabBarProps)
               style={styles.tab}
               onPress={() => {
                 Haptics.selectionAsync();
+                if (!on) sfx('tap');
                 if (!on) navigateToTab(route.key);
               }}>
               <Svg width={19} height={19} viewBox="0 0 24 24">

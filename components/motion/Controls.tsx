@@ -1,3 +1,4 @@
+import { sfx } from '@/lib/sound';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -38,6 +39,7 @@ export function Switch({ value, onChange, label }: { value: boolean; onChange: (
       }}
       onPress={() => {
         Haptics.selectionAsync();
+        sfx('toggle');
         onChange(!value);
       }}>
       <Animated.View style={[styles.track, track]}>

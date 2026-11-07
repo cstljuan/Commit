@@ -17,6 +17,7 @@ import { rememberMatch } from '@/lib/chatbot';
 import { copy } from '@/lib/copy';
 import { filterCount, matchesFilters, useDeckFilters } from '@/lib/filters';
 import { hachi } from '@/lib/hachi';
+import { sfx } from '@/lib/sound';
 import { useMode, type Mode } from '@/lib/theme';
 
 const MODES: Mode[] = ['normal', 'women', 'hack'];
@@ -47,7 +48,10 @@ export default function SwipeScreen() {
         setSuperLeft(left);
       })
       .catch(() => {
-        if (live) setFailed(true);
+        if (live) {
+          setFailed(true);
+          sfx('error');
+        }
       });
     return () => {
       live = false;

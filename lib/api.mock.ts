@@ -200,14 +200,14 @@ const normalDeck: Card[] = [
 
 const womenDeck: Card[] = [
   project({
-    id: 'p_cyclesafe',
-    title: 'CycleSafe',
-    teaser: 'Period tracker where your data never leaves your phone.',
+    id: 'p_courtside',
+    title: 'Courtside',
+    teaser: 'Live stats for pickup basketball, kept by whoever is on the bench.',
     ownerUsername: 'nina_nodes',
     ownerReliability: 89,
-    theme: 'Health',
+    theme: 'Sports',
     timeframe: '1 month',
-    roles: roles(['Security', 1, 0], ['Mobile', 1, 0]),
+    roles: roles(['Backend', 1, 0], ['Mobile', 1, 0]),
     reason: 'Needs your backend skills',
     isSuper: true,
   }),
@@ -222,15 +222,15 @@ const womenDeck: Card[] = [
     reason: 'Your team has no frontend yet',
   }),
   project({
-    id: 'p_mentormatch',
-    title: 'MentorMatch',
-    teaser: 'Pairs first year CS students with seniors who took the same classes.',
+    id: 'p_sublet',
+    title: 'Sublet Sync',
+    teaser: 'Find a summer sublet near your internship, matched by your move-in dates.',
     visibility: 'public',
     fullIdea:
-      'Seniors list classes they aced and hours they can give. First years get matched by class and schedule, with a 20 minute first call template so nobody has to plan it.',
+      'Students leaving for the summer list their rooms, and interns search by office location and dates. It flags overlapping leases and handles the first message for you.',
     ownerUsername: 'aisha_algo',
     ownerReliability: 83,
-    theme: 'Education',
+    theme: 'Campus',
     timeframe: 'semester',
     roles: roles(['Backend', 1, 0], ['PM', 1, 1]),
     reason: 'Needs a backend dev, you are one',
@@ -328,7 +328,7 @@ const hackDeck: Card[] = [
 const decks: Record<Mode, Card[]> = { normal: normalDeck, women: womenDeck, hack: hackDeck };
 
 // Cards whose owner (or person) already swiped right on Bob. A right swipe on these makes a match.
-const likesMe = new Set(['p_alice_tutor', 'u_priya', 'p_cyclesafe', 'u_rio', 'u_omar']);
+const likesMe = new Set(['p_alice_tutor', 'u_priya', 'p_courtside', 'u_rio', 'u_omar']);
 
 // ---------- mutable mock state ----------
 

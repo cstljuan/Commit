@@ -1,4 +1,5 @@
 import * as Haptics from '@/lib/haptics';
+import { sfx } from '@/lib/sound';
 import type { ReactNode } from 'react';
 import { Pressable, type AccessibilityRole, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -32,7 +33,10 @@ export function PressScale({ onPress, children, style, disabled, haptic = true, 
         scale.value = withTiming(1, QUICK);
       }}
       onPress={() => {
-        if (haptic) Haptics.selectionAsync();
+        if (haptic) {
+          Haptics.selectionAsync();
+          sfx('tap');
+        }
         onPress?.();
       }}>
       <Animated.View style={[animated, style, disabled && { opacity: 0.4 }]}>{children}</Animated.View>

@@ -104,6 +104,8 @@ export default function SettingsScreen() {
       </Section>
 
       <Section title="Feel" index={2}>
+        <Row title="Sounds" note="Swipes, matches, commits and Hachi" right={<Switch label="Sounds" value={prefs.sound} onChange={(v) => setPref('sound', v)} />} />
+        <LinkRow title="Hear every sound" href="/sounds" />
         <Row title="Haptics" note="The little taps when things happen" right={<Switch label="Haptics" value={prefs.haptics} onChange={(v) => setPref('haptics', v)} />} />
         <Row title="Calm motion" note="Turns off decorative animation" right={<Switch label="Calm motion" value={prefs.calmMotion} onChange={(v) => setPref('calmMotion', v)} />} />
       </Section>
