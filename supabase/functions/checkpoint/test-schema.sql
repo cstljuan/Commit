@@ -124,4 +124,3 @@ create table redteam_runs (
   details jsonb,
   created_at timestamptz default now()
 );
-
