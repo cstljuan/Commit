@@ -58,6 +58,7 @@ export default function OnboardingProfile() {
     setSaveError(null);
     const input: ProfileInput = {
       username: username.trim(),
+      bio: '',
       role,
       level,
       occupation,
