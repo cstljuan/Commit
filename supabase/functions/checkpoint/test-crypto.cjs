@@ -27,6 +27,23 @@ assert.equal(await v.getDeviceKeyState(),'ready');await v.registerDeviceKeys();a
 const preserved=storage.get('commit_keys_v1');storage.clear();assert.equal(await v.getDeviceKeyState(),'other-device');await assert.rejects(v.registerDeviceKeys());assert.equal(storage.size,0);assert.equal(updates,0);
 storage.set('commit_keys_v1',preserved);profile={box_public_key:null,sign_public_key:null};assert.equal(await v.getDeviceKeyState(),'register');await v.registerDeviceKeys();assert.equal(updates,1);assert.equal(await v.getDeviceKeyState(),'ready');assert.equal(storage.get('commit_keys_v1'),preserved);
 profile={box_public_key:'different',sign_public_key:'different'};assert.equal(await v.getDeviceKeyState(),'other-device');await assert.rejects(v.registerDeviceKeys());assert.equal(updates,1);
+profile={box_public_key:pubs[0].boxPublicKey,sign_public_key:pubs[0].signPublicKey};
+const team=load('teamKeys');const bobBox=nacl.box.keyPair();const wrappedRows=[];let actingUser='alice';let committed=true;let publicIdea=false;
+const people={alice:profile,bob:{box_public_key:util.encodeBase64(bobBox.publicKey),sign_public_key:'bob-sign'}};
+v.configureCyberClient({auth:{getUser:async()=>({data:{user:{id:actingUser}},error:null})},from(table){
+ const filters={};let payload;const q={select(){return q},eq(k,val){filters[k]=val;return q},insert(value){payload=value;return q},
+ result(){if(payload){if(wrappedRows.some(x=>x.project_id===payload.project_id&&x.user_id===payload.user_id))return {data:null,error:{code:'23505'}};wrappedRows.push(payload);return {data:null,error:null}};
+ if(table==='profiles')return {data:people[filters.id],error:null};
+ if(table==='projects')return {data:{owner_id:'alice',visibility:publicIdea?'public':'private',idea_public:'public synthetic idea',idea_cipher:enc.ciphertext,idea_nonce:enc.nonce},error:null};
+ if(table==='team_members')return {data:committed?[{user_id:'bob'}]:[],error:null};
+ if(table==='team_keys')return {data:wrappedRows.find(x=>x.project_id===filters.project_id&&x.user_id===filters.user_id)??null,error:null};
+ throw Error('Unexpected table '+table)},single:async()=>q.result(),maybeSingle:async()=>q.result(),then(resolve,reject){return Promise.resolve(q.result()).then(resolve,reject)}};return q;
+}});
+await team.storeOwnTeamKey('project',key);assert.equal(wrappedRows.length,1);await assert.rejects(team.storeOwnTeamKey('project',key));
+assert.equal(await team.readIdea('project'),'synthetic idea 🐙');await team.shareTeamKey('project','bob');assert.equal(wrappedRows.length,2);
+const bobWrapped=wrappedRows.find(x=>x.user_id==='bob');assert.equal(util.encodeBase64(nacl.box.open(util.decodeBase64(bobWrapped.encrypted_team_key),util.decodeBase64(bobWrapped.nonce),util.decodeBase64(pubs[0].boxPublicKey),bobBox.secretKey)),key);
+await team.shareTeamKey('project','bob');assert.equal(wrappedRows.length,2);committed=false;await assert.rejects(team.shareTeamKey('project','bob'));actingUser='bob';await assert.rejects(team.shareTeamKey('project','alice'));publicIdea=true;assert.equal(await team.readIdea('project'),'public synthetic idea');
+console.log('YES: team-key owner storage, member wrapping, private/public reads, preserved retry, pre-Commit refusal, non-owner refusal. Backend adapter mocked.');
 console.log('YES: onboarding existing-key reuse; missing-device-key refusal; registration retry preserves keys; mismatched account refusal.');
 console.log('YES: key generation concurrent/idempotent; encryption roundtrip/wrong-key denial; box wrapping; signatures/tamper denial; vault valid row; timestamp edit; checkpoint tail deletion; missing checkpoint; wrong checkpoint anchor.');
 })().catch(e=>{console.error(e);process.exitCode=1});
