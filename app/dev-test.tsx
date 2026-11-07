@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import nacl from 'tweetnacl';
-import { InkCommit } from '@/components/Tako/InkCommit';
+import { InkCommit } from '@/components/Hachi/InkCommit';
 import { decodeBase64, decodeUTF8, encodeBase64, encodeUTF8 } from 'tweetnacl-util';
 
 type Row = { name: string; ok: boolean; note?: string };
@@ -79,7 +79,7 @@ export default function DevTest() {
         </Text>
       ))}
       <Pressable onPress={() => setInk(true)}>
-        <Text style={{ fontSize: 18, fontWeight: '700', color: '#6C5CE7' }}>Preview ink animation</Text>
+        <Text style={{ fontSize: 18, fontWeight: '700', color: '#FF6B35' }}>Preview ink animation</Text>
       </Pressable>
       {ink ? (
         <InkCommit

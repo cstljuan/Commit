@@ -1,9 +1,11 @@
 import { Stack } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { MatchMoment, type MatchInfo } from '@/components/match/MatchMoment';
-import { sampleInterested, sampleReveal, type Interested } from '@/components/deck/sampleCards';
+import { sampleReveal } from '@/components/deck/sampleCards';
+import { getInterested } from '@/lib/api';
+import type { Interested } from '@/lib/types';
 import { useMode } from '@/lib/theme';
 
 /**
@@ -12,8 +14,14 @@ import { useMode } from '@/lib/theme';
  */
 export default function LikesScreen() {
   const { t } = useMode();
-  const [items, setItems] = useState<Interested[]>(sampleInterested);
+  const [items, setItems] = useState<Interested[]>([]);
   const [match, setMatch] = useState<MatchInfo | null>(null);
+
+  useEffect(() => {
+    getInterested()
+      .then((r) => setItems(r.cards))
+      .catch(() => setItems([]));
+  }, []);
 
   const remove = (ref: string) => setItems((list) => list.filter((i) => i.swipeRef !== ref));
 
@@ -39,7 +47,7 @@ export default function LikesScreen() {
             style={[
               styles.tile,
               { backgroundColor: t.surface },
-              item.isSuper && { borderColor: t.accent, borderWidth: 3 },
+              item.isSuper && { backgroundColor: t.accent },
             ]}>
             <View style={[styles.mystery, { backgroundColor: t.primary + '2E' }]}>
               <Text style={{ color: t.primary, fontFamily: t.fontDisplay, fontSize: 40 }}>?</Text>
@@ -51,8 +59,8 @@ export default function LikesScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`Pass on this ${item.role}`}
                 onPress={() => remove(item.swipeRef)}
-                style={[styles.action, { borderColor: t.pass, borderWidth: 2 }]}>
-                <Text style={{ color: t.pass, fontFamily: t.fontBold, fontSize: 16 }}>{'✕︎'}</Text>
+                style={[styles.action, { backgroundColor: t.pass }]}>
+                <Text style={{ color: t.bg, fontFamily: t.fontBold, fontSize: 16 }}>{'✕︎'}</Text>
               </Pressable>
               <Pressable
                 accessibilityRole="button"

@@ -5,7 +5,7 @@ import Animated, {
   Extrapolation,
   interpolate,
   useAnimatedStyle,
-  useReducedMotion,
+  FadeInDown,
   useSharedValue,
   withSpring,
   withTiming,
@@ -15,6 +15,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { SWIPE } from '@/lib/motion';
 import { useMode } from '@/lib/theme';
+import { useMotionOff } from '@/lib/prefs';
 
 import type { Card, Direction } from './cardTypes';
 import { SwipeCard } from './SwipeCard';
@@ -33,15 +34,17 @@ type Props = {
   onCommit: (dir: Direction) => void;
   onZone: (zone: Zone) => void;
   onBlockedSuper: () => void;
+  /** Set on the deck's first render, so the cards deal in one after another. */
+  dealDelay?: number;
 };
 
 export const DeckCard = forwardRef<DeckCardHandle, Props>(function DeckCard(
-  { card, active, enterFrom, progress, canSuper, onCommit, onZone, onBlockedSuper },
+  { card, active, enterFrom, progress, canSuper, onCommit, onZone, onBlockedSuper, dealDelay },
   ref,
 ) {
   const { width: W, height: H } = useWindowDimensions();
   const { copy, t } = useMode();
-  const reduced = useReducedMotion();
+  const reduced = useMotionOff();
 
   const offX = W * 1.4;
   const offY = H * 1.2;
@@ -148,33 +151,35 @@ export const DeckCard = forwardRef<DeckCardHandle, Props>(function DeckCard(
   const stampText = { fontFamily: t.fontDisplay, fontSize: 26 };
 
   return (
+    <Animated.View
+      style={StyleSheet.absoluteFill}
+      entering={dealDelay === undefined ? undefined : FadeInDown.delay(dealDelay).springify().damping(15).stiffness(150)}>
     <GestureDetector gesture={pan}>
       <Animated.View style={[StyleSheet.absoluteFill, cardStyle]}>
         <SwipeCard card={card} />
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-          <Animated.View style={[styles.stamp, styles.stampRight, { borderColor: t.like }, rightStamp]}>
-            <Text style={[stampText, { color: t.like }]}>{'\u2665\uFE0E'} {copy.stampRight}</Text>
+          <Animated.View style={[styles.stamp, styles.stampRight, { backgroundColor: t.like }, rightStamp]}>
+            <Text style={[stampText, { color: t.onPrimary }]}>{'\u2665\uFE0E'} {copy.stampRight}</Text>
           </Animated.View>
-          <Animated.View style={[styles.stamp, styles.stampLeft, { borderColor: t.pass }, leftStamp]}>
-            <Text style={[stampText, { color: t.pass }]}>{'\u2715\uFE0E'} {copy.stampLeft}</Text>
+          <Animated.View style={[styles.stamp, styles.stampLeft, { backgroundColor: t.pass }, leftStamp]}>
+            <Text style={[stampText, { color: t.bg }]}>{'\u2715\uFE0E'} {copy.stampLeft}</Text>
           </Animated.View>
-          <Animated.View style={[styles.stamp, styles.stampUp, { borderColor: t.primary }, upStamp]}>
-            <Text style={[stampText, { color: t.primary }]}>{'\u2605\uFE0E'} {copy.stampUp}</Text>
+          <Animated.View style={[styles.stamp, styles.stampUp, { backgroundColor: t.accent }, upStamp]}>
+            <Text style={[stampText, { color: '#2A1408' }]}>{'\u2605\uFE0E'} {copy.stampUp}</Text>
           </Animated.View>
         </View>
       </Animated.View>
     </GestureDetector>
+    </Animated.View>
   );
 });
 
 const styles = StyleSheet.create({
   stamp: {
     position: 'absolute',
-    borderWidth: 4,
-    borderRadius: 12,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: 'transparent',
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
   },
   stampRight: { top: 28, left: 20, transform: [{ rotate: '-10deg' }] },
   stampLeft: { top: 28, right: 20, transform: [{ rotate: '10deg' }] },
