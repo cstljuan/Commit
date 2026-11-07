@@ -58,7 +58,7 @@ export default function ProfileScreen() {
         <View style={styles.headText}>
           <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 18 }}>Shows up score</Text>
           <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: 14, lineHeight: 20 }}>
-            Everyone starts at 70. Finishing projects raises it, ghosting lowers it, and it recovers.
+            Everyone starts at 70. Finishing projects raises it, ghosting lowers it, and finishing more earns it back.
           </Text>
         </View>
       </Reveal>
@@ -80,7 +80,7 @@ export default function ProfileScreen() {
       </Reveal>
 
       <Reveal index={4}>
-        <PressScale accessibilityLabel="Security" onPress={() => router.push('/security')} style={[styles.card, { backgroundColor: LAB.bg }]}>
+        <PressScale accessibilityLabel="Security" onPress={() => router.push('/security')} style={[styles.card, { backgroundColor: LAB.card }]}>
           <Text style={{ color: LAB.ok, fontFamily: LAB.monoBold, fontSize: 13 }}>Security</Text>
           <Text style={{ color: LAB.text, fontFamily: t.fontDisplay, fontSize: 24 }}>What we can see, and what we can&apos;t</Text>
         </PressScale>

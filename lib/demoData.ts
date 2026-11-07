@@ -190,7 +190,7 @@ export type DemoEvent = { id: string; kind: 'match' | 'super' | 'alert' | 'team'
 // Real source: a notifications query. Sample until then.
 export const demoActivity: DemoEvent[] = [
   { id: 'e1', kind: 'alert', seed: 'unknown', title: 'Someone reworded your idea', when: '4 min ago', href: '/alert' },
-  { id: 'e2', kind: 'super', seed: 'priya_builds', title: '@priya_builds sent you a Super Commit', when: '20 min ago', href: '/person/priya_builds' },
+  { id: 'e2', kind: 'super', seed: 'unknown', title: 'Someone sent you a Super Commit', when: '20 min ago', href: '/likes' },
   { id: 'e3', kind: 'match', seed: 'ben_codes', title: 'You matched with @ben_codes', when: '38 min ago', href: '/chat/m1' },
   { id: 'e4', kind: 'team', seed: 'dev_ana', title: '@dev_ana committed to Rent splitter', when: '1 hour ago', href: '/project/p1' },
   { id: 'e5', kind: 'commit', seed: 'you', title: 'AI study buddy was committed to the vault', when: '2 hours ago', href: '/commits' },
@@ -202,4 +202,5 @@ export const demoScoreEvents = [
   { label: 'Finished Rent splitter', delta: 5 },
   { label: 'Left a team with notice', delta: -3 },
   { label: 'Showed up to every checkpoint', delta: 2 },
+  { label: 'Seeded demo history', delta: 8 },
 ];

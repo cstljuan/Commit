@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown, LinearTransition } from 'react-native-reanimated';
 
@@ -7,6 +7,7 @@ import type { Role } from '@/components/deck/cardTypes';
 import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
 import { Screen } from '@/components/nav/Screen';
+import { getHackRoles, setHackRoles } from '@/lib/api';
 import { useMode } from '@/lib/theme';
 import { radius, space, type } from '@/lib/tokens';
 
@@ -38,7 +39,29 @@ function Stepper({ value, onChange, canAdd, label }: { value: number; onChange: 
 /** Hack mode has no project ideas, just who your team still needs. From the whiteboard. */
 export default function NeedsScreen() {
   const { t } = useMode();
-  const [needs, setNeeds] = useState<Partial<Record<Role, number>>>({ Backend: 2, Design: 1 });
+  const [needs, setNeeds] = useState<Partial<Record<Role, number>>>({});
+  const [saving, setSaving] = useState(false);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    getHackRoles()
+      .then((roles) => {
+        const saved = Object.fromEntries(roles.map((r) => [r.role, r.open]));
+        // Never replace what someone already changed while this loaded.
+        setNeeds((current) => (Object.keys(current).length ? current : saved));
+      })
+      .catch(() => {});
+  }, []);
+  const save = () => {
+    setSaving(true);
+    setFailed(false);
+    const roles = ROLES.filter((r) => needs[r]).map((r) => ({ role: r, open: needs[r] as number }));
+    setHackRoles(roles)
+      .then(() => router.back())
+      .catch(() => {
+        setFailed(true);
+        setSaving(false);
+      });
+  };
   const total = Object.values(needs).reduce((a, b) => a + (b ?? 0), 0);
   const line = ROLES.filter((r) => needs[r]).map((r) => `${needs[r]} ${r.toLowerCase()}`).join(', ') || 'nobody yet';
   return (
@@ -64,8 +87,11 @@ export default function NeedsScreen() {
           </Animated.View>
         </Reveal>
       ))}
-      <PressScale onPress={() => router.back()} style={[styles.cta, { backgroundColor: t.primary }]}>
-        <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: type.lead }}>Save</Text>
+      {failed ? (
+        <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: type.small, textAlign: 'center' }}>Could not save. Check your connection and try again.</Text>
+      ) : null}
+      <PressScale accessibilityLabel="Save" disabled={saving} onPress={save} style={[styles.cta, { backgroundColor: t.primary, opacity: saving ? 0.6 : 1 }]}>
+        <Text style={{ color: t.onPrimary, fontFamily: t.fontBold, fontSize: type.lead }}>{saving ? 'Saving' : 'Save'}</Text>
       </PressScale>
     </Screen>
   );

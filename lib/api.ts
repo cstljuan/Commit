@@ -58,5 +58,6 @@ export const subscribeRedteamRuns: typeof real.subscribeRedteamRuns = (...a) => 
 // who wants you, hack needs, activity, score
 export const respondToInterested: typeof real.respondToInterested = (...a) => impl.respondToInterested(...a);
 export const setHackRoles: typeof real.setHackRoles = (...a) => impl.setHackRoles(...a);
+export const getHackRoles: typeof real.getHackRoles = (...a) => impl.getHackRoles(...a);
 export const getActivity: typeof real.getActivity = (...a) => impl.getActivity(...a);
 export const getScoreEvents: typeof real.getScoreEvents = (...a) => impl.getScoreEvents(...a);

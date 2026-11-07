@@ -567,6 +567,18 @@ export async function setHackRoles(roles: { role: Role; open: number }[]): Promi
   fail(error);
 }
 
+/** What the caller's hack team still needs, so the screen shows what was really saved. */
+export async function getHackRoles(): Promise<{ role: Role; open: number }[]> {
+  const me = await uid();
+  const { data: team, error } = await supabase.from('projects').select('id')
+    .eq('owner_id', me).eq('type', 'hackathon').eq('hidden', true).order('created_at').limit(1).maybeSingle();
+  fail(error);
+  if (!team) return [];
+  const { data, error: rolesError } = await supabase.from('project_roles').select('role, slots_open').eq('project_id', team.id);
+  fail(rolesError);
+  return (data ?? []).filter((r) => r.slots_open > 0).map((r) => ({ role: r.role as Role, open: r.slots_open as number }));
+}
+
 function ago(iso: string): string {
   const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
   if (s < 60) return 'just now';

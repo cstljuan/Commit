@@ -513,8 +513,15 @@ export async function respondToInterested(swipeRef: string, like: boolean): Prom
   return wait({ matched: true, match: clone(match) });
 }
 
-export async function setHackRoles(_roles: { role: Role; open: number }[]): Promise<void> {
+let hackRoles: { role: Role; open: number }[] = [{ role: 'Backend', open: 2 }, { role: 'Design', open: 1 }];
+
+export async function setHackRoles(roles: { role: Role; open: number }[]): Promise<void> {
+  hackRoles = roles;
   return wait(undefined);
+}
+
+export async function getHackRoles(): Promise<{ role: Role; open: number }[]> {
+  return wait(clone(hackRoles));
 }
 
 export async function getActivity(): Promise<ActivityEvent[]> {

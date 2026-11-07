@@ -1,4 +1,5 @@
 import { router, type Href } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
@@ -8,7 +9,8 @@ import { PressScale } from '@/components/motion/PressScale';
 import { Reveal } from '@/components/motion/Reveal';
 import { SampleBadge } from '@/components/motion/SampleBadge';
 import { Screen } from '@/components/nav/Screen';
-import { demoActivity, type DemoEvent } from '@/lib/demoData';
+import { API_IS_MOCK, getActivity } from '@/lib/api';
+import type { DemoEvent } from '@/lib/demoData';
 import { useMode } from '@/lib/theme';
 import { radius, space, type } from '@/lib/tokens';
 
@@ -46,18 +48,32 @@ function Row({ event, index }: { event: DemoEvent; index: number }) {
 
 export default function ActivityScreen() {
   const { t } = useMode();
+  const [events, setEvents] = useState<DemoEvent[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    getActivity()
+      .then(setEvents)
+      .catch(() => setFailed(true));
+  }, []);
+  const line = failed ? 'Could not load your activity. Check your connection.' : events ? 'Nothing yet. Matches, commits and alerts show up here.' : 'Loading';
   return (
     <Screen title="Activity">
-      <SampleBadge color={t.bg} background={t.muted} />
-      {demoActivity.map((e, i) => (
-        <Row key={e.id} event={e} index={i} />
-      ))}
+      {API_IS_MOCK ? <SampleBadge color={t.bg} background={t.muted} /> : null}
+      {events?.length ? (
+        events.map((e, i) => <Row key={e.id} event={e} index={i} />)
+      ) : (
+        <View style={styles.empty}>
+          <Hachi size={96} state={failed ? 'confused' : events ? 'idle' : 'thinking'} animated />
+          <Text style={{ color: t.muted, fontFamily: t.fontBody, fontSize: type.body, textAlign: 'center' }}>{line}</Text>
+        </View>
+      )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.m, padding: space.m, borderRadius: radius.card },
+  empty: { alignItems: 'center', gap: space.m, paddingVertical: space.xl },
   text: { flex: 1, gap: 2 },
   badge: { position: 'absolute', right: -4, bottom: -4, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
 });

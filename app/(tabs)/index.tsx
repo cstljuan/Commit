@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,7 +12,7 @@ import { useModeFlip } from '@/components/motion/ModeWipe';
 import { PressScale } from '@/components/motion/PressScale';
 import { useTabInset } from '@/components/nav/TabBar';
 import { Hachi, type HachiState } from '@/components/Hachi/Hachi';
-import { commitToMatch, getDeck, getInterested, superCommitsLeft, swipe, undoLastSwipe } from '@/lib/api';
+import { commitToMatch, getDeck, getInterested, superCommitsLeft, swipe, undoLastSwipe, getHackRoles } from '@/lib/api';
 import { rememberMatch } from '@/lib/chatbot';
 import { copy } from '@/lib/copy';
 import { filterCount, matchesFilters, useDeckFilters } from '@/lib/filters';
@@ -29,6 +29,16 @@ export default function SwipeScreen() {
   const inset = useTabInset();
   const [mood, setMood] = useState<HachiState>('idle');
   const [match, setMatch] = useState<MatchInfo | null>(null);
+  const [needsLine, setNeedsLine] = useState('Who does your team need?');
+  // Comes back from the Who do you need screen with whatever was really saved.
+  useFocusEffect(
+    useCallback(() => {
+      if (mode !== 'hack') return;
+      getHackRoles()
+        .then((roles) => setNeedsLine(roles.length ? `Team needs ${roles.map((r) => `${r.open} ${r.role}`).join(', ')}` : 'Who does your team need?'))
+        .catch(() => {});
+    }, [mode]),
+  );
 
   const filters = useDeckFilters();
   const [cards, setCards] = useState<Card[] | null>(null);
@@ -121,7 +131,7 @@ export default function SwipeScreen() {
           onPress={() => router.push(mode === 'hack' ? '/hack/needs' : '/likes')}
           style={[styles.interested, { backgroundColor: t.surface }]}>
           <Text style={{ color: t.text, fontFamily: t.fontBold, fontSize: 14 }}>
-            {mode === 'hack' ? 'Team needs 2 Backend, 1 Design' : `${wanting} ${wanting === 1 ? 'builder wants' : 'builders want'} in`}
+            {mode === 'hack' ? needsLine : `${wanting} ${wanting === 1 ? 'builder wants' : 'builders want'} in`}
           </Text>
         </PressScale>
         <PressScale
