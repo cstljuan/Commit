@@ -7,9 +7,8 @@ import { makeRedirectUri } from 'expo-auth-session';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 import { supabase } from './supabase';
-import { shareTeamKey } from './teamKeys';
 import { encryptForTeam } from './crypto';
-import { createTeamKey, storeOwnTeamKey } from './teamKeys';
+import { createTeamKey, shareTeamKey, storeOwnTeamKey } from './teamKeys';
 import { appendVault, hashIdea } from './vault';
 import type {
   Card,
@@ -74,16 +73,16 @@ export async function signInWithPassword(email: string, password: string): Promi
 /** Browser flow per F21. The exact redirect URL must be in Supabase's allowed list. */
 /** Any email works, with no inbox needed once email confirmation is off for the project. */
 export async function signUpWithPassword(email: string, password: string): Promise<{ needsConfirmation: boolean }> {
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
   fail(error);
   return { needsConfirmation: !data.session };
 }
 
 /** Which social sign-ins the project has switched on, so the login screen only offers working ones. */
 export async function authProviders(): Promise<{ github: boolean; google: boolean }> {
-  const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-  const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
-  const res = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: key } });
+  const res = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/auth/v1/settings`, {
+    headers: { apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '' },
+  });
   const json = (await res.json()) as { external?: { github?: boolean; google?: boolean } };
   return { github: !!json.external?.github, google: !!json.external?.google };
 }
@@ -262,10 +261,10 @@ export async function getMatches(): Promise<Match[]> {
     return {
       id: r.id,
       projectId: r.project_id,
-      projectTitle: r.project?.type === 'hackathon' ? undefined : (r.project?.title ?? undefined),
       role: asRole(r.role),
       otherUsername: other.username,
       otherAvatarUrl: other.avatarUrl,
+      projectTitle: r.project?.type === 'hackathon' ? undefined : r.project?.title ?? undefined,
       iCommitted: iAmUser ? r.user_committed : r.owner_committed,
       theyCommitted: iAmUser ? r.owner_committed : r.user_committed,
       isTeam: r.project?.type === 'hackathon',
@@ -321,65 +320,56 @@ export async function getTeam(projectId: string): Promise<Team> {
   };
 }
 
-// ---------- projects tab ----------
-
-const must = <T>(result: { data: T; error: { message: string; code?: string } | null }): T => {
-  fail(result.error);
-  return result.data;
-};
-
-const peopleByName = async (ids: string[]): Promise<Map<string, { username: string }>> => {
-  const unique = [...new Set(ids)];
-  if (!unique.length) return new Map();
-  const rows = must(await supabase.from('profiles').select('id,username,name').in('id', unique)) as { id: string; username: string | null; name: string }[];
-  return new Map(rows.map((r) => [r.id, { username: r.username ?? r.name }]));
-};
-
+/** Projects tab: projects I own or joined. Hack shells and hidden posts are left out. */
 export async function getMyProjects(): Promise<MyProject[]> {
   const me = await uid();
-  const memberOf = must(await supabase.from('team_members').select('project_id').eq('user_id', me).eq('status', 'active')) as { project_id: string }[];
-  const owned = must(await supabase.from('projects').select('id').eq('owner_id', me).neq('type', 'hackathon')) as { id: string }[];
-  const ids = [...new Set([...owned.map((p) => p.id), ...memberOf.map((m) => m.project_id)])];
+  const [{ data: memberOf, error: e1 }, { data: owned, error: e2 }] = await Promise.all([
+    supabase.from('team_members').select('project_id').eq('user_id', me).eq('status', 'active'),
+    supabase.from('projects').select('id').eq('owner_id', me),
+  ]);
+  fail(e1);
+  fail(e2);
+  const ids = [...new Set([...(owned ?? []).map((p) => p.id), ...(memberOf ?? []).map((m) => m.project_id)])];
   if (!ids.length) return [];
-  const rows = must(
-    await supabase
-      .from('projects')
-      .select('id,owner_id,title,short_pitch,type,visibility,idea_public,hidden,created_at')
-      .in('id', ids)
-      .order('created_at', { ascending: false }),
-  ) as {
-    id: string;
-    owner_id: string;
-    title: string;
-    short_pitch: string;
-    type: string | null;
-    visibility: 'private' | 'public' | null;
-    idea_public: string | null;
-    hidden: boolean | null;
-  }[];
-  const visible = rows.filter((r) => !r.hidden && r.type !== 'hackathon');
-  const members = must(
-    await supabase.from('team_members').select('project_id,user_id,role').in('project_id', visible.map((r) => r.id)).eq('status', 'active'),
-  ) as { project_id: string; user_id: string; role: Role }[];
-  const people = await peopleByName([...members.map((m) => m.user_id), me]);
+
+  const { data: rows, error: e3 } = await supabase
+    .from('projects')
+    .select('id, owner_id, title, short_pitch, type, visibility, idea_public, hidden, created_at')
+    .in('id', ids)
+    .order('created_at', { ascending: false });
+  fail(e3);
+  const visible = (rows ?? []).filter((r) => !r.hidden && r.type !== 'hackathon');
+  if (!visible.length) return [];
+
+  const { data: members, error: e4 } = await supabase
+    .from('team_members')
+    .select('project_id, user_id, role')
+    .in('project_id', visible.map((r) => r.id))
+    .eq('status', 'active');
+  fail(e4);
+  await Promise.all([...new Set((members ?? []).map((m) => m.user_id))].map(usernameOf));
+
   return Promise.all(
-    visible.map(async (r) => {
-      const counts = must(await supabase.rpc('project_role_counts', { p: r.id })) as RoleCount[];
-      const hash = must(await supabase.rpc('project_commit_hash', { p: r.id })) as string;
-      const taken = members
+    visible.map(async (r): Promise<MyProject> => {
+      const [{ data: counts }, { data: hash }] = await Promise.all([
+        supabase.rpc('project_role_counts', { p: r.id }),
+        supabase.rpc('project_commit_hash', { p: r.id }),
+      ]);
+      const taken = (members ?? [])
         .filter((m) => m.project_id === r.id)
-        .map((m) => ({ role: m.role, username: people.get(m.user_id)?.username ?? 'builder' }));
-      const open = counts.flatMap((c) => Array.from({ length: Math.max(0, c.open) }, () => ({ role: c.role, username: null })));
-      const seats = taken.length || r.owner_id !== me ? [...taken, ...open] : [{ role: 'PM' as Role, username: people.get(me)?.username ?? 'you' }, ...open];
+        .map((m) => ({ role: asRole(m.role), username: usernames.get(m.user_id) ?? 'builder' }));
+      const open = ((counts ?? []) as RoleCount[]).flatMap((c) =>
+        Array.from({ length: Math.max(0, c.open) }, () => ({ role: c.role, username: null as string | null })),
+      );
       return {
         id: r.id,
         title: r.title,
-        commitHash: hash,
+        commitHash: (hash as string) ?? '',
         idea: r.idea_public ?? r.short_pitch,
-        status: r.visibility !== 'public' ? ('private' as const) : open.length ? ('recruiting' as const) : ('building' as const),
+        status: r.visibility !== 'public' ? 'private' : open.length ? 'recruiting' : 'building',
         mine: r.owner_id === me,
         wantIn: 0,
-        roles: seats,
+        roles: [...taken, ...open],
       };
     }),
   );

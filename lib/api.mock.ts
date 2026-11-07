@@ -4,6 +4,7 @@
 
 import { demoProjects } from './demoData';
 import type {
+  MyProject,
   Card,
   ChatMessage,
   CopyAlert,
@@ -12,7 +13,6 @@ import type {
   Interested,
   Match,
   Mode,
-  MyProject,
   PersonCard,
   Profile,
   ProfileInput,
@@ -408,10 +408,6 @@ export async function signInWithPassword(email: string, password: string): Promi
   return wait(undefined);
 }
 
-export async function signInWithProvider(_provider: 'github' | 'google'): Promise<void> {
-  return wait(undefined, 600);
-}
-
 export async function signUpWithPassword(email: string, _password: string): Promise<{ needsConfirmation: boolean }> {
   if (!email.includes('@')) throw new Error('Enter a valid email');
   return wait({ needsConfirmation: false });
@@ -419,6 +415,10 @@ export async function signUpWithPassword(email: string, _password: string): Prom
 
 export async function authProviders(): Promise<{ github: boolean; google: boolean }> {
   return { github: true, google: true };
+}
+
+export async function signInWithProvider(_provider: 'github' | 'google'): Promise<void> {
+  return wait(undefined, 600);
 }
 
 export async function signOut(): Promise<void> {
@@ -543,7 +543,7 @@ export async function getTeam(projectId: string): Promise<Team> {
 }
 
 export async function getMyProjects(): Promise<MyProject[]> {
-  return wait(demoProjects);
+  return wait(clone(demoProjects) as MyProject[]);
 }
 
 // ---------- chat at match (plain text) ----------

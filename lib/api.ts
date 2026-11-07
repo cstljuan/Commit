@@ -7,10 +7,12 @@ import * as mock from './api.mock';
 import * as real from './api.real';
 import { isSupabaseConfigured } from './supabase';
 
-const impl = isSupabaseConfigured ? real : mock;
+// EXPO_PUBLIC_API=mock forces the mock even when Supabase is configured.
+const useMock = !isSupabaseConfigured || process.env.EXPO_PUBLIC_API === 'mock';
+const impl = useMock ? mock : real;
 
 /** True while the mock backs this file. Chat bots and the sign-in gate read it. */
-export const API_IS_MOCK = !isSupabaseConfigured;
+export const API_IS_MOCK = useMock;
 
 // auth
 export const sendEmailCode: typeof real.sendEmailCode = (...a) => impl.sendEmailCode(...a);

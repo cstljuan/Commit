@@ -120,6 +120,25 @@ async function ensureUser(u: SeedUser, existing: Map<string, string>): Promise<s
 
 type Keys = { boxPub: string; boxSec: Uint8Array };
 
+/** Signs in as the user and posts through the deployed post_idea function. Returns the project id. */
+async function postIdeaAs(u: SeedUser, body: Record<string, unknown>): Promise<string> {
+  const pub = env.SUPABASE_PUBLISHABLE_KEY;
+  if (!pub) throw new Error('scripts/.env needs SUPABASE_PUBLISHABLE_KEY');
+  const tok = await fetch(URL + '/auth/v1/token?grant_type=password', {
+    method: 'POST', headers: { apikey: pub, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: emailFor(u), password: passwordFor(u) }),
+  }).then((r) => r.json());
+  if (!tok.access_token) throw new Error(`could not sign in as ${u.key}`);
+  const res = await fetch(URL + '/functions/v1/post_idea', {
+    method: 'POST',
+    headers: { apikey: pub, Authorization: `Bearer ${tok.access_token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok || !j.projectId) throw new Error(`post_idea as ${u.key} failed: ${res.status} ${JSON.stringify(j)}`);
+  return j.projectId;
+}
+
 async function seed() {
   const existing = new Map((await demoAuthUsers()).map((u) => [u.email, u.id]));
   const ids = new Map<string, string>();
@@ -151,26 +170,26 @@ async function seed() {
   }
   console.log(`seed: ${users.length} profiles`);
 
-  // Projects. Public ideas are readable on the card. Private ideas are encrypted with a team key
-  // wrapped for the owner's own box key, in the same format as lib/teamKeys.ts.
+  // Projects go through the deployed post_idea function, signed in as each owner (F13), so every seeded
+  // idea gets an embedding and copy detection works on it. Public ideas are readable on the card.
+  // Private ideas are encrypted here with a team key wrapped for the owner's own box key (lib/teamKeys.ts format).
   const projectIds = new Map<string, string>();
   for (const p of projects) {
     const owner = ids.get(p.owner)!;
-    const row: Record<string, unknown> = {
-      owner_id: owner, title: p.title, short_pitch: p.teaser, type: 'original', field: p.theme, theme: p.theme,
-      timeframe: p.timeframe, github_url: p.githubUrl ?? null, visibility: p.visibility, women_only: !!p.womenOnly,
-      hidden: false,
+    const ownerUser = users.find((u) => u.key === p.owner)!;
+    const body: Record<string, unknown> = {
+      title: p.title, shortPitch: p.teaser, type: 'original', theme: p.theme, timeframe: p.timeframe,
+      githubUrl: p.githubUrl ?? null, visibility: p.visibility, womenOnly: !!p.womenOnly,
+      roles: p.roles, fullIdea: p.idea,
     };
     let wrapped: Record<string, string> | null = null;
-    if (p.visibility === 'public') {
-      row.idea_public = p.idea;
-    } else {
+    if (p.visibility === 'private') {
       const k = keys.get(p.owner);
       if (!k) throw new Error(`private project ${p.key} needs an owner with script-held keys`);
       const teamKey = nacl.randomBytes(nacl.secretbox.keyLength);
       const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
-      row.idea_cipher = encodeBase64(nacl.secretbox(decodeUTF8(p.idea), nonce, teamKey));
-      row.idea_nonce = encodeBase64(nonce);
+      body.ideaCipher = encodeBase64(nacl.secretbox(decodeUTF8(p.idea), nonce, teamKey));
+      body.ideaNonce = encodeBase64(nonce);
       const wrapNonce = nacl.randomBytes(nacl.box.nonceLength);
       wrapped = {
         encrypted_team_key: encodeBase64(nacl.box(teamKey, wrapNonce, naclUtil.decodeBase64(k.boxPub), k.boxSec)),
@@ -178,25 +197,16 @@ async function seed() {
         sender_public_key: k.boxPub,
       };
     }
-    const [created] = await rest('projects', { method: 'POST', body: JSON.stringify(row) });
-    projectIds.set(p.key, created.id);
-    await rest('project_roles', {
-      method: 'POST', headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify(p.roles.map((r) => ({ project_id: created.id, role: r.role, slots_open: r.open }))),
-    });
-    const ownerUser = users.find((u) => u.key === p.owner)!;
-    await rest('team_members', {
-      method: 'POST', headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({ project_id: created.id, user_id: owner, role: ownerUser.role, ownership: 'owner' }),
-    });
+    const created = await postIdeaAs(ownerUser, body);
+    projectIds.set(p.key, created);
     if (wrapped) {
       await rest('team_keys', {
         method: 'POST', headers: { Prefer: 'return=minimal' },
-        body: JSON.stringify({ project_id: created.id, user_id: owner, ...wrapped }),
+        body: JSON.stringify({ project_id: created, user_id: owner, ...wrapped }),
       });
     }
   }
-  console.log(`seed: ${projects.length} projects (${projects.filter((p) => p.visibility === 'private').length} private, encrypted)`);
+  console.log(`seed: ${projects.length} projects through post_idea, all embedded (${projects.filter((p) => p.visibility === 'private').length} private, encrypted)`);
 
   // Hack team shells, same shape ensure_hack_team() creates.
   const shells = new Map<string, string>();
