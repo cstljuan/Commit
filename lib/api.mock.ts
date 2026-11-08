@@ -92,7 +92,7 @@ let me: Profile | null = {
   ],
   hoursPerWeek: 10,
   timezone: 'America/New_York',
-  womenOnly: false,
+  womenOnly: true, // demo build: the team turned Women mode on for this account
   reliability: 82,
 };
 
@@ -435,7 +435,7 @@ export async function getMyProfile(): Promise<Profile | null> {
 
 export async function saveProfile(p: ProfileInput): Promise<void> {
   // Women mode is server-set only (0009), like reliability: the input's womenOnly is ignored.
-  me = { ...p, id: ME_ID, reliability: me?.reliability ?? 70, womenOnly: me?.womenOnly ?? false };
+  me = { ...p, id: ME_ID, reliability: me?.reliability ?? 70, womenOnly: me?.womenOnly ?? true };
   return wait(undefined);
 }
 
