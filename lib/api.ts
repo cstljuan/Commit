@@ -31,6 +31,7 @@ export const saveProfile: typeof real.saveProfile = (...a) => impl.saveProfile(.
 export const getDeck: typeof real.getDeck = (...a) => impl.getDeck(...a);
 export const swipe: typeof real.swipe = (...a) => impl.swipe(...a);
 export const undoLastSwipe: typeof real.undoLastSwipe = (...a) => impl.undoLastSwipe(...a);
+export const resetMySwipes: typeof real.resetMySwipes = (...a) => impl.resetMySwipes(...a);
 export const superCommitsLeft: typeof real.superCommitsLeft = (...a) => impl.superCommitsLeft(...a);
 export const getInterested: typeof real.getInterested = (...a) => impl.getInterested(...a);
 

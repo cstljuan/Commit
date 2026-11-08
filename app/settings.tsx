@@ -1,6 +1,6 @@
-import { signOut } from '@/lib/api';
+import { resetMySwipes, signOut } from '@/lib/api';
 import { router, type Href } from 'expo-router';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
@@ -44,6 +44,31 @@ function SignOutRow() {
   return (
     <PressScale accessibilityLabel="Sign out" onPress={() => signOut().catch(() => {}).finally(() => router.replace('/login'))}>
       <Row title="Sign out" />
+    </PressScale>
+  );
+}
+
+function ResetDeckRow() {
+  const [note, setNote] = useState('Undo your swipes so every project shows up again. Matches stay.');
+  const [busy, setBusy] = useState(false);
+  return (
+    <PressScale
+      accessibilityLabel="Reset my deck"
+      onPress={async () => {
+        if (busy) return;
+        setBusy(true);
+        setNote('Resetting...');
+        try {
+          const n = await resetMySwipes();
+          setNote(n ? `Done. ${n} swipe${n === 1 ? '' : 's'} undone, your deck is fresh.` : 'Your deck is already fresh.');
+          router.replace('/(tabs)');
+        } catch {
+          setNote('Could not reset. Check your connection and try again.');
+        } finally {
+          setBusy(false);
+        }
+      }}>
+      <Row title="Reset my deck" note={note} />
     </PressScale>
   );
 }
@@ -127,6 +152,7 @@ export default function SettingsScreen() {
       <Section title="Account" index={5}>
         <LinkRow title="Edit profile" href="/onboarding/profile" />
         <LinkRow title="Sign in" href="/login" />
+        <ResetDeckRow />
         <SignOutRow />
         <LinkRow title="Replay the welcome" href="/welcome" />
       </Section>

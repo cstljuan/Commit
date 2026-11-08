@@ -321,6 +321,19 @@ export async function undoLastSwipe(): Promise<void> {
   fail(error);
 }
 
+/** Demo helper: undoes your swipes one by one until the deck is fresh. Swipes that made a match stay. */
+export async function resetMySwipes(): Promise<number> {
+  const me = await uid();
+  const { count } = await supabase.from('swipes').select('id', { count: 'exact', head: true }).eq('swiper_id', me);
+  let undone = 0;
+  for (let i = 0; i < Math.min(count ?? 0, 400); i++) {
+    const { error } = await supabase.rpc('undo_last_swipe');
+    if (error) break;
+    undone++;
+  }
+  return undone;
+}
+
 export async function superCommitsLeft(): Promise<number> {
   const { data, error } = await supabase.rpc('super_commits_left');
   fail(error);

@@ -492,6 +492,16 @@ export async function swipe(
   return wait({ matched: false });
 }
 
+export async function resetMySwipes(): Promise<number> {
+  let n = 0;
+  while (swipeHistory.length && !swipeHistory[swipeHistory.length - 1].matchId) {
+    const last = swipeHistory.pop()!;
+    swiped.delete(last.card.id);
+    n++;
+  }
+  return wait(n);
+}
+
 export async function undoLastSwipe(): Promise<void> {
   const last = swipeHistory[swipeHistory.length - 1];
   if (!last) return wait(undefined);
